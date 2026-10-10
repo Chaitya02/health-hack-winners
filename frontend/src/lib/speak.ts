@@ -12,3 +12,12 @@ export function speak(text: string, lang: string): void {
     // Speech is a convenience; the screen still shows everything.
   }
 }
+
+/** Stop anything being read aloud (e.g. the patient just turned voice off). */
+export function stopSpeaking(): void {
+  try {
+    window.speechSynthesis?.cancel()
+  } catch {
+    // nothing to stop
+  }
+}

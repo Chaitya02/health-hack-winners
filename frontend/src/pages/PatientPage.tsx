@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { AudioToggles } from '../components/patient/AudioToggles'
 import { Confirmation } from '../components/patient/Confirmation'
 import { Header } from '../components/patient/Header'
 import { InputPanel } from '../components/patient/InputPanel'
@@ -7,14 +8,19 @@ import { MyRequests } from '../components/patient/MyRequests'
 import { NurseButton } from '../components/patient/NurseButton'
 import { blockedTiles, profileRefusalMessage, raisedForFallRisk } from '../components/patient/profileRules'
 import { RequestTiles } from '../components/patient/RequestTiles'
+import { requestLabel } from '../components/patient/RequestTracker'
 import { Screensaver } from '../components/patient/Screensaver'
+import { useAudioPrefs } from '../hooks/useAudioPrefs'
 import { useIdle } from '../hooks/useIdle'
+import { useStatusAnnouncer } from '../hooks/useStatusAnnouncer'
 import { layoutFor } from '../lib/accessibility'
-import { speak } from '../lib/speak'
+import { speak, stopSpeaking } from '../lib/speak'
+import { startMusic, stopMusic } from '../lib/waitingMusic'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
 import { api, ApiError } from '../lib/api'
 import { DEFAULT_ROOM, IDLE_MS } from '../lib/config'
+import { CLOSED_STATUSES } from '../types/ticket'
 import type {
   CreateRequestResponse,
   InputMode,
@@ -52,6 +58,8 @@ export default function PatientPage() {
   const screensaver = useIdle(IDLE_MS, !busy)
   const layout = layoutFor(room?.profile)
   const nurseInFlight = useRef(false)
+  // US-7: voice defaults on for low vision (US-4) until the patient changes it on this tablet.
+  const audio = useAudioPrefs(roomId, layout.readAloud)
 
   useEffect(() => {
     api
@@ -75,6 +83,19 @@ export default function PatientPage() {
     fromEvent: toView,
   })
 
+  // Spoken status updates: the same label and status text the tracker shows.
+  useStatusAnnouncer(requests, audio.voice, (r) =>
+    speak(`${requestLabel(r, t, lang)}: ${t.status[r.status]}`, t.speechLang),
+  )
+
+  // Waiting music plays while any request is open and stops once they are all done or cancelled.
+  const anyOpen = requests.some((r) => !CLOSED_STATUSES.includes(r.status))
+  useEffect(() => {
+    if (audio.music && anyOpen) startMusic()
+    else stopMusic()
+  }, [audio.music, anyOpen])
+  useEffect(() => stopMusic, [])
+
   /** Returns true when the request was accepted. */
   /** `spokenLabel`: what the patient pressed, read aloud with the result in the low-vision layout. */
   async function send(
@@ -92,7 +113,7 @@ export default function PatientPage() {
       })
       setResult(res)
       if (!isTap && res.confirmation_language !== lang) setLang(res.confirmation_language)
-      if (layout.readAloud) {
+      if (audio.voice) {
         const said = spokenLabel ? `${spokenLabel}. ${res.confirmation}` : res.confirmation
         speak(said, STRINGS[res.confirmation_language].speechLang)
       }
@@ -101,7 +122,7 @@ export default function PatientPage() {
       const refusal = e instanceof ApiError ? profileRefusalMessage(e.status, e.message) : null
       const message = refusal ?? (e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed)
       setError(message)
-      if (layout.readAloud) speak(message, t.speechLang)
+      if (audio.voice) speak(message, t.speechLang)
       return false
     } finally {
       setBusy(false)
@@ -172,11 +193,21 @@ export default function PatientPage() {
               busy={busy}
               large={layout.large}
               blocked={blockedTiles(room?.profile, t)}
-              onBlocked={(reason) => layout.readAloud && speak(reason, t.speechLang)}
+              onBlocked={(reason) => audio.voice && speak(reason, t.speechLang)}
               onTap={(tile) => void send({ text: t.tiles[tile], input_mode: 'quick_tap', tile }, t.tiles[tile])}
             />
           </>
         )}
+
+        <AudioToggles
+          lang={lang}
+          voice={audio.voice}
+          music={audio.music}
+          onChange={(name, value) => {
+            audio.set(name, value)
+            if (name === 'voice' && !value) stopSpeaking()
+          }}
+        />
 
         <MyRequests requests={requests} t={t} roomId={roomId} lang={lang} />
       </main>
