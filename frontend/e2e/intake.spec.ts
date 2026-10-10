@@ -18,7 +18,7 @@ test('(h) bedside intake: notes pick the dashboard and the top buttons; start ov
 
   // Rosa: low vision + bathroom often → audio dashboard, Bathroom first.
   await pickDemo(page, /Rosa, 82/)
-  await expect(page.getByRole('radio', { name: 'Female' })).toBeChecked()
+  await expect(page.getByRole('radio', { name: 'Female', exact: true })).toBeChecked()
   if (process.env.INTAKE_SHOTS) await page.screenshot({ path: `${process.env.INTAKE_SHOTS}/intake-form.png`, fullPage: true })
   await page.getByRole('button', { name: 'Set up my screen' }).click()
   await expect(page.getByTestId('patient-identity')).toHaveText('Rosa, 82 years (Room 400)')

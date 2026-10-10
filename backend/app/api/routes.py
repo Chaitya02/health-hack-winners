@@ -14,6 +14,7 @@ from app.models import (
     MAX_TEXT_LEN,
     ROLE_DEPARTMENT,
     STAFF_ROLE,
+    AttendantPreference,
     CreateRequest,
     CreateRequestResponse,
     Department,
@@ -113,6 +114,8 @@ class IntakeBody(BaseModel):
     name: str = Field(min_length=1, max_length=40)
     age: int = Field(ge=0, le=120)
     gender: Literal["female", "male", "unspecified"] = "unspecified"
+    # US-6: who should help with the bathroom.
+    attendant_preference: AttendantPreference = AttendantPreference.ANY
     clinical_notes: str = Field(default="", max_length=MAX_NOTES_LEN)
     preferred_language: Language | None = None
 
@@ -141,7 +144,9 @@ def save_intake(room_id: str, body: IntakeBody, request: Request) -> dict:
             "gender": body.gender,
             "clinical_notes": body.clinical_notes or None,
             "preferred_language": body.preferred_language or room.preferred_language,
-            "profile": result.profile,
+            "profile": result.profile.model_copy(
+                update={"attendant_preference": body.attendant_preference}
+            ),
             "intake_complete": True,
             "intake_at": utc_now_iso(),
         }

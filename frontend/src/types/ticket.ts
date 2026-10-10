@@ -84,6 +84,9 @@ export interface Ticket {
   assigned_to: string | null
   assigned_name: string | null
   assigned_at: string | null
+  /** US-6: preferred attendant for bathroom help, and whether the assignee matches. */
+  attendant_preference: AttendantPreference | null
+  attendant_preference_met: boolean | null
   eta_minutes: number | null
   history: StatusChange[]
   notes: TicketNote[]
@@ -147,6 +150,7 @@ export interface IntakeBody {
   name: string
   age: number
   gender: 'female' | 'male' | 'unspecified'
+  attendant_preference?: AttendantPreference
   clinical_notes: string
   preferred_language?: Language
 }
@@ -209,6 +213,7 @@ export interface StaffView {
   staff_id: string
   name: string
   department: Department
+  gender: 'female' | 'male' | null
   schedule: ScheduleBlock[]
   status: StaffStatus
   status_until: string | null

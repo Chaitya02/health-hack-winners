@@ -29,6 +29,8 @@ export function ticket(overrides: Partial<Ticket> = {}): Ticket {
     assigned_to: null,
     assigned_name: null,
     assigned_at: null,
+    attendant_preference: null,
+    attendant_preference_met: null,
     eta_minutes: null,
     history: [],
     notes: [],

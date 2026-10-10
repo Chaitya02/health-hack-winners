@@ -15,6 +15,8 @@ export function PersonalTiles({
   large,
   onTap,
   gender = 'unspecified',
+  blocked = {},
+  onBlocked,
 }: {
   top: QuickTile[]
   t: Strings
@@ -23,6 +25,9 @@ export function PersonalTiles({
   large: boolean
   onTap: (tile: QuickTile) => void
   gender?: Gender
+  /** US-5: tiles the profile rules out, with why (see profileRules.ts). */
+  blocked?: Partial<Record<QuickTile, string>>
+  onBlocked?: (why: string) => void
 }) {
   const d = DASHBOARD[lang]
   const [more, setMore] = useState(false)
@@ -58,7 +63,7 @@ export function PersonalTiles({
       </button>
       {more && (
         <div id="more-requests" className="mt-1">
-          <RequestTiles t={t} busy={busy} onTap={onTap} large={large} exclude={top} gender={gender} showTitle={false} />
+          <RequestTiles t={t} busy={busy} onTap={onTap} large={large} exclude={top} gender={gender} showTitle={false} blocked={blocked} onBlocked={onBlocked} />
         </div>
       )}
     </section>

@@ -25,6 +25,16 @@ describe('App routes', () => {
     renderAt('/')
     expect(await screen.findByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
     expect(screen.getByLabelText(/^your name/i)).toBeInTheDocument()
+    // Every staff and admin screen is one tap away (new tab).
+    const nav = screen.getByRole('navigation', { name: 'Staff and admin screens' })
+    const links = Array.from(nav.querySelectorAll('a')).map((a) => [a.textContent?.replace('↗', '').trim(), a.getAttribute('href'), a.target])
+    expect(links).toEqual([
+      ['Primary Nurse', '/nursing', '_blank'],
+      ['Housekeeping & Facilities', '/housekeeping', '_blank'],
+      ['Food Services', '/food', '_blank'],
+      ['Unit Clerk / IT', '/it', '_blank'],
+      ['Admin & insights', '/admin', '_blank'],
+    ])
   })
 
   it.each(['nursing', 'housekeeping', 'food', 'it'])('/%s is that department’s dashboard', async (dept) => {

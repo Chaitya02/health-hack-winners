@@ -131,6 +131,9 @@ class Ticket(BaseModel):
     assigned_to: str | None = None
     assigned_name: str | None = None
     assigned_at: str | None = None
+    # US-6: the patient's preferred attendant for bathroom help, and whether the assignee matches.
+    attendant_preference: AttendantPreference | None = None
+    attendant_preference_met: bool | None = None
     eta_minutes: int | None = Field(default=None, ge=0)
     history: list[StatusChange] = Field(default_factory=list)
     notes: list[TicketNote] = Field(default_factory=list)

@@ -20,6 +20,7 @@ from app.models import (
     CLINICAL_CATEGORIES,
     CLOSED_STATUSES,
     OPEN_STATUSES,
+    AttendantPreference,
     Category,
     CreateRequest,
     CreateRequestResponse,
@@ -37,7 +38,7 @@ from app.models import (
     default_severity,
     utc_now_iso,
 )
-from app.profile_rules import apply_profile, check_tile
+from app.profile_rules import apply_profile, check_tile, is_mobility_request
 from app.realtime import Publisher
 from app.repo import TicketRepository, new_id
 from app.safety import scan
@@ -93,8 +94,10 @@ class TicketService:
     def _assign(self, ticket: Ticket, preferred_name: str | None = None) -> None:
         """Set (or clear) the ticket's assignee by the department's availability rules."""
         ticket.assigned_to = ticket.assigned_name = ticket.assigned_at = None
+        ticket.attendant_preference_met = None
         if self.staff is None or ticket.department not in STAFFED_DEPARTMENTS:
             return
+        attendant = str(ticket.attendant_preference) if ticket.attendant_preference else None
         members = self.staff.by_department(ticket.department)
         counts = open_counts(self.tickets.by_department(ticket.department))
         pick = choose_assignee(
@@ -103,10 +106,13 @@ class TicketService:
             datetime.now(UTC),
             urgent=is_urgent(ticket),
             preferred_name=preferred_name,
+            attendant=attendant,
         )
         if pick:
             ticket.assigned_to, ticket.assigned_name = pick.staff_id, pick.name
             ticket.assigned_at = utc_now_iso()
+            if attendant:
+                ticket.attendant_preference_met = pick.gender == attendant
 
     def rebalance(self, department: Department) -> int:
         """Hand waiting (unassigned) requests to whoever is available now, urgent and oldest first.
@@ -237,6 +243,14 @@ class TicketService:
                     fallback=decision.fallback,
                 ),
             )
+            # US-6: bathroom / mobility help honours the patient's attendant preference.
+            pref = room.profile.attendant_preference
+            if (
+                pref != AttendantPreference.ANY
+                and ticket.department == Department.NURSING
+                and is_mobility_request(req.text, tile)
+            ):
+                ticket.attendant_preference = pref
             self._assign(ticket, preferred_name=room.primary_nurse)
             self.tickets.put(ticket)
             tickets.append(ticket)

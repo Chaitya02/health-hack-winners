@@ -398,6 +398,12 @@ function TicketRow({
       </div>
       <p className="mt-3 text-xl leading-snug">{t.english_summary}</p>
       {t.escalated_from && <p className="mt-1 font-bold text-bell">Escalated by {DEPARTMENT_LABELS[t.escalated_from]}</p>}
+      {t.attendant_preference && (
+        <p className={`mt-1 text-sm font-bold ${t.attendant_preference_met === false ? 'text-wait' : 'text-pine-soft'}`} data-testid="attendant-pref">
+          Prefers {t.attendant_preference} staff
+          {t.attendant_preference_met === false && ' · none available, assigned to the next available'}
+        </p>
+      )}
       {t.assigned_name ? (
         <p className="mt-1 text-sm font-bold text-care-deep" data-testid="assignee">
           Assigned to {t.assigned_name}

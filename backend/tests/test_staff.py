@@ -196,3 +196,86 @@ def test_staff_panel_access_and_admin_workload(client, staffed):
         "Marcus",
         "Nurse Jordan",
     }
+
+
+# --- US-6: attendant preference for bathroom help -----------------------------------------
+
+
+def test_attendant_preference_picks_matching_gender_first():
+    jordan = member("j", "Nurse Jordan").model_copy(update={"gender": "male"})
+    priya = member("p", "Nurse Priya").model_copy(update={"gender": "female"})
+    # Priya is busier but matches the preference.
+    pick = choose_assignee([jordan, priya], {"p": 3}, NOW, urgent=False, attendant="female")
+    assert pick is priya
+    # Nobody matching is available → still someone available (never left waiting).
+    priya_break = member("p", "Nurse Priya", on_break=True).model_copy(update={"gender": "female"})
+    assert (
+        choose_assignee([jordan, priya_break], {}, NOW, urgent=False, attendant="female") is jordan
+    )
+
+
+@pytest.fixture
+def preferring_room(app, staffed):
+    """Room 403 asks for a female attendant; both nurses available (Jordan's break removed)."""
+    jordan = staffed[0].model_copy(
+        update={"gender": "male", "schedule": [b for b in staffed[0].schedule if b.kind == "shift"]}
+    )
+    priya = staffed[1].model_copy(update={"gender": "female"})
+    app.state.staff.put(jordan)
+    app.state.staff.put(priya)
+    app.state.rooms.put(
+        Room(
+            room_id="403",
+            unit="u",
+            patient_alias="Hetal",
+            primary_nurse="Nurse Jordan",
+            profile={"attendant_preference": "female"},
+        )
+    )
+    return jordan, priya
+
+
+def tap(client, tile, room="403"):
+    return client.post(
+        "/api/requests",
+        json={"room_id": room, "text": tile, "input_mode": "quick_tap", "tile": tile},
+    ).json()["tickets"][0]
+
+
+def test_bathroom_help_goes_to_a_matching_attendant(client, preferring_room):
+    t = tap(client, "bathroom")
+    assert (t["assigned_name"], t["attendant_preference"], t["attendant_preference_met"]) == (
+        "Nurse Priya",
+        "female",
+        True,
+    )
+    # Not a bathroom / mobility request → no preference applied (primary nurse Jordan, tie).
+    other = tap(client, "medication")
+    assert other["attendant_preference"] is None and other["attendant_preference_met"] is None
+
+
+def test_preference_not_met_is_flagged_but_never_waits(app, client, preferring_room):
+    _, priya = preferring_room
+    now = datetime.now(UTC)
+    on_break = priya.model_copy(deep=True)
+    on_break.schedule.append(
+        ScheduleBlock(
+            start=iso(now - timedelta(minutes=1)),
+            end=iso(now + timedelta(minutes=20)),
+            kind="break",
+        )
+    )
+    app.state.staff.put(on_break)
+    t = tap(client, "bathroom")
+    assert (t["assigned_name"], t["attendant_preference_met"]) == ("Nurse Jordan", False)
+
+
+def test_intake_saves_attendant_preference(app, client):
+    app.state.rooms.put(
+        Room(room_id="400", unit="u", patient_alias="", primary_nurse="n", intake_complete=False)
+    )
+    body = {"name": "Rosa", "age": 82, "clinical_notes": "", "attendant_preference": "female"}
+    room = client.put("/api/rooms/400/intake", json=body).json()["room"]
+    assert room["profile"]["attendant_preference"] == "female"
+    bad = {**body, "attendant_preference": "robot"}
+    assert client.put("/api/rooms/400/intake", json=bad).status_code == 422
