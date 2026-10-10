@@ -41,3 +41,6 @@ export function setConfigForTests(cfg: AppConfig | null) {
 
 /** Room shown on the home page. Each bedside tablet is built or configured for its own room. */
 export const DEFAULT_ROOM: string = import.meta.env.VITE_DEFAULT_ROOM ?? '401'
+
+/** Patient screen goes to the screensaver after this much inactivity (US-8: 3 minutes). */
+export const IDLE_MS: number = Number(import.meta.env.VITE_IDLE_SECONDS ?? 180) * 1000

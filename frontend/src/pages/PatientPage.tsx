@@ -6,10 +6,12 @@ import { InputPanel } from '../components/patient/InputPanel'
 import { MyRequests } from '../components/patient/MyRequests'
 import { NurseButton } from '../components/patient/NurseButton'
 import { RequestTiles } from '../components/patient/RequestTiles'
+import { Screensaver } from '../components/patient/Screensaver'
+import { useIdle } from '../hooks/useIdle'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
 import { api, ApiError } from '../lib/api'
-import { DEFAULT_ROOM } from '../lib/config'
+import { DEFAULT_ROOM, IDLE_MS } from '../lib/config'
 import type {
   CreateRequestResponse,
   InputMode,
@@ -44,6 +46,7 @@ export default function PatientPage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<CreateRequestResponse | null>(null)
   const t = STRINGS[lang]
+  const screensaver = useIdle(IDLE_MS, !busy)
 
   useEffect(() => {
     api
@@ -97,8 +100,23 @@ export default function PatientPage() {
     )
   }
 
+  const callNurse = () => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' })
+
   return (
     <div className="min-h-screen text-[24px] leading-snug">
+      {screensaver.idle && (
+        <Screensaver
+          roomId={roomId}
+          lang={lang}
+          t={t}
+          requests={requests}
+          onWake={screensaver.wake}
+          onNurse={() => {
+            screensaver.wake()
+            callNurse()
+          }}
+        />
+      )}
       <Header roomId={roomId} unit={room?.unit ?? ''} lang={lang} t={t} onLangChange={setLang} />
 
       <main className="mx-auto max-w-5xl px-5 pb-10 pt-6 sm:px-8">
@@ -114,7 +132,7 @@ export default function PatientPage() {
             <NurseButton
               t={t}
               busy={busy}
-              onPress={() => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' })}
+              onPress={callNurse}
             />
 
             <InputPanel t={t} busy={busy} onSubmit={(text, mode) => send({ text, input_mode: mode })} />

@@ -15,6 +15,12 @@ export async function staffPage(browser: Browser, dept: string): Promise<Page> {
 
 export async function patientPage(browser: Browser, room: string): Promise<Page> {
   const page = await (await browser.newContext({ viewport: { width: 768, height: 1024 } })).newPage()
+  await openPatient(page, room)
+  return page
+}
+
+/** Opens a room's patient screen on an existing page and switches it to English. */
+export async function openPatient(page: Page, room: string) {
   const roomLoaded = page.waitForResponse((r) => r.url().endsWith(`/api/rooms/${room}`) && r.ok())
   await page.goto(`/patient/${room}`)
   // The heading renders before the room arrives, and the room then switches the UI to the
@@ -25,7 +31,6 @@ export async function patientPage(browser: Browser, room: string): Promise<Page>
   // Rooms have synthetic preferred languages; tests drive the English UI unless stated.
   await page.getByRole('combobox').selectOption('en')
   await expect(page.getByRole('combobox')).toHaveValue('en')
-  return page
 }
 
 /** Waits for POST /api/requests and returns the created tickets. */

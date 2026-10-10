@@ -151,7 +151,7 @@ Files: `backend/app/tiles.py`, the tile component and `strings.ts` (all 7 langua
 - **Speech difficulty:** hide the mic; emphasize buttons and text.
 - **Can't write:** hide the text box; buttons and voice only.
 
-**O7 · US-8 screensaver**
+**O7 · US-8 screensaver** (taken by Chaitya)
 - After 3 minutes idle, fade to info slides. Patient screen only.
 - Any touch exits, and the page state is unchanged afterwards.
 - If a request is open, keep its status visible on the screensaver.

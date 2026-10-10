@@ -35,7 +35,7 @@ Ting-ting is an AI call-bell router for hospital inpatients (HealthHack Ops Unle
 | O3 | Gray out tiles for NPO patients with a reason, plus a fall-risk message | C3 (rules), O2 |
 | O5 | Spoken status updates and waiting music, with on/off toggles | O4 |
 | O6 | Accessibility layouts from the patient profile | O2 |
-| O7 | Screensaver after 3 minutes idle | O1 |
+| O7 | Screensaver after 3 minutes idle (**taken by Chaitya**, see below) | O1 |
 
 **Start with O1.** It only needs `main`, and it makes every later task easier.
 
@@ -92,6 +92,7 @@ Ticket statuses are `NEW → ACKNOWLEDGED → IN_PROGRESS → RESOLVED`, plus `E
 | `frontend/src/i18n/strings.ts` | All patient-facing text in 7 languages. TypeScript makes every language required. Shared with Chaitya, so rebase before pushing. |
 | `frontend/src/hooks/useSpeech.ts` | Voice input (browser speech API) |
 | `frontend/src/hooks/useLiveTickets.ts` | Live ticket list: WebSocket first, falls back to polling every 2s |
+| `frontend/src/components/patient/Screensaver.tsx`, `hooks/useIdle.ts`, `i18n/screensaver.ts` | O7 screensaver (Chaitya). Mounted at the top of `PatientPage`; idle time is `IDLE_MS` (`VITE_IDLE_SECONDS`, default 180). It reuses your `NurseButton`. |
 | `frontend/src/lib/api.ts` | API client |
 | `frontend/src/types/ticket.ts` | TypeScript mirror of the backend models. **Chaitya owns it**, so ask before changing it. |
 | `backend/app/tiles.py` | Quick-tap tile → category mapping. Created in C1; owned by you from O2. |

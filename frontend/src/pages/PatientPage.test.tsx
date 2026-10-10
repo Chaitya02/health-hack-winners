@@ -1,7 +1,7 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { FakeWebSocket } from '../test/setup'
 import { mockFetch, ticket } from '../test/fixtures'
 import PatientPage from './PatientPage'
@@ -99,5 +99,27 @@ describe('PatientPage', () => {
     ws.emit({ type: 'subscribed', channels: ['room:401'] })
     ws.emit({ type: 'ticket.updated', ticket: ticket({ status: 'IN_PROGRESS' }), ts: '' })
     expect(await screen.findByTestId('patient-request')).toHaveTextContent('On the way')
+  })
+
+  it('shows the screensaver after 3 idle minutes and comes back with the draft intact', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
+      renderPatient()
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
+      await screen.findByRole('heading', { name: /hi maya/i })
+      await user.type(screen.getByLabelText(/type your request/i), 'extra pillow')
+
+      act(() => vi.advanceTimersByTime(179_000))
+      expect(screen.queryByTestId('screensaver')).not.toBeInTheDocument()
+      act(() => vi.advanceTimersByTime(1_000))
+      expect(screen.getByTestId('screensaver')).toBeInTheDocument()
+
+      await user.click(screen.getByRole('button', { name: 'Tap anywhere to continue' }))
+      expect(screen.queryByTestId('screensaver')).not.toBeInTheDocument()
+      expect(screen.getByLabelText(/type your request/i)).toHaveValue('extra pillow')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
