@@ -1,0 +1,39 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:2.5.4
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    ports: ["8001:8000"]
+
+  backend:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_ENV: local
+      DYNAMODB_ENDPOINT_URL: http://dynamodb:8000
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+    command: ["uvicorn", "app.asgi:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - ./backend/app:/srv/app
+      # Bedrock mode locally: share your AWS CLI credentials read-only (never baked into the image).
+      - ${HOME}/.aws:/root/.aws:ro
+    ports: ["8000:8000"]
+    depends_on: [dynamodb]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    ports: ["5173:5173"]
+    depends_on: [backend]
