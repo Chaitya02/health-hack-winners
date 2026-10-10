@@ -1,5 +1,5 @@
 FROM python:3.12-slim
-COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /usr/local/bin/uv
+RUN pip install --no-cache-dir uv==0.8.22
 WORKDIR /srv
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv PATH=/opt/venv/bin:$PATH PYTHONUNBUFFERED=1
 COPY pyproject.toml uv.lock ./

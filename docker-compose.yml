@@ -1,3 +1,5 @@
+name: tingting
+
 services:
   dynamodb:
     image: amazon/dynamodb-local:2.5.4
