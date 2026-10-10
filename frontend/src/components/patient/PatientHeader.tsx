@@ -8,6 +8,7 @@ import type { Language } from '../../types/ticket'
 export function PatientHeader({
   name,
   age,
+  roomId,
   lang,
   openCount,
   onLangChange,
@@ -16,6 +17,7 @@ export function PatientHeader({
 }: {
   name: string
   age: number | null
+  roomId: string
   lang: Language
   openCount: number
   onLangChange: (l: Language) => void
@@ -28,6 +30,7 @@ export function PatientHeader({
       <h1 data-testid="patient-identity" className="leading-tight">
         <span className="text-[40px] font-bold">{name}</span>
         {age != null && <span className="text-[28px] text-pine-soft">, {d.ageYears(age)}</span>}
+        <span className="text-[28px] text-pine-soft"> ({d.room(roomId)})</span>
       </h1>
       <div className="flex flex-wrap items-center gap-3">
         <LanguageSelect lang={lang} onChange={onLangChange} />

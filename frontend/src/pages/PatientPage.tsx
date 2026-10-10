@@ -187,6 +187,7 @@ function Dashboard({
       <PatientHeader
         name={room.patient_alias}
         age={room.age}
+        roomId={roomId}
         lang={lang}
         openCount={openCount}
         onLangChange={onLangChange}
