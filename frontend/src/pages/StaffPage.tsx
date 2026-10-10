@@ -161,11 +161,6 @@ function Login({ department, onToken }: { department: Department; onToken: (t: s
   )
 }
 
-const AGING_EDGE: Record<Aging, string> = {
-  fresh: 'border-l-fresh',
-  waiting: 'border-l-wait',
-  late: 'border-l-bell',
-}
 const AGING_TEXT: Record<Aging, string> = {
   fresh: 'text-fresh',
   waiting: 'text-wait',
@@ -448,7 +443,7 @@ function TicketRow({
       data-testid="ticket"
       data-ticket-id={t.ticket_id}
       data-priority={t.priority}
-      className={`flex flex-col rounded-3xl border-2 border-l-8 bg-paper p-5 ${AGING_EDGE[age]} ${high ? 'border-bell' : 'border-line'}`}
+      className={`flex flex-col rounded-3xl border-2 bg-paper p-5 ${high ? 'border-bell' : 'border-line'}`}
     >
       <div className="flex items-start gap-4">
         {t.tile ? (
