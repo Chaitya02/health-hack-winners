@@ -47,7 +47,9 @@ test('(b) incision throbbing + dizzy → Nursing HIGH alert', async ({ browser }
     await patient.screenshot({ path: `${SHOTS}/patient-urgent-tablet.png` })
   }
   await card.getByRole('button', { name: 'Acknowledge' }).click()
-  await expect(nursing.getByTestId('urgent-banner')).not.toContainText('402')
+  // The banner unmounts when nothing urgent is left (fresh DB in CI), so check for "no banner
+  // mentioning 402" rather than "banner without 402".
+  await expect(nursing.getByTestId('urgent-banner').filter({ hasText: 'Room 402' })).toHaveCount(0)
 })
 
 test('(c) Spanish ice-water request → Food Services with Spanish confirmation', async ({ browser }) => {
