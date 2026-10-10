@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import * as waitingMusic from '../lib/waitingMusic'
 
 // Minimal Web Speech API typings (not in lib.dom for all browsers).
 interface SpeechResultEvent {
@@ -19,6 +20,13 @@ type Ctor = new () => SpeechRecognitionLike
 function getCtor(): Ctor | null {
   const w = globalThis as unknown as { SpeechRecognition?: Ctor; webkitSpeechRecognition?: Ctor }
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null
+}
+
+/** While recording nothing else plays: waiting music is silenced and read-aloud is cut off, so
+ * the microphone only hears the patient. */
+function quiet(on: boolean) {
+  waitingMusic.mute(on)
+  if (on) globalThis.speechSynthesis?.cancel()
 }
 
 /**
@@ -65,6 +73,7 @@ export function useSpeech(lang: string, onText: (text: string) => void) {
       recording.current = false
       setFailed(true)
       setListening(false)
+      quiet(false)
     }
     rec.onend = () => {
       if (recording.current) restart.current() // a pause, not the patient: keep recording
@@ -89,6 +98,7 @@ export function useSpeech(lang: string, onText: (text: string) => void) {
     recording.current = true
     heard.current = ''
     setFailed(false)
+    quiet(true)
     session()
   }, [session])
 
@@ -96,12 +106,14 @@ export function useSpeech(lang: string, onText: (text: string) => void) {
     recording.current = false
     recRef.current?.stop()
     setListening(false)
+    quiet(false)
   }, [])
 
   useEffect(
     () => () => {
       recording.current = false
       recRef.current?.stop()
+      waitingMusic.mute(false)
     },
     [],
   )
