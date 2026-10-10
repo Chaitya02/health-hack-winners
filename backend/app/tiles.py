@@ -20,6 +20,15 @@ QUICK_TAP_TILES: dict[str, tuple[Category, str, list[str]]] = {
     ),
     "tv": (Category.TECH_AMENITIES, "Patient needs help with the TV / remote.", ["tv remote"]),
     "food": (Category.DIETARY, "Patient asks about food / the menu.", ["menu"]),
+    # Medication is always clinical: it sits under "Food & medication" but routes to nursing.
+    "medication": (
+        Category.NON_URGENT_CLINICAL,
+        "Patient has a question or request about their medication.",
+        [],
+    ),
+    "family": (Category.EMOTIONAL_SUPPORT, "Patient would like help contacting family.", []),
+    "counseling": (Category.EMOTIONAL_SUPPORT, "Patient would like someone to talk to.", []),
+    "spiritual": (Category.EMOTIONAL_SUPPORT, "Patient requests spiritual care.", []),
     "nurse": (
         Category.URGENT_CLINICAL,
         "Patient pressed 'I need my nurse'.",

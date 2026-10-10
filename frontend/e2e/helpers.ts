@@ -45,3 +45,9 @@ export async function submitAndCapture(page: Page, action: () => Promise<void>) 
 }
 
 export const ticketCard = (page: Page, id: string) => page.locator(`[data-ticket-id="${id}"]`)
+
+/** Main tiles open a short list (US-6): tap the group, then the item, e.g. Comfort → Pillow. */
+export async function tapTile(page: Page, group: string, item: string) {
+  await page.getByRole('button', { name: group, exact: true }).click()
+  await page.getByRole('button', { name: item, exact: true }).click()
+}

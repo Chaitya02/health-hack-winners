@@ -9,7 +9,14 @@ export type TileKey =
   | 'temperature'
   | 'tv'
   | 'food'
+  | 'medication'
+  | 'family'
+  | 'counseling'
+  | 'spiritual'
   | 'nurse'
+
+/** Main tiles that open a short list of choices. */
+export type TileGroupKey = 'thirsty' | 'comfort' | 'foodMeds' | 'emotional'
 
 export interface Strings {
   languageName: string
@@ -26,6 +33,8 @@ export interface Strings {
   sending: string
   quickTitle: string
   tiles: Record<TileKey, string>
+  tileGroups: Record<TileGroupKey, string>
+  back: string
   nurseHint: string
   newRequest: string
   yourRequests: string
@@ -61,8 +70,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: 'Room temperature',
       tv: 'TV / remote',
       food: 'Food / menu',
+      medication: 'Medication',
+      family: 'Contact my family',
+      counseling: 'Someone to talk to',
+      spiritual: 'Spiritual care',
       nurse: 'I need my nurse',
     },
+    tileGroups: {
+      thirsty: 'Thirsty',
+      comfort: 'Comfort',
+      foodMeds: 'Food & medication',
+      emotional: 'Emotional support',
+    },
+    back: 'Back',
     nurseHint: 'For pain, bleeding, breathing trouble or anything that worries you',
     newRequest: 'Make another request',
     yourRequests: 'Your requests today',
@@ -108,8 +128,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: 'Temperatura del cuarto',
       tv: 'TV / control',
       food: 'Comida / menú',
+      medication: 'Medicamentos',
+      family: 'Contactar a mi familia',
+      counseling: 'Alguien con quien hablar',
+      spiritual: 'Apoyo espiritual',
       nurse: 'Necesito a mi enfermera',
     },
+    tileGroups: {
+      thirsty: 'Tengo sed',
+      comfort: 'Comodidad',
+      foodMeds: 'Comida y medicinas',
+      emotional: 'Apoyo emocional',
+    },
+    back: 'Volver',
     nurseHint: 'Por dolor, sangrado, falta de aire o cualquier cosa que le preocupe',
     newRequest: 'Hacer otro pedido',
     yourRequests: 'Sus pedidos de hoy',
@@ -155,8 +186,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: 'कमरे का तापमान',
       tv: 'टीवी / रिमोट',
       food: 'खाना / मेन्यू',
+      medication: 'दवा',
+      family: 'परिवार से संपर्क',
+      counseling: 'किसी से बात करनी है',
+      spiritual: 'आध्यात्मिक सहायता',
       nurse: 'मुझे नर्स चाहिए',
     },
+    tileGroups: {
+      thirsty: 'प्यास लगी है',
+      comfort: 'आराम',
+      foodMeds: 'खाना और दवा',
+      emotional: 'भावनात्मक सहारा',
+    },
+    back: 'वापस',
     nurseHint: 'दर्द, खून, साँस की तकलीफ़ या किसी भी चिंता के लिए',
     newRequest: 'एक और अनुरोध करें',
     yourRequests: 'आज के आपके अनुरोध',
@@ -202,8 +244,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: 'રૂમનું તાપમાન',
       tv: 'ટીવી / રિમોટ',
       food: 'જમવાનું / મેનુ',
+      medication: 'દવા',
+      family: 'પરિવારનો સંપર્ક',
+      counseling: 'કોઈની સાથે વાત કરવી છે',
+      spiritual: 'આધ્યાત્મિક સહાય',
       nurse: 'મને મારી નર્સ જોઈએ',
     },
+    tileGroups: {
+      thirsty: 'તરસ લાગી છે',
+      comfort: 'આરામ',
+      foodMeds: 'જમવાનું અને દવા',
+      emotional: 'ભાવનાત્મક સહારો',
+    },
+    back: 'પાછા',
     nurseHint: 'દુખાવો, લોહી, શ્વાસની તકલીફ અથવા કોઈપણ ચિંતા માટે',
     newRequest: 'બીજી વિનંતી કરો',
     yourRequests: 'આજની તમારી વિનંતીઓ',
@@ -249,8 +302,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: '房间温度',
       tv: '电视 / 遥控器',
       food: '餐食 / 菜单',
+      medication: '药物',
+      family: '联系家人',
+      counseling: '想找人聊聊',
+      spiritual: '心灵关怀',
       nurse: '我需要护士',
     },
+    tileGroups: {
+      thirsty: '口渴',
+      comfort: '舒适',
+      foodMeds: '餐食和药物',
+      emotional: '情感支持',
+    },
+    back: '返回',
     nurseHint: '疼痛、出血、呼吸困难或任何让您担心的情况',
     newRequest: '再提一个请求',
     yourRequests: '您今天的请求',
@@ -296,8 +360,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: 'Tanperati chanm nan',
       tv: 'TV / remòt',
       food: 'Manje / meni',
+      medication: 'Medikaman',
+      family: 'Kontakte fanmi m',
+      counseling: 'Yon moun pou m pale',
+      spiritual: 'Sipò espirityèl',
       nurse: 'Mwen bezwen enfimyè m',
     },
+    tileGroups: {
+      thirsty: 'Mwen swaf',
+      comfort: 'Konfò',
+      foodMeds: 'Manje ak medikaman',
+      emotional: 'Sipò emosyonèl',
+    },
+    back: 'Retounen',
     nurseHint: 'Pou doulè, san, pwoblèm respire oswa nenpòt bagay ki enkyete w',
     newRequest: 'Fè yon lòt demann',
     yourRequests: 'Demann ou jodi a',
@@ -343,8 +418,19 @@ export const STRINGS: Record<Language, Strings> = {
       temperature: 'Temperatura do quarto',
       tv: 'TV / controle',
       food: 'Comida / cardápio',
+      medication: 'Remédios',
+      family: 'Falar com minha família',
+      counseling: 'Alguém para conversar',
+      spiritual: 'Apoio espiritual',
       nurse: 'Preciso da minha enfermeira',
     },
+    tileGroups: {
+      thirsty: 'Estou com sede',
+      comfort: 'Conforto',
+      foodMeds: 'Comida e remédios',
+      emotional: 'Apoio emocional',
+    },
+    back: 'Voltar',
     nurseHint: 'Para dor, sangramento, falta de ar ou qualquer coisa que preocupe você',
     newRequest: 'Fazer outro pedido',
     yourRequests: 'Seus pedidos de hoje',
