@@ -3,7 +3,6 @@ import type { Language } from '../types/ticket'
 export interface DashboardStrings {
   // Intake form
   welcome: string
-  intakeIntro: string
   name: string
   age: string
   gender: string
@@ -38,7 +37,6 @@ export interface DashboardStrings {
 export const DASHBOARD: Record<Language, DashboardStrings> = {
   en: {
     welcome: 'Welcome',
-    intakeIntro: 'Tell us a little about you so we can set up your screen.',
     name: 'Your name',
     age: 'Your age',
     gender: 'Gender',
@@ -68,7 +66,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   es: {
     welcome: 'Bienvenido',
-    intakeIntro: 'Cuéntenos un poco sobre usted para preparar su pantalla.',
     name: 'Su nombre',
     age: 'Su edad',
     gender: 'Género',
@@ -98,7 +95,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   hi: {
     welcome: 'स्वागत है',
-    intakeIntro: 'अपने बारे में थोड़ा बताएँ ताकि हम आपकी स्क्रीन तैयार कर सकें।',
     name: 'आपका नाम',
     age: 'आपकी उम्र',
     gender: 'लिंग',
@@ -128,7 +124,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   gu: {
     welcome: 'સ્વાગત છે',
-    intakeIntro: 'તમારા વિશે થોડું જણાવો જેથી અમે તમારી સ્ક્રીન તૈયાર કરી શકીએ.',
     name: 'તમારું નામ',
     age: 'તમારી ઉંમર',
     gender: 'જાતિ',
@@ -158,7 +153,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   zh: {
     welcome: '欢迎',
-    intakeIntro: '请简单介绍一下您自己，以便我们为您设置屏幕。',
     name: '您的姓名',
     age: '您的年龄',
     gender: '性别',
@@ -188,7 +182,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   ht: {
     welcome: 'Byenvini',
-    intakeIntro: 'Di nou yon ti kras sou ou pou nou ka prepare ekran ou.',
     name: 'Non ou',
     age: 'Laj ou',
     gender: 'Sèks',
@@ -218,7 +211,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   pt: {
     welcome: 'Bem-vindo',
-    intakeIntro: 'Conte-nos um pouco sobre você para prepararmos sua tela.',
     name: 'Seu nome',
     age: 'Sua idade',
     gender: 'Gênero',

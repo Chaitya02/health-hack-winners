@@ -54,7 +54,6 @@ export function IntakeForm({
         <h1 className="text-[40px] font-bold leading-tight">{d.welcome}</h1>
         <LanguageSelect lang={lang} onChange={onLangChange} />
       </div>
-      <p className="mt-2 text-pine-soft">{d.intakeIntro}</p>
 
       <form onSubmit={submit} className="mt-6 space-y-5">
         <div className="grid gap-5 sm:grid-cols-[1fr_10rem]">
