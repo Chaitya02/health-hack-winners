@@ -105,7 +105,7 @@ Housekeeping so the two tracks don't collide:
 - `/admin` requires admin. Staff only see their own department.
 - Patients never see staff UI, and staff pages have no patient input.
 - Queues sort by severity, then by wait time. This was a mentor request.
-- Home page becomes a role picker.
+- ~~Home page becomes a role picker.~~ Dropped: the home page is the patient screen, and each department and admin has its own URL.
 
 **C5 · US-1 data store and insights**
 - Every request is stored with category, severity, history and audit.

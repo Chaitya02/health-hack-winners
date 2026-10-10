@@ -48,7 +48,10 @@ def create_app(
     app.state.tickets = TicketRepository(settings, db)
     app.state.rooms = RoomRepository(settings, db)
     app.state.auth = StaffAuth(
-        settings.staff_pin, settings.staff_token_secret, settings.staff_token_ttl_s
+        settings.staff_pin,
+        settings.staff_token_secret,
+        settings.staff_token_ttl_s,
+        admin_pin=settings.admin_pin,
     )
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
     if publisher is None:

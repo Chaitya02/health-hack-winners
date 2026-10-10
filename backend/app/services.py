@@ -44,13 +44,6 @@ from app.tiles import QUICK_TAP_TILES
 
 log = logging.getLogger("tingting.service")
 
-STAFF_ROLE: dict[Department, Role] = {
-    Department.NURSING: Role.NURSE,
-    Department.HOUSEKEEPING: Role.HOUSEKEEPING,
-    Department.FOOD: Role.FOOD,
-    Department.IT: Role.IT,
-}
-
 # ETA until the request is done, used until there are enough resolved tickets today to learn from.
 DEFAULT_ETA_MINUTES: dict[Priority, int] = {Priority.HIGH: 2, Priority.NORMAL: 10, Priority.LOW: 15}
 MIN_ETA_SAMPLES = 3

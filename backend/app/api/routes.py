@@ -8,23 +8,39 @@ from app.metrics import Metrics, compute, start_of_day
 from app.models import (
     MAX_NOTE_LEN,
     MAX_TEXT_LEN,
+    ROLE_DEPARTMENT,
+    STAFF_ROLE,
     CreateRequest,
     CreateRequestResponse,
     Department,
     PatientTicketView,
+    Role,
     Room,
     Status,
     Ticket,
 )
 from app.profile_rules import ProfileRefusal
-from app.services import STAFF_ROLE, InvalidTransition, TicketService
+from app.services import InvalidTransition, TicketService
 
 router = APIRouter(prefix="/api")
 
 
 class LoginBody(BaseModel):
-    department: Department
+    """Log in as a role, or as a department (shorthand for that department's staff role)."""
+
+    role: Role | None = None
+    department: Department | None = None
     pin: str = Field(min_length=1, max_length=12)
+
+    @model_validator(mode="after")
+    def _role_or_department(self) -> "LoginBody":
+        if (self.role is None) == (self.department is None):
+            raise ValueError("send exactly one of role or department")
+        return self
+
+    @property
+    def resolved_role(self) -> Role:
+        return self.role if self.role is not None else STAFF_ROLE[self.department]
 
 
 class ActionBody(BaseModel):
@@ -59,14 +75,23 @@ def _room(request: Request, room_id: str) -> Room:
     return room
 
 
-def staff_department(
-    request: Request, authorization: Annotated[str | None, Header()] = None
-) -> Department:
+def current_role(request: Request, authorization: Annotated[str | None, Header()] = None) -> Role:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(401, "Staff login required")
-    dept = request.app.state.auth.verify(authorization.removeprefix("Bearer ").strip())
-    if dept is None:
+    role = request.app.state.auth.verify(authorization.removeprefix("Bearer ").strip())
+    if role is None:
         raise HTTPException(401, "Invalid or expired staff token")
+    return role
+
+
+SignedIn = Annotated[Role, Depends(current_role)]
+
+
+def staff_department(role: SignedIn) -> Department:
+    """The department queue this role works. Admin has none."""
+    dept = ROLE_DEPARTMENT.get(role)
+    if dept is None:
+        raise HTTPException(403, "This account has no department queue")
     return dept
 
 
@@ -121,10 +146,11 @@ def patient_ticket_action(
 
 @router.post("/auth/login")
 def login(body: LoginBody, request: Request) -> dict:
-    token = request.app.state.auth.login(body.department, body.pin)
+    role = body.resolved_role
+    token = request.app.state.auth.login(role, body.pin)
     if token is None:
         raise HTTPException(401, "Wrong PIN")
-    return {"token": token, "department": body.department}
+    return {"token": token, "role": role, "department": ROLE_DEPARTMENT.get(role)}
 
 
 @router.get("/queues/{department}", response_model=list[Ticket])
@@ -154,13 +180,13 @@ def update_ticket(ticket_id: str, body: ActionBody, request: Request, staff: Sta
 
 
 @router.get("/metrics", response_model=Metrics)
-def metrics(request: Request) -> Metrics:
+def metrics(request: Request, _: SignedIn) -> Metrics:
     since = start_of_day()
     return compute(request.app.state.tickets.since(since), since)
 
 
 @router.post("/classify")
-def classify(body: ClassifyBody, request: Request, staff: StaffDept) -> dict:
+def classify(body: ClassifyBody, request: Request, _: SignedIn) -> dict:
     """Dry-run classification (no ticket, no broadcast). Used by scripts/eval.py --mode api."""
     svc = _service(request)
     d = decide(body.text, svc.classifier, svc.confidence_threshold)

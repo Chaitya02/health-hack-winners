@@ -134,10 +134,10 @@ const AGING_TEXT: Record<Aging, string> = {
   late: 'text-bell',
 }
 
-function sortQueue(a: Ticket, b: Ticket) {
-  const pa = a.priority === 'HIGH' ? 0 : 1
-  const pb = b.priority === 'HIGH' ? 0 : 1
-  return pa - pb || a.created_at.localeCompare(b.created_at) // urgent first, then longest waiting
+// Most severe first (5 = urgent clinical), then HIGH priority, then longest waiting.
+export function sortQueue(a: Ticket, b: Ticket) {
+  const high = (t: Ticket) => (t.priority === 'HIGH' ? 0 : 1)
+  return b.severity - a.severity || high(a) - high(b) || a.created_at.localeCompare(b.created_at)
 }
 
 function Dashboard({
@@ -162,10 +162,10 @@ function Dashboard({
   const refreshMetrics = useCallback(() => {
     if (!isNursing) return
     api
-      .metrics()
+      .metrics(token)
       .then((m) => setDiverted(m.diverted_from_nursing))
       .catch(() => undefined)
-  }, [isNursing])
+  }, [isNursing, token])
 
   const { items, status, error } = useLiveTickets<Ticket>({
     fetcher,

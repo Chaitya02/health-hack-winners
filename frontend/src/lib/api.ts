@@ -5,6 +5,7 @@ import type {
   Department,
   PatientAction,
   PatientTicketView,
+  Role,
   Room,
   Status,
   Ticket,
@@ -36,6 +37,12 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
   return (await res.json()) as T
 }
 
+export interface LoginResponse {
+  token: string
+  role: Role
+  department: Department | null
+}
+
 export interface Metrics {
   since: string
   total: number
@@ -59,9 +66,14 @@ export const api = {
   roomTickets: (roomId: string) =>
     request<PatientTicketView[]>(`/api/rooms/${encodeURIComponent(roomId)}/tickets`),
   login: (department: Department, pin: string) =>
-    request<{ token: string; department: Department }>('/api/auth/login', {
+    request<LoginResponse>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ department, pin }),
+    }),
+  loginAdmin: (pin: string) =>
+    request<LoginResponse>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ role: 'admin', pin }),
     }),
   queue: (department: Department, token: string, status?: Status) =>
     request<Ticket[]>(`/api/queues/${department}${status ? `?status=${status}` : ''}`, {}, token),
@@ -76,5 +88,5 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify(note === undefined ? { action } : { action, note }),
     }),
-  metrics: () => request<Metrics>('/api/metrics'),
+  metrics: (token: string) => request<Metrics>('/api/metrics', {}, token),
 }

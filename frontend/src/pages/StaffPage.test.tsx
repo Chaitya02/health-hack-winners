@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import { FakeWebSocket } from '../test/setup'
 import { mockFetch, ticket } from '../test/fixtures'
-import StaffPage from './StaffPage'
+import StaffPage, { sortQueue } from './StaffPage'
 
 const METRICS = { diverted_from_nursing: 7 }
 
@@ -101,5 +101,23 @@ describe('StaffPage', () => {
     await waitFor(() => expect(screen.getByTestId('live-status')).toHaveAttribute('data-status', 'live'))
     ws.close()
     await waitFor(() => expect(screen.getByTestId('live-status')).toHaveAttribute('data-status', 'offline'))
+  })
+
+  it('orders the queue by severity, then HIGH priority, then longest waiting', () => {
+    const at = (min: number) => new Date(Date.UTC(2026, 9, 10, 10, min)).toISOString()
+    const queue = [
+      ticket({ ticket_id: 'routine-old', severity: 3, created_at: at(0) }),
+      ticket({ ticket_id: 'nudged', severity: 4, created_at: at(5) }),
+      ticket({ ticket_id: 'urgent', severity: 5, priority: 'HIGH', created_at: at(9) }),
+      ticket({ ticket_id: 'fall-risk', severity: 4, priority: 'HIGH', created_at: at(8) }),
+      ticket({ ticket_id: 'routine-new', severity: 3, created_at: at(7) }),
+    ]
+    expect([...queue].sort(sortQueue).map((t) => t.ticket_id)).toEqual([
+      'urgent',
+      'fall-risk',
+      'nudged',
+      'routine-old',
+      'routine-new',
+    ])
   })
 })

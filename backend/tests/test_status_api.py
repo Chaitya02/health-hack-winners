@@ -112,7 +112,7 @@ def test_patient_cannot_cancel_after_staff_escalation(client):
 
 def test_cancelled_tickets_do_not_count_as_resolved_in_metrics(client):
     act(client, pillow(client)["ticket_id"], "cancel")
-    m = client.get("/api/metrics").json()
+    m = client.get("/api/metrics", headers=login(client)).json()
     assert m["avg_resolve_seconds"]["housekeeping"] is None
     assert m["open_by_department"]["housekeeping"] == 0
 

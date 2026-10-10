@@ -167,7 +167,7 @@ def test_metrics(client):
     submit(client, "extra pillow please")
     submit(client, "¿Me puede traer agua con hielo?")
     submit(client, "I'm bleeding")
-    m = client.get("/api/metrics").json()
+    m = client.get("/api/metrics", headers=login(client)).json()
     assert m["total"] == 3
     assert m["diverted_from_nursing"] == 2
     assert m["diverted_pct"] == pytest.approx(66.7)
@@ -180,4 +180,4 @@ def test_dry_run_classify_requires_staff_and_creates_nothing(client):
         "/api/classify", json={"text": "I'm bleeding"}, headers=login(client, "nursing")
     ).json()
     assert r["departments"] == ["nursing"] and r["is_clinical"] is True
-    assert client.get("/api/metrics").json()["total"] == 0
+    assert client.get("/api/metrics", headers=login(client)).json()["total"] == 0
