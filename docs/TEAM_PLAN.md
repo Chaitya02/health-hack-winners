@@ -146,7 +146,7 @@ Files: `backend/app/tiles.py`, the tile component and `strings.ts` (all 7 langua
 - Optional waiting music starts when a request is sent and stops when it's done.
 - Separate on/off toggles for voice and music, remembered per room in localStorage.
 
-**O6 · US-4 accessibility layouts** (driven by `room.profile.accessibility`)
+**O6 · US-4 accessibility layouts** (driven by `room.profile.accessibility`; taken by Chaitya)
 - **Low vision:** extra-large buttons and read-aloud. See the open question below.
 - **Speech difficulty:** hide the mic; emphasize buttons and text.
 - **Can't write:** hide the text box; buttons and voice only.
@@ -196,7 +196,7 @@ Keep PRs small, one task each. Merge C1 and C2 as soon as they're green.
 2. **Bathroom attendant gender:** is it practical? Ask the mentor or a nurse.
 3. **Button count:** 3 or 4 main tiles, plus the nurse button? O2 currently lists five candidates.
 4. **Emotional support routing:** nursing for now, or a new "support" department?
-5. **Low vision:** the story says buttons only, with no audio or text. But voice input and read-aloud usually help low-vision users most. Confirm before building O6.
+5. ~~**Low vision:** buttons only, or voice + read-aloud?~~ **Decided:** large buttons + read-aloud, mic kept, text box hidden (built in O6).
 6. **EMR data:** profiles are mocked in the seed data for now. There's no Epic integration in the hackathon scope.
 
 **Not in this sprint:** Phase 3 AWS deployment and the Bedrock eval. They're still blocked on credentials, and whoever gets credentials first takes them.

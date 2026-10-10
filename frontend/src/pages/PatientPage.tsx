@@ -8,6 +8,8 @@ import { NurseButton } from '../components/patient/NurseButton'
 import { RequestTiles } from '../components/patient/RequestTiles'
 import { Screensaver } from '../components/patient/Screensaver'
 import { useIdle } from '../hooks/useIdle'
+import { layoutFor } from '../lib/accessibility'
+import { speak } from '../lib/speak'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
 import { api, ApiError } from '../lib/api'
@@ -47,6 +49,7 @@ export default function PatientPage() {
   const [result, setResult] = useState<CreateRequestResponse | null>(null)
   const t = STRINGS[lang]
   const screensaver = useIdle(IDLE_MS, !busy)
+  const layout = layoutFor(room?.profile)
 
   useEffect(() => {
     api
@@ -71,7 +74,11 @@ export default function PatientPage() {
   })
 
   /** Returns true when the request was accepted. */
-  async function send(body: { text: string; input_mode: InputMode; tile?: string }): Promise<boolean> {
+  /** `spokenLabel`: what the patient pressed, read aloud with the result in the low-vision layout. */
+  async function send(
+    body: { text: string; input_mode: InputMode; tile?: string },
+    spokenLabel?: string,
+  ): Promise<boolean> {
     setBusy(true)
     setError(null)
     try {
@@ -83,9 +90,15 @@ export default function PatientPage() {
       })
       setResult(res)
       if (!isTap && res.confirmation_language !== lang) setLang(res.confirmation_language)
+      if (layout.readAloud) {
+        const said = spokenLabel ? `${spokenLabel}. ${res.confirmation}` : res.confirmation
+        speak(said, STRINGS[res.confirmation_language].speechLang)
+      }
       return true
     } catch (e) {
-      setError(e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed)
+      const message = e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed
+      setError(message)
+      if (layout.readAloud) speak(message, t.speechLang)
       return false
     } finally {
       setBusy(false)
@@ -100,10 +113,10 @@ export default function PatientPage() {
     )
   }
 
-  const callNurse = () => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' })
+  const callNurse = () => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' }, t.tiles.nurse)
 
   return (
-    <div className="min-h-screen text-[24px] leading-snug">
+    <div className={`min-h-screen leading-snug ${layout.large ? 'text-[30px]' : 'text-[24px]'}`}>
       {screensaver.idle && (
         <Screensaver
           roomId={roomId}
@@ -135,7 +148,13 @@ export default function PatientPage() {
               onPress={callNurse}
             />
 
-            <InputPanel t={t} busy={busy} onSubmit={(text, mode) => send({ text, input_mode: mode })} />
+            <InputPanel
+              t={t}
+              busy={busy}
+              onSubmit={(text, mode) => send({ text, input_mode: mode })}
+              showText={layout.showText}
+              showMic={layout.showMic}
+            />
             {error && (
               <p role="alert" className="mt-4 rounded-2xl bg-bell-tint p-4 font-bold text-bell-deep">
                 {error}
@@ -145,7 +164,8 @@ export default function PatientPage() {
             <RequestTiles
               t={t}
               busy={busy}
-              onTap={(tile) => void send({ text: t.tiles[tile], input_mode: 'quick_tap', tile })}
+              large={layout.large}
+              onTap={(tile) => void send({ text: t.tiles[tile], input_mode: 'quick_tap', tile }, t.tiles[tile])}
             />
           </>
         )}
