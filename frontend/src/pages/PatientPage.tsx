@@ -174,11 +174,13 @@ function Dashboard({
         }
         return true
       } catch (e) {
-        // A profile refusal (409, e.g. water while NPO) carries a patient-language reason.
+        // A profile refusal (409, e.g. water while NPO) or "that wasn't a request" (422) carries a
+        // patient-language reason; nothing was sent to anyone.
         const refusal = e instanceof ApiError ? profileRefusalMessage(e.status, e.message) : null
         const message = refusal ?? (e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed)
         setError(message)
-        if (layout.readAloud) speak(message, t.speechLang)
+        // Spoken input gets a spoken answer, so the patient knows to try again.
+        if (layout.readAloud || body.input_mode === 'voice') speak(message, t.speechLang)
         return false
       } finally {
         setBusy(false)

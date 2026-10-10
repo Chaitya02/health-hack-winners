@@ -165,3 +165,27 @@ describe('US-7: spoken updates and waiting music', () => {
     expect(JSON.parse(localStorage.getItem('tingting.audio.400')!)).toEqual({ voice: false, music: false })
   })
 })
+
+describe('input that is not a request', () => {
+  it('is turned back with the server’s message; nothing is confirmed', async () => {
+    const calls = mockFetch({ 'GET /api/rooms/400/tickets': [], 'GET /api/rooms/400': room() })
+    const ok = vi.mocked(fetch).getMockImplementation()!
+    const message = 'Sorry, I didn’t understand a request. Please try again, or tap a button.'
+    vi.mocked(fetch).mockImplementation(async (input, init) =>
+      init?.method === 'POST'
+        ? new Response(JSON.stringify({ detail: { code: 'not_a_request', reason: 'gibberish', message } }), { status: 422 })
+        : ok(input, init),
+    )
+    renderRoom()
+    await userEvent.type(await screen.findByLabelText(STRINGS.en.typeLabel), 'asdfgh')
+    await userEvent.click(screen.getByRole('button', { name: STRINGS.en.send }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    expect(screen.queryByTestId('confirmation')).not.toBeInTheDocument()
+    expect(calls.filter((c) => c.method === 'GET').length).toBeGreaterThan(0)
+  })
+
+  it('a 422 with a code carries the message; a plain validation error does not', () => {
+    expect(profileRefusalMessage(422, JSON.stringify({ code: 'not_a_request', message: 'Inténtelo de nuevo.' }))).toBe('Inténtelo de nuevo.')
+    expect(profileRefusalMessage(422, JSON.stringify([{ loc: ['body', 'text'] }]))).toBeNull()
+  })
+})

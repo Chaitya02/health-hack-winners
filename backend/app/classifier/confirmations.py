@@ -115,3 +115,19 @@ _PROFILE_NOTES: dict[Language, dict[str, str]] = {
 
 def profile_note(language: Language, flag: str) -> str:
     return _PROFILE_NOTES.get(language, _PROFILE_NOTES[Language.EN])[flag]
+
+
+# A typed or spoken message that isn't a request (app/validity.py): nothing is sent.
+_NOT_A_REQUEST: dict[Language, str] = {
+    Language.EN: "Sorry, I didn’t understand a request. Please try again, or tap a button.",
+    Language.ES: "Lo siento, no entendí su solicitud. Inténtelo de nuevo o toque un botón.",
+    Language.HI: "माफ़ कीजिए, मैं आपका अनुरोध समझ नहीं पाया। कृपया फिर से कोशिश करें या कोई बटन दबाएँ।",
+    Language.GU: "માફ કરશો, હું તમારી વિનંતી સમજી શક્યો નહીં. કૃપા કરીને ફરી પ્રયાસ કરો અથવા બટન દબાવો.",
+    Language.ZH: "抱歉，我没有听懂您的请求。请再试一次，或点击一个按钮。",
+    Language.HT: "Eskize m, mwen pa konprann demand ou. Tanpri eseye ankò, oswa peze yon bouton.",
+    Language.PT: "Desculpe, não entendi o seu pedido. Tente de novo ou toque em um botão.",
+}
+
+
+def not_a_request_message(language: Language) -> str:
+    return _NOT_A_REQUEST.get(language, _NOT_A_REQUEST[Language.EN])
