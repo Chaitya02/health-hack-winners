@@ -15,9 +15,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
-from app.config import Settings  # noqa: E402
-from app.models import Language, Room  # noqa: E402
-from app.repo import RoomRepository, dynamo_resource, ensure_tables  # noqa: E402
+from app.config import Settings
+from app.models import Language, Room
+from app.repo import RoomRepository, dynamo_resource, ensure_tables
 
 UNIT = "4 West Med-Surg"
 NURSES = ["Nurse Jordan", "Nurse Priya", "Nurse Luis", "Nurse Mei"]

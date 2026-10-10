@@ -21,7 +21,7 @@ test:
 	cd frontend && npm test
 
 lint:
-	cd backend && uv run ruff check . && uv run ruff format --check .
+	cd backend && uv run ruff check . ../scripts && uv run ruff format --check . ../scripts
 	cd frontend && npm run lint && npm run typecheck
 
 fmt:
