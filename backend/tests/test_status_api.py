@@ -193,3 +193,24 @@ def test_patient_action_is_scoped_to_the_room(app, client):
     t = pillow(client)
     assert act(client, t["ticket_id"], "cancel", room="402").status_code == 404
     assert act(client, "t_missing", "cancel").status_code == 404
+
+
+# --- tile key (O4 card labels) -------------------------------------------------------------
+
+
+def test_patient_view_names_quick_tap_tiles_but_never_free_text(client):
+    tapped = client.post(
+        "/api/requests",
+        json={"room_id": "401", "text": "Pillow", "input_mode": "quick_tap", "tile": "pillow"},
+    ).json()["tickets"][0]
+    assert tapped["tile"] == "pillow"
+    typed = submit(client, "my secret: extra pillow please")["tickets"][0]
+    assert typed["tile"] is None
+    unknown = client.post(
+        "/api/requests",
+        json={"room_id": "401", "text": "x", "input_mode": "quick_tap", "tile": "spaceship"},
+    ).json()["tickets"][0]
+    assert unknown["tile"] is None
+    views = client.get("/api/rooms/401/tickets").json()
+    assert sorted(v["tile"] or "" for v in views) == ["", "", "pillow"]
+    assert all("original_text" not in v for v in views)
