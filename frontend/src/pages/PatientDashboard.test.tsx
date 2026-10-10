@@ -113,7 +113,7 @@ describe('Bedside intake → personalised dashboard', () => {
     expect(calls.some((c) => c.method === 'DELETE')).toBe(true)
   })
 
-  it('audio dashboard: voice bubble instead of the text box; speaking sends the request', async () => {
+  it('audio dashboard: voice bubble instead of the text box; tap to record, tap again to send', async () => {
     const calls = mockFetch({
       'GET /api/rooms/400/tickets': [],
       'GET /api/rooms/400': ROSA,
@@ -127,9 +127,34 @@ describe('Bedside intake → personalised dashboard', () => {
     await userEvent.click(within(bubble).getByRole('button', { name: /tap and tell me/i }))
     FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'I need a blanket' }, isFinal: true, length: 1 }] })
     expect(await screen.findByTestId('voice-heard')).toHaveTextContent('I need a blanket')
-    FakeRecognition.last!.onend!()
+    // A pause ends the browser's session: recording carries on, nothing is sent yet.
+    const first = FakeRecognition.last!
+    first.onend!()
+    expect(FakeRecognition.last).not.toBe(first)
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+    expect(within(bubble).getByTestId('recording')).toHaveTextContent('Tap again to send')
+    FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'and a pillow' }, isFinal: true, length: 1 }] })
+    expect(await screen.findByText(/I need a blanket and a pillow/)).toBeInTheDocument()
+    // Second tap: stop and send.
+    await userEvent.click(within(bubble).getByRole('button', { name: 'Tap again to send' }))
     await screen.findByTestId('confirmation')
-    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ text: 'I need a blanket', input_mode: 'voice' })
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ text: 'I need a blanket and a pillow', input_mode: 'voice' })
+  })
+
+  it('standard dashboard: tap the mic to record, tap again to send', async () => {
+    const calls = mockFetch({
+      'GET /api/rooms/400/tickets': [],
+      'GET /api/rooms/400': SAM,
+      'POST /api/requests': { request_id: 'r', tickets: [ticket()], confirmation: 'Housekeeping is on the way.', confirmation_language: 'en', is_clinical: false },
+    })
+    renderRoom()
+    await userEvent.click(await screen.findByRole('button', { name: 'Tap to speak' }))
+    FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'extra blanket' }, isFinal: true, length: 1 }] })
+    expect(await screen.findByDisplayValue('extra blanket')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: 'Recording… tap again to send' }))
+    await screen.findByTestId('confirmation')
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ text: 'extra blanket', input_mode: 'voice' })
   })
 
   it('bell shows the open count; its panel lists open requests and drops resolved ones', async () => {
