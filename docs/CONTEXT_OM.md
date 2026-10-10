@@ -34,7 +34,7 @@ Ting-ting is an AI call-bell router for hospital inpatients (HealthHack Ops Unle
 | O4 | "Mirror" status tracker: stepper, ETA, cancel / still waiting | C2 (status API), O1 |
 | O3 | Gray out tiles for NPO patients with a reason, plus a fall-risk message | C3 (rules), O2 |
 | O5 | Spoken status updates and waiting music, with on/off toggles | O4 |
-| O6 | Accessibility layouts from the patient profile | O2 |
+| O6 | Accessibility layouts from the patient profile (**taken by Chaitya**) | O2 |
 | O7 | Screensaver after 3 minutes idle (**taken by Chaitya**, see below) | O1 |
 
 **Start with O1.** It only needs `main`, and it makes every later task easier.
@@ -93,6 +93,7 @@ Ticket statuses are `NEW → ACKNOWLEDGED → IN_PROGRESS → RESOLVED`, plus `E
 | `frontend/src/hooks/useSpeech.ts` | Voice input (browser speech API) |
 | `frontend/src/hooks/useLiveTickets.ts` | Live ticket list: WebSocket first, falls back to polling every 2s |
 | `frontend/src/components/patient/Screensaver.tsx`, `hooks/useIdle.ts`, `i18n/screensaver.ts` | O7 screensaver (Chaitya). Mounted at the top of `PatientPage`; idle time is `IDLE_MS` (`VITE_IDLE_SECONDS`, default 180). It reuses your `NurseButton`. |
+| `frontend/src/lib/accessibility.ts`, `lib/speak.ts` | O6 (Chaitya). `layoutFor(room.profile)` decides `showText` / `showMic` / `large` / `readAloud`; `InputPanel` and `RequestTiles` take these as optional props. **When you rebuild the tiles in O2, keep the `large` prop.** `speak()` is reusable for O5. |
 | `frontend/src/lib/api.ts` | API client |
 | `frontend/src/types/ticket.ts` | TypeScript mirror of the backend models. **Chaitya owns it**, so ask before changing it. |
 | `backend/app/tiles.py` | Quick-tap tile → category mapping. Created in C1; owned by you from O2. |
@@ -119,4 +120,4 @@ Ticket statuses are `NEW → ACKNOWLEDGED → IN_PROGRESS → RESOLVED`, plus `E
 These are from the team sheet; confirm them before building the affected piece.
 - **Button count:** 3 or 4 main tiles? (O2)
 - **Bathroom attendant gender:** is it practical? (O2)
-- **Low vision:** the story says buttons only, with no audio or text. But read-aloud usually helps low-vision users most. Confirm before building that part of O6.
+- ~~**Low vision**~~ decided and built in O6: large buttons + read-aloud, mic kept, text box hidden.
