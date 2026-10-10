@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { openPatient, submitAndCapture } from './helpers'
+import { openPatient, submitAndCapture, tapTile } from './helpers'
 
 const SHOTS = process.env.SCREENSAVER_SHOTS
 
@@ -8,7 +8,7 @@ test('(f) idle patient screen shows the screensaver with the nurse button and op
   await context.clock.install()
   const patient = await context.newPage()
   await openPatient(patient, '406')
-  await submitAndCapture(patient, () => patient.getByRole('button', { name: 'Pillow', exact: true }).click())
+  await submitAndCapture(patient, () => tapTile(patient, 'Comfort', 'Pillow'))
   await patient.getByRole('button', { name: /make another request/i }).click()
 
   await patient.clock.fastForward('02:59')

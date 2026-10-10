@@ -19,14 +19,49 @@ function renderPatient() {
 }
 
 describe('PatientPage', () => {
-  it('shows greeting, all quick-tap tiles and the nurse button', async () => {
+  it('shows greeting, the main tiles and the nurse button', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
     expect(await screen.findByRole('heading', { name: /hi maya/i })).toBeInTheDocument()
-    for (const label of ['Water', 'Ice', 'Pillow', 'Blanket', 'Help to the bathroom', 'Room temperature', 'TV / remote', 'Food / menu']) {
-      expect(screen.getByRole('button', { name: new RegExp(label, 'i') })).toBeInTheDocument()
+    for (const label of ['Thirsty', 'Comfort', 'Food & medication', 'Emotional support', 'Help to the bathroom']) {
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
     expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeInTheDocument()
+  })
+
+  it.each([
+    ['Thirsty', ['Water', 'Ice']],
+    ['Comfort', ['Pillow', 'Blanket', 'Room temperature', 'TV / remote']],
+    ['Food & medication', ['Food / menu', 'Medication']],
+    ['Emotional support', ['Contact my family', 'Someone to talk to', 'Spiritual care']],
+  ])('%s opens its choices, keeps the nurse button, and Back returns', async (group, items) => {
+    mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
+    renderPatient()
+    await userEvent.click(await screen.findByRole('button', { name: group }))
+    expect(screen.getByRole('heading', { name: group })).toHaveFocus()
+    for (const label of items) expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeEnabled()
+    await userEvent.click(screen.getByRole('button', { name: /back/i }))
+    expect(screen.getByRole('button', { name: 'Comfort' })).toBeInTheDocument()
+  })
+
+  it('medication under Food & medication sends the medication tile (routed to nursing)', async () => {
+    const calls = mockFetch({
+      'GET /api/rooms/401/tickets': [],
+      'GET /api/rooms/401': ROOM,
+      'POST /api/requests': {
+        request_id: 'r_m',
+        tickets: [ticket({ department: 'nursing', category: 'NON_URGENT_CLINICAL' })],
+        confirmation: 'Your nurse has your request.',
+        confirmation_language: 'en',
+        is_clinical: false,
+      },
+    })
+    renderPatient()
+    await userEvent.click(await screen.findByRole('button', { name: 'Food & medication' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Medication' }))
+    await screen.findByTestId('confirmation')
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ input_mode: 'quick_tap', tile: 'medication' })
   })
 
   it('tapping Pillow sends a quick-tap request and shows the confirmation', async () => {
@@ -43,7 +78,8 @@ describe('PatientPage', () => {
       },
     })
     renderPatient()
-    await userEvent.click(await screen.findByRole('button', { name: /pillow/i }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Comfort' }))
+    await userEvent.click(screen.getByRole('button', { name: /pillow/i }))
     expect(await screen.findByTestId('confirmation')).toHaveTextContent('Housekeeping is on the way.')
     const post = calls.find((c) => c.method === 'POST')
     expect(post?.body).toMatchObject({ room_id: '401', input_mode: 'quick_tap', tile: 'pillow', language_hint: 'en' })

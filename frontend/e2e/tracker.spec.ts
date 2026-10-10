@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { patientPage, staffPage, submitAndCapture, ticketCard } from './helpers'
+import { patientPage, staffPage, submitAndCapture, tapTile, ticketCard } from './helpers'
 
 const SHOT = process.env.TRACKER_SHOT
 
@@ -10,9 +10,9 @@ test('(g) patient tracker follows staff updates; still waiting and cancel reach 
   const housekeeping = await staffPage(browser, 'housekeeping')
   const patient = await patientPage(browser, '407')
 
-  const pillow = await submitAndCapture(patient, () => patient.getByRole('button', { name: 'Pillow', exact: true }).click())
+  const pillow = await submitAndCapture(patient, () => tapTile(patient, 'Comfort', 'Pillow'))
   await patient.getByRole('button', { name: /make another request/i }).click()
-  const blanket = await submitAndCapture(patient, () => patient.getByRole('button', { name: 'Blanket', exact: true }).click())
+  const blanket = await submitAndCapture(patient, () => tapTile(patient, 'Comfort', 'Blanket'))
   await patient.getByRole('button', { name: /make another request/i }).click()
   const [pillowId, blanketId] = [pillow.tickets[0].ticket_id, blanket.tickets[0].ticket_id]
 

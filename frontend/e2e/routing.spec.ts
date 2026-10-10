@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { MAX_LATENCY_MS, patientPage, SHOTS, staffPage, submitAndCapture, ticketCard } from './helpers'
+import { MAX_LATENCY_MS, patientPage, SHOTS, staffPage, submitAndCapture, tapTile, ticketCard } from './helpers'
 
 test('(a) pillow on the tablet appears live in Housekeeping and never in Nursing', async ({ browser }) => {
   const housekeeping = await staffPage(browser, 'housekeeping')
@@ -7,6 +7,7 @@ test('(a) pillow on the tablet appears live in Housekeeping and never in Nursing
   const patient = await patientPage(browser, '401')
 
   let t0 = 0
+  await patient.getByRole('button', { name: 'Comfort', exact: true }).click()
   const { tickets } = await submitAndCapture(patient, async () => {
     t0 = Date.now()
     await patient.getByRole('button', { name: 'Pillow', exact: true }).click()
@@ -71,7 +72,7 @@ test('(d) staff escalates a ticket → it appears in Nursing', async ({ browser 
   const nursing = await staffPage(browser, 'nursing')
   const patient = await patientPage(browser, '404')
   const { tickets } = await submitAndCapture(patient, () =>
-    patient.getByRole('button', { name: 'Blanket', exact: true }).click(),
+    tapTile(patient, 'Comfort', 'Blanket'),
   )
   const id = tickets[0].ticket_id
   const hkCard = ticketCard(housekeeping, id)
@@ -96,12 +97,12 @@ test('(e) WebSocket blocked → dashboard still updates via 2 s polling', async 
 
   const patient = await patientPage(browser, '405')
   const { tickets } = await submitAndCapture(patient, () =>
-    patient.getByRole('button', { name: 'Ice', exact: true }).click(),
+    tapTile(patient, 'Thirsty', 'Ice'),
   )
   expect(tickets[0].department).toBe('food')
   const pillowReq = await submitAndCapture(patient, async () => {
     await patient.getByRole('button', { name: /make another request/i }).click()
-    await patient.getByRole('button', { name: 'Pillow', exact: true }).click()
+    await tapTile(patient, 'Comfort', 'Pillow')
   })
   await expect(ticketCard(housekeeping, pillowReq.tickets[0].ticket_id)).toBeVisible({ timeout: 5000 })
   await expect(housekeeping.getByTestId('live-status')).not.toHaveAttribute('data-status', 'live')
