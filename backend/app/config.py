@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     dynamodb_endpoint_url: str | None = None
     tickets_table: str = "tingting-tickets"
     rooms_table: str = "tingting-rooms"
+    staff_table: str = "tingting-staff"
     connections_table: str = "tingting-connections"
 
     # API hardening

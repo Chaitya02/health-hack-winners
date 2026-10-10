@@ -29,6 +29,7 @@ from app.models import (
 )
 from app.profile_rules import ProfileRefusal
 from app.services import InvalidTransition, TicketService
+from app.staff import StaffView
 
 router = APIRouter(prefix="/api")
 
@@ -225,6 +226,7 @@ def queue(
 ) -> list[Ticket]:
     if staff != department:
         raise HTTPException(403, "Token is for another department")
+    _service(request).rebalance(department)  # hand waiting requests to anyone now available
     since = start_of_day()
     tickets = request.app.state.tickets.by_department(department, status)
     # Today's tickets plus anything still open from earlier.
@@ -243,6 +245,17 @@ def update_ticket(ticket_id: str, body: ActionBody, request: Request, staff: Sta
     except InvalidTransition as e:
         raise HTTPException(409, str(e)) from e
     return updated
+
+
+@router.get("/staff/{department}", response_model=list[StaffView])
+def department_staff(department: Department, request: Request, role: SignedIn) -> list[StaffView]:
+    """The department's people right now: schedule, status (available / break / off), open
+    tasks. Also hands waiting requests to anyone who has become available."""
+    if role != Role.ADMIN and ROLE_DEPARTMENT.get(role) != department:
+        raise HTTPException(403, "Token is for another department")
+    svc = _service(request)
+    svc.rebalance(department)
+    return svc.staff_views(department)
 
 
 def insights_reader(role: SignedIn) -> Role:
@@ -264,7 +277,13 @@ def request_analytics(
     tz_offset_minutes: Annotated[int, Query(ge=-14 * 60, le=14 * 60)] = 0,
 ) -> analytics.Analytics:
     since = analytics.window_start(days)
-    return analytics.compute(request.app.state.tickets.since(since), since, days, tz_offset_minutes)
+    return analytics.compute(
+        request.app.state.tickets.since(since),
+        since,
+        days,
+        tz_offset_minutes,
+        roster=request.app.state.staff.all(),
+    )
 
 
 @router.get("/analytics/export.csv")

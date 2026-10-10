@@ -80,6 +80,10 @@ export interface Ticket {
   acknowledged_at: string | null
   resolved_at: string | null
   escalated_from: Department | null
+  /** Who in the department has it; null = waiting for someone to be available. */
+  assigned_to: string | null
+  assigned_name: string | null
+  assigned_at: string | null
   eta_minutes: number | null
   history: StatusChange[]
   notes: TicketNote[]
@@ -190,4 +194,23 @@ export interface ProfileRefusal {
   code: 'npo'
   reason: string | null
   message: string
+}
+
+export interface ScheduleBlock {
+  start: string
+  end: string
+  kind: 'shift' | 'break'
+}
+
+export type StaffStatus = 'available' | 'break' | 'off'
+
+/** A department staff member right now (GET /api/staff/:department). */
+export interface StaffView {
+  staff_id: string
+  name: string
+  department: Department
+  schedule: ScheduleBlock[]
+  status: StaffStatus
+  status_until: string | null
+  open_tasks: number
 }

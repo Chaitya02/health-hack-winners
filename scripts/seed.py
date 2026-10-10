@@ -11,6 +11,7 @@ import argparse
 import os
 import sys
 from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
@@ -18,9 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 from app.config import Settings
 from app.models import Accessibility, AttendantPreference, Language, PatientProfile, Room
 from app.repo import RoomRepository, dynamo_resource, ensure_tables
+from app.staff import StaffRepository, generate_roster, status_at
 
 UNIT = "4 West Med-Surg"
-NURSES = ["Nurse Jordan", "Nurse Priya", "Nurse Luis", "Nurse Mei"]
+# The two demo nurses (app/staff.py DEMO_STAFF); rooms alternate primary nurse between them.
+NURSES = ["Nurse Jordan", "Nurse Priya"]
 
 # (alias, preferred language) — synthetic only.
 PATIENTS: list[tuple[str, Language]] = [
@@ -83,7 +86,7 @@ def build_rooms() -> list[Room]:
                 unit=UNIT,
                 patient_alias=alias,
                 preferred_language=lang,
-                primary_nurse=NURSES[i // 5],
+                primary_nurse=NURSES[i % len(NURSES)],
                 profile=PROFILES.get(str(401 + i), PatientProfile()),
                 age=AGES[i],
             )
@@ -121,6 +124,17 @@ def main() -> None:
     nurses = Counter(r.primary_nurse for r in rooms)
     print(f"  patient profiles: rooms {', '.join(sorted(PROFILES))}")
     print("  primary nurses: " + ", ".join(f"{k}={v}" for k, v in nurses.items()))
+
+    # Today's demo staff schedule (random shifts and breaks; one person on a break right now).
+    staff_repo = StaffRepository(settings, db)
+    now = datetime.now(UTC)
+    for member in generate_roster(now):
+        staff_repo.put(member)
+    print("  staff on duty:")
+    for member in staff_repo.all():
+        status, until = status_at(member, now)
+        until_txt = f" until {until[11:16]} UTC" if until else ""
+        print(f"    {member.department:<12} {member.name:<13} {status}{until_txt}")
 
 
 if __name__ == "__main__":

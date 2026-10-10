@@ -11,7 +11,8 @@ from statistics import median
 
 from pydantic import BaseModel
 
-from app.models import Category, Department, Status, Ticket
+from app.models import OPEN_STATUSES, Category, Department, Status, Ticket
+from app.staff import StaffMember, status_at
 
 MAX_DAYS = 30
 TOP_ROOMS = 5
@@ -59,6 +60,18 @@ class Escalations(BaseModel):
     from_department: dict[str, int]
 
 
+class StaffStats(BaseModel):
+    staff_id: str
+    name: str
+    department: Department
+    status: str  # available / break / off, right now
+    status_until: str | None
+    open_tasks: int
+    resolved: int
+    median_ack_seconds: float | None
+    schedule: list[dict]  # today's shift and breaks, for the timeline
+
+
 class Analytics(BaseModel):
     since: str
     days: int
@@ -77,6 +90,7 @@ class Analytics(BaseModel):
     npo_reroutes: int
     fall_risk_priority: int
     top_rooms: list[RoomActivity]
+    staff: list[StaffStats] = []
 
 
 def _ts(s: str) -> datetime:
@@ -98,7 +112,38 @@ def window_start(days: int, now: datetime | None = None) -> str:
     return start.isoformat().replace("+00:00", "Z")
 
 
-def compute(tickets: list[Ticket], since: str, days: int, tz_offset_minutes: int = 0) -> Analytics:
+def staff_stats(
+    roster: list[StaffMember], tickets: list[Ticket], now: datetime
+) -> list[StaffStats]:
+    """Per person: status now, open and resolved tasks, median time to acknowledge."""
+    out = []
+    for m in roster:
+        mine = [t for t in tickets if t.assigned_to == m.staff_id]
+        ack = [s for t in mine if (s := _seconds(t.created_at, t.acknowledged_at)) is not None]
+        status, until = status_at(m, now)
+        out.append(
+            StaffStats(
+                staff_id=m.staff_id,
+                name=m.name,
+                department=m.department,
+                status=status,
+                status_until=until,
+                open_tasks=sum(t.status in OPEN_STATUSES for t in mine),
+                resolved=sum(t.status == Status.RESOLVED for t in mine),
+                median_ack_seconds=_median(ack),
+                schedule=[b.model_dump() for b in m.schedule],
+            )
+        )
+    return out
+
+
+def compute(
+    tickets: list[Ticket],
+    since: str,
+    days: int,
+    tz_offset_minutes: int = 0,
+    roster: list[StaffMember] | None = None,
+) -> Analytics:
     """tz_offset_minutes follows JavaScript's Date.getTimezoneOffset() (UTC minus local)."""
     by_hour = [0] * 24
     for t in tickets:
@@ -159,6 +204,7 @@ def compute(tickets: list[Ticket], since: str, days: int, tz_offset_minutes: int
             RoomActivity(room_id=room, requests=n, nudges=nudges_by_room[room])
             for room, n in sorted(rooms.items(), key=lambda kv: (-kv[1], kv[0]))[:TOP_ROOMS]
         ],
+        staff=staff_stats(roster or [], tickets, datetime.now(UTC)),
     )
 
 

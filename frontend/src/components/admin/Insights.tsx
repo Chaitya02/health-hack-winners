@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
-import { api, type Analytics } from '../../lib/api'
+import { api, type Analytics, type StaffStats } from '../../lib/api'
 import { DEPARTMENT_LABELS } from '../../types/ticket'
+import { useNow } from '../../hooks/useNow'
+import { ScheduleTimeline, scheduleWindow, TimeAxis } from '../staff/ScheduleTimeline'
+import { STATUS_LABEL, STATUS_STYLE } from '../staff/StaffPanel'
 import { Bars } from './Bars'
 
 const RANGES = [
@@ -113,6 +116,8 @@ export function Insights({ token }: { token: string }) {
         <Tile label="“Still waiting” taps" value={a?.nudges} note={a ? `on ${plural(a.nudged_requests, 'request', 'requests')} · ${plural(a.notes, 'note', 'notes')} added` : undefined} />
         <Tile label="Cancelled by patients" value={a?.cancelled} note={a ? `of ${plural(a.total, 'request', 'requests')} (${range.toLowerCase()})` : undefined} />
       </div>
+
+      {a && a.staff.length > 0 && <StaffWorkload staff={a.staff} />}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
@@ -268,5 +273,69 @@ export function HourChart({ counts }: { counts: number[] }) {
         </table>
       </details>
     </figure>
+  )
+}
+
+/** Staff on duty, by department: status now, workload, response time and today's schedule. */
+function StaffWorkload({ staff }: { staff: StaffStats[] }) {
+  const now = useNow(30_000)
+  const window = scheduleWindow(staff.map((s) => s.schedule))
+  const departments = [...new Set(staff.map((s) => s.department))]
+  return (
+    <section aria-labelledby="staff-workload" data-testid="staff-workload">
+      <h3 id="staff-workload" className="font-bold">
+        Staff on duty
+      </h3>
+      <p className="text-sm text-pine-soft">Requests go to whoever is available with the fewest open tasks.</p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[44rem] text-left text-sm">
+          <thead className="text-pine-soft">
+            <tr>
+              <th className="py-1 font-normal">Staff</th>
+              <th className="py-1 font-normal">Now</th>
+              <th className="py-1 text-right font-normal">Open</th>
+              <th className="py-1 text-right font-normal">Done</th>
+              <th className="py-1 text-right font-normal">Median to acknowledge</th>
+              <th className="w-[40%] py-1 pl-6 font-normal">Today’s schedule</th>
+            </tr>
+          </thead>
+          {departments.map((dept) => (
+            <tbody key={dept} className="tabular-nums">
+              <tr>
+                <th colSpan={6} scope="colgroup" className="pt-3 text-xs uppercase tracking-wide text-pine-soft">
+                  {DEPARTMENT_LABELS[dept]}
+                </th>
+              </tr>
+              {staff
+                .filter((s) => s.department === dept)
+                .map((s) => (
+                  <tr key={s.staff_id} className="border-t border-line">
+                    <th scope="row" className="py-2 font-bold">
+                      {s.name}
+                    </th>
+                    <td className="py-2">
+                      <span className={`rounded-full px-2 py-0.5 font-bold ${STATUS_STYLE[s.status]}`}>{STATUS_LABEL[s.status]}</span>
+                    </td>
+                    <td className="py-2 text-right font-bold">{nf.format(s.open_tasks)}</td>
+                    <td className="py-2 text-right">{nf.format(s.resolved)}</td>
+                    <td className="py-2 text-right">{duration(s.median_ack_seconds)}</td>
+                    <td className="py-2 pl-6">
+                      <ScheduleTimeline schedule={s.schedule} now={now} window={window} />
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          ))}
+          <tfoot>
+            <tr>
+              <td colSpan={5} />
+              <td className="pl-6">
+                <TimeAxis window={window} />
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
   )
 }
