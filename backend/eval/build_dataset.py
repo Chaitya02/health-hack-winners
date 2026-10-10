@@ -251,7 +251,7 @@ ROWS: list[tuple] = [
     (
         "tv broken and room too cold",
         "en",
-        TEC,
+        ENV,
         {"departments": ["it", "housekeeping"], "tags": ["multi_intent", "messy"]},
     ),
     (

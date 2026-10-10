@@ -32,3 +32,7 @@ ignore = ["RUF001", "RUF002", "RUF003"]  # multilingual lexicons legitimately co
 testpaths = ["tests"]
 addopts = "-q"
 pythonpath = ["."]
+
+[tool.ruff.lint.per-file-ignores]
+"app/safety/lexicon.py" = ["E501"]  # long regex alternations / multilingual phrases
+"app/classifier/prompt.py" = ["E501"]  # few-shot JSON examples
