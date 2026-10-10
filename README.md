@@ -17,6 +17,7 @@ make seed               # synthetic unit "4 West Med-Surg", rooms 401–420
 
 - Patient tablet (home page): http://localhost:5173/ shows room 401 (set `VITE_DEFAULT_ROOM` per device); any room: http://localhost:5173/patient/410
 - Staff dashboards: http://localhost:5173/nursing, `/housekeeping`, `/food`, `/it` (demo PIN 2468)
+- Admin / impact: http://localhost:5173/admin (demo admin PIN 1357)
 - Admin / impact: http://localhost:5173/admin
 - API health: http://localhost:8000/health
 

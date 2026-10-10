@@ -11,7 +11,16 @@ from app.models.enums import (
     Role,
     Status,
 )
-from app.models.routing import DEPARTMENT_LABELS, ROUTING, SEVERITY, default_severity, route
+from app.models.routing import (
+    DEPARTMENT_LABELS,
+    LOGIN_ROLES,
+    ROLE_DEPARTMENT,
+    ROUTING,
+    SEVERITY,
+    STAFF_ROLE,
+    default_severity,
+    route,
+)
 from app.models.ticket import (
     MAX_NOTE_LEN,
     MAX_TEXT_LEN,
@@ -32,11 +41,14 @@ __all__ = [
     "CLINICAL_CATEGORIES",
     "CLOSED_STATUSES",
     "DEPARTMENT_LABELS",
+    "LOGIN_ROLES",
     "MAX_NOTE_LEN",
     "MAX_TEXT_LEN",
     "OPEN_STATUSES",
+    "ROLE_DEPARTMENT",
     "ROUTING",
     "SEVERITY",
+    "STAFF_ROLE",
     "Accessibility",
     "AttendantPreference",
     "Category",

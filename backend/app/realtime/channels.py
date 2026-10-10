@@ -6,7 +6,7 @@
 
 import re
 
-from app.models import Department
+from app.models import ROLE_DEPARTMENT, Department
 from app.security import StaffAuth
 
 _ROOM = re.compile(r"^room:[A-Za-z0-9-]{1,10}$")
@@ -18,7 +18,8 @@ def authorize_channels(
 ) -> tuple[list[str], str | None]:
     if not isinstance(channels, list) or not channels or len(channels) > MAX_CHANNELS:
         return [], "channels must be a non-empty list"
-    staff_dept = auth.verify(token) if token else None
+    role = auth.verify(token) if token else None
+    staff_dept = ROLE_DEPARTMENT.get(role) if role else None
     allowed: list[str] = []
     for ch in channels:
         if not isinstance(ch, str):

@@ -1,6 +1,6 @@
 """Single source of truth for category → department/priority routing."""
 
-from app.models.enums import Category, Department, Priority
+from app.models.enums import Category, Department, Priority, Role
 
 ROUTING: dict[Category, tuple[Department, Priority]] = {
     Category.URGENT_CLINICAL: (Department.NURSING, Priority.HIGH),
@@ -25,6 +25,16 @@ SEVERITY: dict[Category, int] = {
     Category.DIETARY: 2,
     Category.TECH_AMENITIES: 1,
 }
+
+# Each staff role works one department's queue. Admin has no queue; patient/system never log in.
+STAFF_ROLE: dict[Department, Role] = {
+    Department.NURSING: Role.NURSE,
+    Department.HOUSEKEEPING: Role.HOUSEKEEPING,
+    Department.FOOD: Role.FOOD,
+    Department.IT: Role.IT,
+}
+ROLE_DEPARTMENT: dict[Role, Department] = {r: d for d, r in STAFF_ROLE.items()}
+LOGIN_ROLES = frozenset({*ROLE_DEPARTMENT, Role.ADMIN})
 
 DEPARTMENT_LABELS: dict[Department, str] = {
     Department.NURSING: "Primary Nurse",

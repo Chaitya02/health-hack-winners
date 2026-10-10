@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { api, type Metrics } from '../lib/api'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { api, ApiError, type Metrics } from '../lib/api'
 import { computeImpact, DEFAULT_INPUTS, HOSPITAL_BEDS, type ImpactInputs } from '../lib/impact'
 import { CATEGORIES, DEPARTMENT_LABELS, DEPARTMENTS, type Category } from '../types/ticket'
 
@@ -22,30 +22,114 @@ function seconds(v: number | null | undefined) {
   return v < 90 ? `${Math.round(v)} s` : `${(v / 60).toFixed(1)} min`
 }
 
+const TOKEN_KEY = 'tingting.admin'
+
+function readToken(): string | null {
+  try {
+    return sessionStorage.getItem(TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function storeToken(token: string | null) {
+  try {
+    if (token) sessionStorage.setItem(TOKEN_KEY, token)
+    else sessionStorage.removeItem(TOKEN_KEY)
+  } catch {
+    // session storage unavailable: token lives in memory only
+  }
+}
+
 export default function AdminPage() {
+  const [token, setToken] = useState<string | null>(readToken)
+  useEffect(() => {
+    document.documentElement.lang = 'en'
+    document.title = 'Admin · Ting-ting'
+  }, [])
+  const signIn = useCallback((t: string | null) => {
+    storeToken(t)
+    setToken(t)
+  }, [])
+  const signOut = useCallback(() => signIn(null), [signIn])
+  if (!token) return <AdminLogin onToken={signIn} />
+  return <Impact token={token} onSignOut={signOut} />
+}
+
+function AdminLogin({ onToken }: { onToken: (t: string) => void }) {
+  const [pin, setPin] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    try {
+      onToken((await api.loginAdmin(pin)).token)
+    } catch (err) {
+      setError(err instanceof ApiError && err.status === 401 ? 'That PIN is not correct.' : 'Cannot reach the server. Try again.')
+    }
+  }
+  return (
+    <main className="grid min-h-screen place-items-center p-6">
+      <form onSubmit={submit} className="w-full max-w-sm rounded-3xl border-2 border-line bg-paper p-8">
+        <h1 className="text-2xl font-bold">Unit Operations &amp; Impact</h1>
+        <p className="mt-1 text-pine-soft">Admin sign-in</p>
+        <label htmlFor="admin-pin" className="mt-6 block font-bold">
+          Admin PIN
+        </label>
+        <input
+          id="admin-pin"
+          type="password"
+          inputMode="numeric"
+          autoComplete="off"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          className="mt-2 min-h-14 w-full rounded-xl border-2 border-pine px-4 text-2xl tracking-widest"
+        />
+        {error && (
+          <p role="alert" className="mt-3 font-bold text-bell">
+            {error}
+          </p>
+        )}
+        <button type="submit" className="mt-6 min-h-14 w-full rounded-xl bg-care font-bold text-white hover:bg-care-deep">
+          Sign in
+        </button>
+        <p className="mt-4 text-sm text-pine-soft">Demo admin PIN: 1357</p>
+      </form>
+    </main>
+  )
+}
+
+function Impact({ token, onSignOut }: { token: string; onSignOut: () => void }) {
   const [m, setM] = useState<Metrics | null>(null)
   const [err, setErr] = useState(false)
   useEffect(() => {
-    document.documentElement.lang = 'en'
     let alive = true
     const load = () =>
       api
-        .metrics()
+        .metrics(token)
         .then((x) => alive && (setM(x), setErr(false)))
-        .catch(() => alive && setErr(true))
+        .catch((e) => {
+          if (!alive) return
+          if (e instanceof ApiError && e.status === 401) onSignOut()
+          else setErr(true)
+        })
     void load()
     const id = setInterval(load, 3000)
     return () => {
       alive = false
       clearInterval(id)
     }
-  }, [])
+  }, [token, onSignOut])
 
   return (
     <div className="min-h-screen">
-      <header className="border-b-2 border-line bg-paper px-5 py-4">
-        <h1 className="text-2xl font-bold">Unit Operations &amp; Impact</h1>
-        <p className="text-pine-soft">4 West Med-Surg · today · refreshes every 3 s</p>
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-line bg-paper px-5 py-4">
+        <div>
+          <h1 className="text-2xl font-bold">Unit Operations &amp; Impact</h1>
+          <p className="text-pine-soft">4 West Med-Surg · today · refreshes every 3 s</p>
+        </div>
+        <button type="button" onClick={onSignOut} className="min-h-12 rounded-xl border-2 border-line px-4 hover:border-pine">
+          Sign out
+        </button>
       </header>
       <main className="mx-auto max-w-6xl space-y-10 px-5 py-6">
         {err && <p role="alert" className="font-bold text-bell">Cannot reach the API. Showing the last data received.</p>}

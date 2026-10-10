@@ -1,4 +1,4 @@
-"""Demo staff auth (per-department PIN → HMAC token) and per-room rate limiting.
+"""Demo staff auth (role PIN → HMAC token carrying the role) and per-room rate limiting.
 
 StaffAuth is an interface so Cognito / hospital SSO can replace the PIN check later.
 """
@@ -10,12 +10,13 @@ import threading
 import time
 from collections import defaultdict, deque
 
-from app.models import Department
+from app.models import LOGIN_ROLES, Role
 
 
 class StaffAuth:
-    def __init__(self, pin: str, secret: str, ttl_s: int):
+    def __init__(self, pin: str, secret: str, ttl_s: int, admin_pin: str):
         self._pin = pin
+        self._admin_pin = admin_pin
         self._secret = secret.encode()
         self._ttl = ttl_s
 
@@ -23,26 +24,30 @@ class StaffAuth:
         mac = hmac.new(self._secret, payload.encode(), hashlib.sha256).digest()
         return base64.urlsafe_b64encode(mac).decode().rstrip("=")
 
-    def login(self, department: Department, pin: str) -> str | None:
-        if not hmac.compare_digest(pin.encode(), self._pin.encode()):
+    def login(self, role: Role, pin: str) -> str | None:
+        if role not in LOGIN_ROLES:
             return None
-        payload = f"{department}.{int(time.time()) + self._ttl}"
+        expected = self._admin_pin if role == Role.ADMIN else self._pin
+        if not hmac.compare_digest(pin.encode(), expected.encode()):
+            return None
+        payload = f"{role}.{int(time.time()) + self._ttl}"
         return f"{payload}.{self._sign(payload)}"
 
-    def verify(self, token: str) -> Department | None:
+    def verify(self, token: str) -> Role | None:
         try:
-            dept, exp, sig = token.rsplit(".", 2)
+            role, exp, sig = token.rsplit(".", 2)
         except ValueError:
             return None
-        payload = f"{dept}.{exp}"
+        payload = f"{role}.{exp}"
         if not hmac.compare_digest(sig, self._sign(payload)):
             return None
         if not exp.isdigit() or int(exp) < time.time():
             return None
         try:
-            return Department(dept)
+            verified = Role(role)
         except ValueError:
             return None
+        return verified if verified in LOGIN_ROLES else None
 
 
 class RateLimiter:

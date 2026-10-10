@@ -33,6 +33,7 @@ class Settings(BaseSettings):
 
     # Staff demo auth: the PIN is a demo value; the token secret comes from env / Secrets Manager
     staff_pin: str = "2468"
+    admin_pin: str = "1357"
     staff_token_secret: str = "local-dev-only-change-me"
     staff_token_ttl_s: int = 12 * 3600
 

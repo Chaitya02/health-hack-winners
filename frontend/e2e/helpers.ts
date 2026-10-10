@@ -15,10 +15,16 @@ export async function staffPage(browser: Browser, dept: string): Promise<Page> {
 
 export async function patientPage(browser: Browser, room: string): Promise<Page> {
   const page = await (await browser.newContext({ viewport: { width: 768, height: 1024 } })).newPage()
+  const roomLoaded = page.waitForResponse((r) => r.url().endsWith(`/api/rooms/${room}`) && r.ok())
   await page.goto(`/patient/${room}`)
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  // The heading renders before the room arrives, and the room then switches the UI to the
+  // patient's preferred language. Wait for that switch, or it can undo selectOption('en') below
+  // (seen on a cold backend: room 405 flipped to Chinese and "Ice" was never found).
+  const { preferred_language } = (await (await roomLoaded).json()) as { preferred_language: string }
+  await expect(page.getByRole('combobox')).toHaveValue(preferred_language)
   // Rooms have synthetic preferred languages; tests drive the English UI unless stated.
   await page.getByRole('combobox').selectOption('en')
+  await expect(page.getByRole('combobox')).toHaveValue('en')
   return page
 }
 
