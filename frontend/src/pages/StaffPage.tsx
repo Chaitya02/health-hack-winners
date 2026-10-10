@@ -2,15 +2,17 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Link, useParams } from 'react-router-dom'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { useNow } from '../hooks/useNow'
-import { STRINGS } from '../i18n/strings'
 import { playAlert, unlockAudio } from '../lib/alertSound'
 import { api, ApiError } from '../lib/api'
+import { autoSignIn, demoPins } from '../lib/config'
 import { aging, formatWait, secondsSince, type Aging } from '../lib/time'
+import { StaffPanel } from '../components/staff/StaffPanel'
 import {
   CLOSED_STATUSES,
   DEPARTMENT_LABELS,
   DEPARTMENTS,
   type Department,
+  type StaffView,
   type Ticket,
   type TicketAction,
   type TicketEvent,
@@ -52,16 +54,49 @@ export default function StaffPage() {
 
 function StaffGate({ department }: { department: Department }) {
   const [token, setToken] = useState<string | null>(() => readToken(department))
+  const auto = autoSignIn()
+  const [autoFailed, setAutoFailed] = useState(false)
   useEffect(() => {
     document.title = `${DEPARTMENT_LABELS[department]} · Ting-ting`
     document.documentElement.lang = 'en'
   }, [department])
 
-  if (!token) return <Login department={department} onToken={setToken} />
+  // Demo: sign in with the demo PIN so the link opens straight onto the dashboard.
+  useEffect(() => {
+    if (token || !auto || autoFailed) return
+    let alive = true
+    api
+      .login(department, demoPins().staff)
+      .then(({ token: t }) => {
+        if (!alive) return
+        try {
+          sessionStorage.setItem(tokenKey(department), t)
+        } catch {
+          // session storage unavailable: token lives in memory only
+        }
+        setToken(t)
+      })
+      .catch(() => alive && setAutoFailed(true)) // fall back to the PIN form
+    return () => {
+      alive = false
+    }
+  }, [token, auto, autoFailed, department])
+
+  if (!token) {
+    if (auto && !autoFailed) {
+      return (
+        <main className="grid min-h-screen place-items-center p-6 text-xl text-pine-soft" aria-busy="true">
+          Opening {DEPARTMENT_LABELS[department]}…
+        </main>
+      )
+    }
+    return <Login department={department} onToken={setToken} />
+  }
   return (
     <Dashboard
       department={department}
       token={token}
+      canSignOut={!auto}
       onSignOut={() => {
         try {
           sessionStorage.removeItem(tokenKey(department))
@@ -144,13 +179,17 @@ function Dashboard({
   department,
   token,
   onSignOut,
+  canSignOut = true,
 }: {
   department: Department
   token: string
   onSignOut: () => void
+  canSignOut?: boolean
 }) {
   const isNursing = department === 'nursing'
   const [diverted, setDiverted] = useState<number | null>(null)
+  const [staff, setStaff] = useState<StaffView[]>([])
+  const [filter, setFilter] = useState<string>('all') // 'all' | staff_id | 'waiting'
   const [actionError, setActionError] = useState<string | null>(null)
   const now = useNow()
 
@@ -160,12 +199,17 @@ function Dashboard({
     [department],
   )
   const refreshMetrics = useCallback(() => {
+    // The staff panel also hands waiting requests to anyone who just became available.
+    api
+      .staff(department, token)
+      .then(setStaff)
+      .catch(() => undefined)
     if (!isNursing) return
     api
       .metrics(token)
       .then((m) => setDiverted(m.diverted_from_nursing))
       .catch(() => undefined)
-  }, [isNursing, token])
+  }, [department, isNursing, token])
 
   const { items, status, error } = useLiveTickets<Ticket>({
     fetcher,
@@ -176,7 +220,7 @@ function Dashboard({
   })
   useEffect(() => {
     refreshMetrics()
-    const id = setInterval(refreshMetrics, 10_000)
+    const id = setInterval(refreshMetrics, 30_000)
     return () => clearInterval(id)
   }, [refreshMetrics])
   useEffect(() => {
@@ -188,6 +232,8 @@ function Dashboard({
     () => items.filter((t) => CLOSED_STATUSES.includes(t.status)).sort((a, b) => b.created_at.localeCompare(a.created_at)),
     [items],
   )
+  const waiting = open.filter((t) => !t.assigned_to).length
+  const shown = open.filter((t) => filter === 'all' || (filter === 'waiting' ? !t.assigned_to : t.assigned_to === filter))
   const unackedHigh = open.filter((t) => t.priority === 'HIGH' && (t.status === 'NEW' || t.status === 'ESCALATED'))
 
   useEffect(() => {
@@ -225,25 +271,49 @@ function Dashboard({
             </p>
           )}
           <LiveBadge status={status} />
-          <button type="button" onClick={onSignOut} className="min-h-11 rounded-lg border-2 border-line px-3 hover:border-pine">
-            Sign out
-          </button>
+          {canSignOut && (
+            <button type="button" onClick={onSignOut} className="min-h-11 rounded-lg border-2 border-line px-3 hover:border-pine">
+              Sign out
+            </button>
+          )}
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-5">
+      <main className="mx-auto max-w-5xl px-4 py-5">
         {actionError && (
           <p role="alert" className="mb-3 rounded-xl bg-bell-tint p-3 font-bold text-bell-deep">
             {actionError}
           </p>
         )}
-        {open.length === 0 ? (
+        {staff.length > 0 && (
+          <>
+            <StaffPanel staff={staff} now={now} waiting={waiting} />
+            <div role="group" aria-label="Show requests for" className="mb-3 mt-4 flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: `Everyone (${open.length})` },
+                ...staff.map((s) => ({ id: s.staff_id, label: `${s.name} (${open.filter((t) => t.assigned_to === s.staff_id).length})` })),
+                { id: 'waiting', label: `Waiting (${waiting})` },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  type="button"
+                  aria-pressed={filter === f.id}
+                  onClick={() => setFilter(f.id)}
+                  className={`min-h-11 rounded-full border-2 px-4 font-bold ${filter === f.id ? 'border-pine bg-pine text-white' : 'border-line bg-paper text-pine hover:border-pine'}`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        {shown.length === 0 ? (
           <p className="rounded-2xl border-2 border-dashed border-line p-8 text-center text-lg text-pine-soft">
-            No open requests. New ones appear here instantly.
+            {open.length === 0 ? 'No open requests. New ones appear here instantly.' : 'Nothing here right now.'}
           </p>
         ) : (
           <ul className="space-y-3" aria-label="Open requests" data-testid="queue">
-            {open.map((t) => (
+            {shown.map((t) => (
               <TicketRow key={t.ticket_id} ticket={t} now={now} department={department} onAction={act} />
             ))}
           </ul>
@@ -290,11 +360,9 @@ function TicketRow({
   department: Department
   onAction: (t: Ticket, a: TicketAction) => void
 }) {
-  const [showOriginal, setShowOriginal] = useState(false)
   const waited = secondsSince(t.created_at, now)
   const age = aging(waited)
   const high = t.priority === 'HIGH'
-  const lang = STRINGS[t.detected_language]
   const actions: { action: TicketAction; label: string }[] = []
   if (t.status === 'NEW' || t.status === 'ESCALATED') actions.push({ action: 'acknowledge', label: 'Acknowledge' })
   if (t.status !== 'IN_PROGRESS') actions.push({ action: 'start', label: 'On my way' })
@@ -317,9 +385,6 @@ function TicketRow({
           >
             {high ? 'HIGH' : t.priority === 'LOW' ? 'Low' : 'Normal'}
           </span>
-          <span className="rounded-full border border-line px-3 py-1 text-sm" title={lang.languageName}>
-            {t.detected_language.toUpperCase()} · {lang.languageName}
-          </span>
           {t.status !== 'NEW' && <span className="text-sm text-pine-soft">{t.status.replace('_', ' ').toLowerCase()}</span>}
           {t.nudge_count > 0 && (
             <span className="rounded-full bg-bell-tint px-3 py-1 text-sm font-bold text-bell-deep" data-testid="still-waiting">
@@ -333,6 +398,17 @@ function TicketRow({
       </div>
       <p className="mt-3 text-xl leading-snug">{t.english_summary}</p>
       {t.escalated_from && <p className="mt-1 font-bold text-bell">Escalated by {DEPARTMENT_LABELS[t.escalated_from]}</p>}
+      {t.assigned_name ? (
+        <p className="mt-1 text-sm font-bold text-care-deep" data-testid="assignee">
+          Assigned to {t.assigned_name}
+        </p>
+      ) : (
+        department !== 'it' && (
+          <p className="mt-1 text-sm font-bold text-wait" data-testid="assignee">
+            Waiting for someone available
+          </p>
+        )
+      )}
       {t.notes.length > 0 && (
         <ul className="mt-2 space-y-1" aria-label="Patient notes">
           {t.notes.map((n) => (
@@ -343,12 +419,10 @@ function TicketRow({
         </ul>
       )}
       {department === 'nursing' && t.safety_reasons.length > 0 && (
-        <p className="mt-1 text-sm text-pine-soft">Why you: {t.safety_reasons.join(', ')}</p>
-      )}
-      {showOriginal && (
-        <p className="mt-2 rounded-xl bg-curtain p-3 italic" lang={t.detected_language}>
-          “{t.original_text}”
-        </p>
+        <details className="mt-1 text-sm text-pine-soft" data-testid="why-you">
+          <summary className="w-fit cursor-pointer font-bold">Why you</summary>
+          <p className="mt-1">{t.safety_reasons.join(', ')}</p>
+        </details>
       )}
       <div className="mt-4 flex flex-wrap gap-2">
         {actions.map((a) => (
@@ -361,14 +435,6 @@ function TicketRow({
             {a.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setShowOriginal((v) => !v)}
-          aria-expanded={showOriginal}
-          className="min-h-12 rounded-xl border-2 border-line px-4 hover:border-pine"
-        >
-          {showOriginal ? 'Hide original' : 'Show original'}
-        </button>
         {department !== 'nursing' && (
           <button
             type="button"

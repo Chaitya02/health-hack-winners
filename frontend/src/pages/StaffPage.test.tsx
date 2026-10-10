@@ -43,7 +43,12 @@ describe('StaffPage', () => {
     expect(rows[0]).toHaveAttribute('data-priority', 'HIGH')
     expect(within(rows[0]).getByText('409')).toBeInTheDocument()
     expect(screen.getByTestId('urgent-banner')).toHaveTextContent('Room 409')
-    expect(within(rows[0]).getByText(/red_flag:pre:wound/)).toBeInTheDocument()
+    // Safety reasons are hidden until the nurse opens "Why you".
+    const why = within(rows[0]).getByTestId('why-you')
+    expect(why).not.toHaveAttribute('open')
+    await userEvent.click(within(why).getByText('Why you'))
+    expect(why).toHaveAttribute('open')
+    expect(within(why).getByText(/red_flag:pre:wound/)).toBeVisible()
     expect(within(rows[1]).getByLabelText(/waiting 11:/i).className).toContain('text-bell')
     await waitFor(() => expect(screen.getByTestId('diverted-counter')).toHaveTextContent('7'))
     expect(screen.queryByRole('button', { name: /send to nurse/i })).not.toBeInTheDocument()
@@ -57,8 +62,7 @@ describe('StaffPage', () => {
     })
     renderStaff('housekeeping')
     const row = await screen.findByTestId('ticket')
-    await userEvent.click(within(row).getByRole('button', { name: /show original/i }))
-    expect(within(row).getByText(/extra pillow please/)).toBeInTheDocument()
+    expect(within(row).queryByRole('button', { name: /show original/i })).not.toBeInTheDocument()
     await userEvent.click(within(row).getByRole('button', { name: /acknowledge/i }))
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ action: 'acknowledge' })
 

@@ -4,7 +4,7 @@ patient actions."""
 import logging
 import math
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from statistics import median
 
 from app.classifier import (
@@ -19,6 +19,7 @@ from app.metrics import start_of_day
 from app.models import (
     CLINICAL_CATEGORIES,
     CLOSED_STATUSES,
+    OPEN_STATUSES,
     Category,
     CreateRequest,
     CreateRequestResponse,
@@ -40,6 +41,15 @@ from app.profile_rules import apply_profile, check_tile
 from app.realtime import Publisher
 from app.repo import TicketRepository, new_id
 from app.safety import scan
+from app.staff import (
+    STAFFED_DEPARTMENTS,
+    StaffRepository,
+    StaffView,
+    choose_assignee,
+    is_urgent,
+    open_counts,
+    status_at,
+)
 from app.tiles import QUICK_TAP_TILES
 
 log = logging.getLogger("tingting.service")
@@ -76,6 +86,68 @@ class TicketService:
     classifier: Classifier
     publisher: Publisher
     confidence_threshold: float = 0.7
+    staff: StaffRepository | None = None  # None: no rosters, requests stay department-wide
+
+    # --- who gets the request (app/staff.py) -----------------------------------------------
+
+    def _assign(self, ticket: Ticket, preferred_name: str | None = None) -> None:
+        """Set (or clear) the ticket's assignee by the department's availability rules."""
+        ticket.assigned_to = ticket.assigned_name = ticket.assigned_at = None
+        if self.staff is None or ticket.department not in STAFFED_DEPARTMENTS:
+            return
+        members = self.staff.by_department(ticket.department)
+        counts = open_counts(self.tickets.by_department(ticket.department))
+        pick = choose_assignee(
+            members,
+            counts,
+            datetime.now(UTC),
+            urgent=is_urgent(ticket),
+            preferred_name=preferred_name,
+        )
+        if pick:
+            ticket.assigned_to, ticket.assigned_name = pick.staff_id, pick.name
+            ticket.assigned_at = utc_now_iso()
+
+    def rebalance(self, department: Department) -> int:
+        """Hand waiting (unassigned) requests to whoever is available now, urgent and oldest first.
+        Called when dashboards load or refresh their staff panel."""
+        if self.staff is None or department not in STAFFED_DEPARTMENTS:
+            return 0
+        waiting = sorted(
+            (
+                t
+                for t in self.tickets.by_department(department)
+                if t.assigned_to is None and t.status in OPEN_STATUSES
+            ),
+            key=lambda t: (-t.severity, t.created_at),
+        )
+        assigned = 0
+        for ticket in waiting:
+            self._assign(ticket)
+            if ticket.assigned_to is None:
+                break  # nobody available: the rest keep waiting too
+            self.tickets.put(ticket)
+            self.publisher.publish("ticket.updated", ticket)
+            assigned += 1
+        return assigned
+
+    def staff_views(self, department: Department) -> list[StaffView]:
+        if self.staff is None:
+            return []
+        now = datetime.now(UTC)
+        counts = open_counts(self.tickets.by_department(department))
+        views = []
+        for m in self.staff.by_department(department):
+            status, until = status_at(m, now)
+            views.append(
+                StaffView(
+                    **m.model_dump(),
+                    status=status,
+                    status_until=until,
+                    open_tasks=counts.get(m.staff_id, 0),
+                )
+            )
+        return views
 
     def _quick_tap_decision(self, tile: str, language: Language) -> Decision:
         category, summary, items = QUICK_TAP_TILES[tile]
@@ -165,6 +237,7 @@ class TicketService:
                     fallback=decision.fallback,
                 ),
             )
+            self._assign(ticket, preferred_name=room.primary_nurse)
             self.tickets.put(ticket)
             tickets.append(ticket)
             self.publisher.publish("ticket.created", ticket)
@@ -256,6 +329,7 @@ class TicketService:
         ticket.acknowledged_at = None
         ticket.eta_minutes = self.eta_minutes(Department.NURSING, Priority.HIGH)
         ticket.safety_reasons += [r for r in reasons if r not in ticket.safety_reasons]
+        self._assign(ticket)  # now a nursing request: an available nurse (never left unassigned)
 
     def patient_action(self, ticket: Ticket, action: str, note: str | None = None) -> Ticket:
         """Changes the patient can make while waiting (US-2). They can only move a request

@@ -127,6 +127,10 @@ class Ticket(BaseModel):
     acknowledged_at: str | None = None
     resolved_at: str | None = None
     escalated_from: Department | None = None
+    # Who in the department has it (app/staff.py); None = waiting for someone to be available.
+    assigned_to: str | None = None
+    assigned_name: str | None = None
+    assigned_at: str | None = None
     eta_minutes: int | None = Field(default=None, ge=0)
     history: list[StatusChange] = Field(default_factory=list)
     notes: list[TicketNote] = Field(default_factory=list)

@@ -27,11 +27,8 @@ export function PersonalTiles({
   const d = DASHBOARD[lang]
   const [more, setMore] = useState(false)
   return (
-    <section aria-labelledby="for-you" className="mt-6">
-      <h2 id="for-you" className="text-[26px] font-bold">
-        {d.forYou}
-      </h2>
-      <ul className="mt-3 flex flex-col gap-3" data-testid="top-tiles">
+    <section aria-label={d.forYou} className="mt-5">
+      <ul className="flex flex-col gap-3" data-testid="top-tiles">
         {top.map((key) => (
           <li key={key}>
             <button

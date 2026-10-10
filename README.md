@@ -16,8 +16,8 @@ make seed               # synthetic unit "4 West Med-Surg", rooms 401–420
 ```
 
 - Patient tablet (home page): http://localhost:5173/ is bedside room 400. It starts with an intake form (name, age, clinical notes, or one of three demo patients) that sets up a personalised dashboard; "Start over" resets it. Seeded rooms: http://localhost:5173/patient/410
-- Staff dashboards: http://localhost:5173/nursing, `/housekeeping`, `/food`, `/it` (demo PIN 2468)
-- Admin / impact: http://localhost:5173/admin (demo admin PIN 1357)
+- Staff dashboards: http://localhost:5173/nursing, `/housekeeping`, `/food`, `/it`. They sign in automatically for demos (`VITE_AUTO_SIGN_IN`); with it off, the PIN is 2468.
+- Admin / impact: http://localhost:5173/admin (automatic sign-in for demos; admin PIN 1357 when it's off)
 - Admin / impact: http://localhost:5173/admin
 - API health: http://localhost:8000/health
 

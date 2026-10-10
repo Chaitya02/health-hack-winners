@@ -84,7 +84,7 @@ describe('Bedside intake → personalised dashboard', () => {
     expect(screen.getByLabelText('Clinical notes')).not.toHaveAttribute('placeholder')
     await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
     const identity = await screen.findByTestId('patient-identity')
-    expect(identity).toHaveTextContent(/^Sam, 54 years$/)
+    expect(identity).toHaveTextContent(/^Sam, 54 years \(Room 400\)$/)
     expect(screen.queryByText(/NPO|knee|anxious/i)).not.toBeInTheDocument() // notes never shown
     // Emergency button says just that; no greeting; icon buttons keep accessible names.
     expect(screen.getByRole('button', { name: /^emergency$/i })).toHaveTextContent(/^Emergency$/)

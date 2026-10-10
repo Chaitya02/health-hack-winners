@@ -90,3 +90,11 @@ export function CloseIcon({ className = 'size-6' }: IconProps) {
     </svg>
   )
 }
+
+export function CheckIcon({ className = 'size-6' }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </svg>
+  )
+}

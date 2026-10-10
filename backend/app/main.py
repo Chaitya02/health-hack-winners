@@ -16,6 +16,7 @@ from app.realtime.hub import LocalHub
 from app.repo import RoomRepository, TicketRepository, dynamo_resource, ensure_tables
 from app.security import RateLimiter, StaffAuth
 from app.services import TicketService
+from app.staff import StaffRepository
 
 log = logging.getLogger("tingting")
 
@@ -47,6 +48,7 @@ def create_app(
             log.info("created local tables", extra={"tables": created})
     app.state.tickets = TicketRepository(settings, db)
     app.state.rooms = RoomRepository(settings, db)
+    app.state.staff = StaffRepository(settings, db)
     app.state.auth = StaffAuth(
         settings.staff_pin,
         settings.staff_token_secret,
@@ -62,6 +64,7 @@ def create_app(
         classifier=classifier or build_classifier(settings),
         publisher=app.state.publisher,
         confidence_threshold=settings.confidence_threshold,
+        staff=app.state.staff,
     )
 
     @app.exception_handler(RequestValidationError)

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { api, ApiError, type Metrics } from '../lib/api'
+import { autoSignIn, demoPins } from '../lib/config'
 import { computeImpact, DEFAULT_INPUTS, HOSPITAL_BEDS, type ImpactInputs } from '../lib/impact'
 import { Bars } from '../components/admin/Bars'
 import { Insights } from '../components/admin/Insights'
@@ -54,8 +55,33 @@ export default function AdminPage() {
     setToken(t)
   }, [])
   const signOut = useCallback(() => signIn(null), [signIn])
-  if (!token) return <AdminLogin onToken={signIn} />
-  return <Impact token={token} onSignOut={signOut} />
+  const auto = autoSignIn()
+  const [autoFailed, setAutoFailed] = useState(false)
+
+  // Demo: sign in with the demo admin PIN so the link opens straight onto the page.
+  useEffect(() => {
+    if (token || !auto || autoFailed) return
+    let alive = true
+    api
+      .loginAdmin(demoPins().admin)
+      .then(({ token: t }) => alive && signIn(t))
+      .catch(() => alive && setAutoFailed(true)) // fall back to the PIN form
+    return () => {
+      alive = false
+    }
+  }, [token, auto, autoFailed, signIn])
+
+  if (!token) {
+    if (auto && !autoFailed) {
+      return (
+        <main className="grid min-h-screen place-items-center p-6 text-xl text-pine-soft" aria-busy="true">
+          Opening admin…
+        </main>
+      )
+    }
+    return <AdminLogin onToken={signIn} />
+  }
+  return <Impact token={token} onSignOut={signOut} canSignOut={!auto} />
 }
 
 function AdminLogin({ onToken }: { onToken: (t: string) => void }) {
@@ -100,7 +126,7 @@ function AdminLogin({ onToken }: { onToken: (t: string) => void }) {
   )
 }
 
-function Impact({ token, onSignOut }: { token: string; onSignOut: () => void }) {
+function Impact({ token, onSignOut, canSignOut = true }: { token: string; onSignOut: () => void; canSignOut?: boolean }) {
   const [m, setM] = useState<Metrics | null>(null)
   const [err, setErr] = useState(false)
   useEffect(() => {
@@ -129,9 +155,11 @@ function Impact({ token, onSignOut }: { token: string; onSignOut: () => void }) 
           <h1 className="text-2xl font-bold">Unit Operations &amp; Impact</h1>
           <p className="text-pine-soft">4 West Med-Surg · today · refreshes every 3 s</p>
         </div>
-        <button type="button" onClick={onSignOut} className="min-h-12 rounded-xl border-2 border-line px-4 hover:border-pine">
-          Sign out
-        </button>
+        {canSignOut && (
+          <button type="button" onClick={onSignOut} className="min-h-12 rounded-xl border-2 border-line px-4 hover:border-pine">
+            Sign out
+          </button>
+        )}
       </header>
       <main className="mx-auto max-w-6xl space-y-10 px-5 py-6">
         {err && <p role="alert" className="font-bold text-bell">Cannot reach the API. Showing the last data received.</p>}

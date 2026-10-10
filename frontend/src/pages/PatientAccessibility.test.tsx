@@ -86,7 +86,7 @@ const textBox = () => screen.queryByLabelText(/type your request/i)
 describe('Patient accessibility layouts (US-4)', () => {
   it('default: text box, mic, normal tiles, nothing read aloud', async () => {
     renderRoom({})
-    await screen.findByRole('heading', { name: 'Alex' })
+    await screen.findByRole('heading', { name: /^Alex\b/ })
     expect(textBox()).toBeInTheDocument()
     expect(mic()).toBeInTheDocument()
     // Pillow is one of the default top 3 buttons.
@@ -98,7 +98,7 @@ describe('Patient accessibility layouts (US-4)', () => {
 
   it('low vision: no text box, mic kept, large tiles, reads the pressed button and result aloud', async () => {
     renderRoom({ low_vision: true })
-    await screen.findByRole('heading', { name: 'Alex' })
+    await screen.findByRole('heading', { name: /^Alex\b/ })
     await waitFor(() => expect(textBox()).not.toBeInTheDocument())
     expect(mic()).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Pillow' }).className).toContain('min-h-52')
@@ -121,7 +121,7 @@ describe('Patient accessibility layouts (US-4)', () => {
 
   it('speech difficulty: no mic; text box and tiles stay', async () => {
     renderRoom({ speech_difficulty: true })
-    await screen.findByRole('heading', { name: 'Alex' })
+    await screen.findByRole('heading', { name: /^Alex\b/ })
     await waitFor(() => expect(mic()).not.toBeInTheDocument())
     expect(textBox()).toBeInTheDocument()
     expect(screen.queryByText(/voice input isn’t available/i)).not.toBeInTheDocument()
@@ -129,14 +129,14 @@ describe('Patient accessibility layouts (US-4)', () => {
 
   it('cannot write: no text box; mic and tiles stay', async () => {
     renderRoom({ cannot_write: true })
-    await screen.findByRole('heading', { name: 'Alex' })
+    await screen.findByRole('heading', { name: /^Alex\b/ })
     await waitFor(() => expect(textBox()).not.toBeInTheDocument())
     expect(mic()).toBeInTheDocument()
   })
 
   it('speech difficulty + cannot write: buttons only, nurse button still there', async () => {
     renderRoom({ speech_difficulty: true, cannot_write: true })
-    await screen.findByRole('heading', { name: 'Alex' })
+    await screen.findByRole('heading', { name: /^Alex\b/ })
     await waitFor(() => expect(textBox()).not.toBeInTheDocument())
     expect(mic()).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Pillow' })).toBeInTheDocument()

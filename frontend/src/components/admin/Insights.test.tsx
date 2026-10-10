@@ -27,6 +27,7 @@ function analytics(overrides: Partial<Analytics> = {}): Analytics {
     npo_reroutes: 1,
     fall_risk_priority: 2,
     top_rooms: [{ room_id: '412', requests: 5, nudges: 3 }],
+    staff: [],
     ...overrides,
   }
 }
@@ -61,5 +62,26 @@ describe('HourChart', () => {
     fireEvent.mouseLeave(columns[9])
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
     expect(screen.getByRole('table')).toBeInTheDocument()
+  })
+})
+
+describe('Insights staff workload', () => {
+  it('lists staff by department with status, workload and schedule', async () => {
+    const shift = { start: '2026-10-10T11:00:00Z', end: '2026-10-10T23:00:00Z', kind: 'shift' as const }
+    mockFetch({
+      'GET /api/analytics': analytics({
+        staff: [
+          { staff_id: 'n-priya', name: 'Nurse Priya', department: 'nursing', status: 'available', status_until: null, open_tasks: 3, resolved: 5, median_ack_seconds: 42, schedule: [shift] },
+          { staff_id: 'h-ana', name: 'Ana', department: 'housekeeping', status: 'break', status_until: null, open_tasks: 0, resolved: 2, median_ack_seconds: null, schedule: [shift] },
+        ],
+      }),
+    })
+    render(<Insights token="tok" />)
+    const section = await screen.findByTestId('staff-workload')
+    expect(within(section).getByText('Primary Nurse')).toBeInTheDocument()
+    const priya = within(section).getByRole('row', { name: /nurse priya/i })
+    expect(priya).toHaveTextContent('Available')
+    expect(priya).toHaveTextContent('42 s')
+    expect(within(section).getByRole('row', { name: /ana/i })).toHaveTextContent('On break')
   })
 })

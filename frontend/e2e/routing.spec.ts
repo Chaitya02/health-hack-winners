@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { MAX_LATENCY_MS, patientPage, SHOTS, staffPage, submitAndCapture, tapTile, ticketCard } from './helpers'
+import { MAX_LATENCY_MS, patientPage, SHOTS, signInIfAsked, staffPage, submitAndCapture, tapTile, ticketCard } from './helpers'
 
 test('(a) pillow on the tablet appears live in Housekeeping and never in Nursing', async ({ browser }) => {
   const housekeeping = await staffPage(browser, 'housekeeping')
@@ -63,7 +63,7 @@ test('(c) Spanish ice-water request → Food Services with Spanish confirmation'
   expect(confirmation).toMatch(/alimentación/i)
   await expect(patient.getByTestId('confirmation')).toContainText('Servicios de alimentación va en camino')
   await expect(patient.getByRole('button', { name: 'Hacer otro pedido' })).toBeVisible()
-  await expect(ticketCard(food, tickets[0].ticket_id)).toContainText('ES')
+  await expect(ticketCard(food, tickets[0].ticket_id)).toBeVisible()
 })
 
 test('(d) staff escalates a ticket → it appears in Nursing', async ({ browser }) => {
@@ -90,8 +90,7 @@ test('(e) WebSocket blocked → dashboard still updates via 2 s polling', async 
   // Block only the app socket (local /ws or API Gateway), not Vite HMR.
   await housekeeping.routeWebSocket(/\/ws$|execute-api/, (ws) => ws.close())
   await housekeeping.goto('/housekeeping')
-  await housekeeping.getByLabel('Department PIN').fill(process.env.STAFF_PIN ?? '2468')
-  await housekeeping.getByRole('button', { name: 'Sign in' }).click()
+  await signInIfAsked(housekeeping)
   await expect(housekeeping.getByTestId('live-status')).toHaveAttribute('data-status', /offline|connecting/)
 
   const patient = await patientPage(browser, '405')

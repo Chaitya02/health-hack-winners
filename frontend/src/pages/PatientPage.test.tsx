@@ -25,7 +25,7 @@ describe('PatientPage', () => {
   it('shows greeting, the top 3 buttons, the nurse button, and the rest under More requests', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
-    expect(await screen.findByRole('heading', { name: 'Maya' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /^Maya\b/ })).toBeInTheDocument()
     const top = within(screen.getByTestId('top-tiles')).getAllByRole('button')
     expect(top.map((b) => b.textContent)).toEqual(['Water', 'Pillow', 'Bathroom'])
     expect(screen.queryByRole('button', { name: 'Comfort' })).not.toBeInTheDocument()
@@ -144,7 +144,7 @@ describe('PatientPage', () => {
   it('updates request status live from the room channel', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
-    await screen.findByRole('heading', { name: 'Maya' })
+    await screen.findByRole('heading', { name: /^Maya\b/ })
     await waitFor(() => expect(FakeWebSocket.instances.length).toBeGreaterThan(0))
     const ws = FakeWebSocket.instances.at(-1)!
     ws.open()
@@ -165,7 +165,7 @@ describe('PatientPage', () => {
       mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
       renderPatient()
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-      await screen.findByRole('heading', { name: 'Maya' })
+      await screen.findByRole('heading', { name: /^Maya\b/ })
       await user.type(screen.getByLabelText(/type your request/i), 'extra pillow')
 
       act(() => vi.advanceTimersByTime(179_000))

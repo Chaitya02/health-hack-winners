@@ -187,6 +187,7 @@ function Dashboard({
       <PatientHeader
         name={room.patient_alias}
         age={room.age}
+        roomId={roomId}
         lang={lang}
         openCount={openCount}
         onLangChange={onLangChange}
@@ -194,12 +195,12 @@ function Dashboard({
         onStartOver={onStartOver}
       />
 
-      <main className="px-5 pb-10 pt-2 sm:px-8">
+      <main className="px-5 pb-10 pt-2 sm:px-8 lg:pb-0">
         {result ? (
           <Confirmation result={result} t={t} onDone={() => setResult(null)} />
         ) : (
-          <div className="grid items-start gap-x-10 lg:grid-cols-[minmax(0,1fr)_26rem]">
-            <div className="flex flex-col lg:min-h-[calc(100vh-8rem)]">
+          <div className="grid items-start gap-x-10 lg:h-[calc(100vh-7.5rem)] lg:grid-cols-[minmax(0,1fr)_26rem]">
+            <div className="flex flex-col lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:px-1">
               <EmergencyButton
                 lang={lang}
                 busy={busy}
@@ -223,7 +224,8 @@ function Dashboard({
                 </p>
               )}
             </div>
-            <div className="lg:mt-5">
+            {/* Wide screens: the request column scrolls in place; the page itself doesn't move. */}
+            <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:px-2 lg:pb-4" data-testid="request-column">
               <PersonalTiles top={top} t={t} lang={lang} busy={busy} large={layout.large} onTap={tap} gender={room.gender} />
             </div>
           </div>

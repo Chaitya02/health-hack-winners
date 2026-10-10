@@ -43,6 +43,12 @@ def table_specs(settings: Settings) -> list[dict]:
             "AttributeDefinitions": [{"AttributeName": "room_id", "AttributeType": "S"}],
             "BillingMode": "PAY_PER_REQUEST",
         },
+        {
+            "TableName": settings.staff_table,
+            "KeySchema": [{"AttributeName": "staff_id", "KeyType": "HASH"}],
+            "AttributeDefinitions": [{"AttributeName": "staff_id", "AttributeType": "S"}],
+            "BillingMode": "PAY_PER_REQUEST",
+        },
     ]
 
 

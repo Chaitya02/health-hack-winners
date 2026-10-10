@@ -8,6 +8,9 @@ import type {
   PatientTicketView,
   Role,
   Room,
+  ScheduleBlock,
+  StaffStatus,
+  StaffView,
   Status,
   Ticket,
   TicketAction,
@@ -64,6 +67,19 @@ export interface Analytics {
   npo_reroutes: number
   fall_risk_priority: number
   top_rooms: { room_id: string; requests: number; nudges: number }[]
+  staff: StaffStats[]
+}
+
+export interface StaffStats {
+  staff_id: string
+  name: string
+  department: Department
+  status: StaffStatus
+  status_until: string | null
+  open_tasks: number
+  resolved: number
+  median_ack_seconds: number | null
+  schedule: ScheduleBlock[]
 }
 
 export interface LoginResponse {
@@ -125,6 +141,8 @@ export const api = {
       body: JSON.stringify(note === undefined ? { action } : { action, note }),
     }),
   metrics: (token: string) => request<Metrics>('/api/metrics', {}, token),
+  /** The department's people right now (also hands waiting requests to anyone available). */
+  staff: (department: Department, token: string) => request<StaffView[]>(`/api/staff/${department}`, {}, token),
   analytics: (token: string, days: number) =>
     request<Analytics>(`/api/analytics?days=${days}&tz_offset_minutes=${new Date().getTimezoneOffset()}`, {}, token),
   /** CSV of every request in the window (no patient words). Nurse/admin only. */
