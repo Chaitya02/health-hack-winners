@@ -78,6 +78,7 @@ class CreateRequest(BaseModel):
     text: str = Field(min_length=1, max_length=MAX_TEXT_LEN)
     input_mode: InputMode = InputMode.TEXT
     language_hint: Language | None = None
+    tile: str | None = Field(default=None, max_length=20, pattern=r"^[a-z_]+$")
 
 
 class CreateRequestResponse(BaseModel):

@@ -1,17 +1,28 @@
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
-from app.api import health
+from app.api import health, routes
+from app.classifier import Classifier, build_classifier
 from app.config import Settings, get_settings
 from app.logging_setup import configure_logging
+from app.realtime import NullPublisher, Publisher
 from app.repo import RoomRepository, TicketRepository, dynamo_resource, ensure_tables
+from app.security import RateLimiter, StaffAuth
+from app.services import TicketService
 
 log = logging.getLogger("tingting")
 
 
-def create_app(settings: Settings | None = None, resource=None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    resource=None,
+    classifier: Classifier | None = None,
+    publisher: Publisher | None = None,
+) -> FastAPI:
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
@@ -25,6 +36,23 @@ def create_app(settings: Settings | None = None, resource=None) -> FastAPI:
             log.info("created local tables", extra={"tables": created})
     app.state.tickets = TicketRepository(settings, db)
     app.state.rooms = RoomRepository(settings, db)
+    app.state.auth = StaffAuth(
+        settings.staff_pin, settings.staff_token_secret, settings.staff_token_ttl_s
+    )
+    app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
+    app.state.publisher = publisher or NullPublisher()
+    app.state.service = TicketService(
+        tickets=app.state.tickets,
+        classifier=classifier or build_classifier(settings),
+        publisher=app.state.publisher,
+        confidence_threshold=settings.confidence_threshold,
+    )
+
+    @app.exception_handler(RequestValidationError)
+    async def _validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+        # Never echo patient text back in validation errors (it may end up in logs).
+        errors = [{"loc": e["loc"], "msg": e["msg"], "type": e["type"]} for e in exc.errors()]
+        return JSONResponse(status_code=422, content={"detail": errors})
 
     app.add_middleware(
         CORSMiddleware,
@@ -33,4 +61,9 @@ def create_app(settings: Settings | None = None, resource=None) -> FastAPI:
         allow_headers=["Content-Type", "Authorization"],
     )
     app.include_router(health.router)
+    app.include_router(routes.router)
+    log.info(
+        "app started",
+        extra={"classifier_mode": settings.classifier_mode, "app_env": settings.app_env},
+    )
     return app
