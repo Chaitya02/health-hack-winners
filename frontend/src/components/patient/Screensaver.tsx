@@ -96,7 +96,7 @@ export function Screensaver({
           )}
 
           <div className="pointer-events-auto">
-            <NurseButton t={t} busy={false} onPress={onNurse} />
+            <NurseButton t={t} onPress={onNurse} />
           </div>
         </div>
 

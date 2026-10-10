@@ -35,6 +35,8 @@ export interface Strings {
   tiles: Record<TileKey, string>
   tileGroups: Record<TileGroupKey, string>
   back: string
+  npoBlocked: string
+  higherPriority: string
   nurseHint: string
   newRequest: string
   yourRequests: string
@@ -83,6 +85,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: 'Emotional support',
     },
     back: 'Back',
+    npoBlocked: 'You can’t eat or drink right now. Ask your nurse if you have questions.',
+    higherPriority: 'Marked higher priority',
     nurseHint: 'For pain, bleeding, breathing trouble or anything that worries you',
     newRequest: 'Make another request',
     yourRequests: 'Your requests today',
@@ -141,6 +145,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: 'Apoyo emocional',
     },
     back: 'Volver',
+    npoBlocked: 'Ahora no puede comer ni beber. Pregunte a su enfermera si tiene dudas.',
+    higherPriority: 'Marcado como prioridad alta',
     nurseHint: 'Por dolor, sangrado, falta de aire o cualquier cosa que le preocupe',
     newRequest: 'Hacer otro pedido',
     yourRequests: 'Sus pedidos de hoy',
@@ -199,6 +205,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: 'भावनात्मक सहारा',
     },
     back: 'वापस',
+    npoBlocked: 'अभी आप कुछ खा या पी नहीं सकते। कोई सवाल हो तो अपनी नर्स से पूछें।',
+    higherPriority: 'उच्च प्राथमिकता दी गई',
     nurseHint: 'दर्द, खून, साँस की तकलीफ़ या किसी भी चिंता के लिए',
     newRequest: 'एक और अनुरोध करें',
     yourRequests: 'आज के आपके अनुरोध',
@@ -257,6 +265,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: 'ભાવનાત્મક સહારો',
     },
     back: 'પાછા',
+    npoBlocked: 'હમણાં તમે કંઈ ખાઈ કે પી શકતા નથી. કોઈ પ્રશ્ન હોય તો તમારી નર્સને પૂછો.',
+    higherPriority: 'ઉચ્ચ પ્રાથમિકતા આપી',
     nurseHint: 'દુખાવો, લોહી, શ્વાસની તકલીફ અથવા કોઈપણ ચિંતા માટે',
     newRequest: 'બીજી વિનંતી કરો',
     yourRequests: 'આજની તમારી વિનંતીઓ',
@@ -315,6 +325,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: '情感支持',
     },
     back: '返回',
+    npoBlocked: '您现在不能进食或喝水。如有疑问，请询问您的护士。',
+    higherPriority: '已标为优先',
     nurseHint: '疼痛、出血、呼吸困难或任何让您担心的情况',
     newRequest: '再提一个请求',
     yourRequests: '您今天的请求',
@@ -373,6 +385,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: 'Sipò emosyonèl',
     },
     back: 'Retounen',
+    npoBlocked: 'Ou pa ka manje ni bwè kounye a. Mande enfimyè w si ou gen kesyon.',
+    higherPriority: 'Make kòm priyorite',
     nurseHint: 'Pou doulè, san, pwoblèm respire oswa nenpòt bagay ki enkyete w',
     newRequest: 'Fè yon lòt demann',
     yourRequests: 'Demann ou jodi a',
@@ -431,6 +445,8 @@ export const STRINGS: Record<Language, Strings> = {
       emotional: 'Apoio emocional',
     },
     back: 'Voltar',
+    npoBlocked: 'Você não pode comer nem beber agora. Pergunte à sua enfermeira se tiver dúvidas.',
+    higherPriority: 'Marcado como prioridade',
     nurseHint: 'Para dor, sangramento, falta de ar ou qualquer coisa que preocupe você',
     newRequest: 'Fazer outro pedido',
     yourRequests: 'Seus pedidos de hoje',
