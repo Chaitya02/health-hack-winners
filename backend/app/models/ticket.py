@@ -78,6 +78,8 @@ class Ticket(BaseModel):
     patient_alias: str
     original_text: str = Field(max_length=MAX_TEXT_LEN)
     input_mode: InputMode
+    # Quick-tap tile key (e.g. "pillow") so the patient UI can name the request without free text.
+    tile: str | None = Field(default=None, max_length=20)
     detected_language: Language
     english_summary: str
     category: Category
@@ -121,6 +123,7 @@ class PatientTicketView(BaseModel):
     ticket_id: str
     department: Department
     category: Category
+    tile: str | None = None
     priority: Priority
     status: Status
     patient_confirmation: str

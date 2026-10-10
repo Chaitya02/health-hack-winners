@@ -139,6 +139,7 @@ class TicketService:
                 patient_alias=room.patient_alias,
                 original_text=req.text,
                 input_mode=req.input_mode,
+                tile=tile if tile in QUICK_TAP_TILES else None,
                 detected_language=decision.detected_language,
                 english_summary=intent.english_summary,
                 category=intent.category,

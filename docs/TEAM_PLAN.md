@@ -136,7 +136,7 @@ Files: `backend/app/tiles.py`, the tile component and `strings.ts` (all 7 langua
 - Show a "higher priority" message for fall-risk requests.
 - **The nurse button is never disabled.**
 
-**O4 · US-2 UI · the "Mirror" tracker**
+**O4 · US-2 UI · the "Mirror" tracker** (taken by Chaitya)
 - Show each request as a stepper: Sent → Seen → On the way → Done, with an ETA countdown and live updates.
 - Add buttons for "Cancel" and "Still waiting?", which call C2's endpoint.
 - Keep it simple, as the story says.

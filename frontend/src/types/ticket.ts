@@ -62,6 +62,8 @@ export interface Ticket {
   patient_alias: string
   original_text: string
   input_mode: InputMode
+  /** Quick-tap tile key, e.g. "pillow"; null for typed or spoken requests. */
+  tile: string | null
   detected_language: Language
   english_summary: string
   category: Category
@@ -94,6 +96,7 @@ export interface PatientTicketView {
   ticket_id: string
   department: Department
   category: Category
+  tile: string | null
   priority: Priority
   status: Status
   patient_confirmation: string

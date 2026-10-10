@@ -98,7 +98,10 @@ describe('PatientPage', () => {
     expect(JSON.parse(ws.sent[0])).toMatchObject({ action: 'subscribe', channels: ['room:401'] })
     ws.emit({ type: 'subscribed', channels: ['room:401'] })
     ws.emit({ type: 'ticket.updated', ticket: ticket({ status: 'IN_PROGRESS' }), ts: '' })
-    expect(await screen.findByTestId('patient-request')).toHaveTextContent('On the way')
+    const row = await screen.findByTestId('patient-request')
+    expect(row).toHaveAttribute('data-status', 'IN_PROGRESS')
+    // The tracker lists every step; the current one is marked.
+    expect(row.querySelector('[aria-current="step"]')).toHaveTextContent('On the way')
   })
 
   it('shows the screensaver after 3 idle minutes and comes back with the draft intact', async () => {
