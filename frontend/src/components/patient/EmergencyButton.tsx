@@ -45,7 +45,7 @@ export function EmergencyButton({
             onArm?.(d.emergencyAgain)
           }
         }}
-        className={`mt-5 flex min-h-24 w-full items-center justify-center rounded-3xl bg-bell px-6 py-4 text-[36px] font-bold text-white shadow-[0_6px_0_var(--color-bell-deep)] active:translate-y-1 active:shadow-[0_2px_0_var(--color-bell-deep)] ${
+        className={`mt-5 flex min-h-24 w-full items-center justify-center rounded-3xl bg-bell px-6 py-4 text-[36px] font-bold uppercase tracking-wider text-white shadow-[0_6px_0_var(--color-bell-deep)] active:translate-y-1 active:shadow-[0_2px_0_var(--color-bell-deep)] ${
           armed ? 'ring-8 ring-bell/30 motion-safe:animate-pulse' : ''
         }`}
       >
