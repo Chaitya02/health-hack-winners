@@ -38,3 +38,6 @@ export function getConfig(): AppConfig {
 export function setConfigForTests(cfg: AppConfig | null) {
   cached = cfg
 }
+
+/** Room shown on the home page. Each bedside tablet is built or configured for its own room. */
+export const DEFAULT_ROOM: string = import.meta.env.VITE_DEFAULT_ROOM ?? '401'

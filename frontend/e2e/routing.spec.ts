@@ -89,7 +89,7 @@ test('(e) WebSocket blocked → dashboard still updates via 2 s polling', async 
   const housekeeping = await context.newPage()
   // Block only the app socket (local /ws or API Gateway), not Vite HMR.
   await housekeeping.routeWebSocket(/\/ws$|execute-api/, (ws) => ws.close())
-  await housekeeping.goto('/staff/housekeeping')
+  await housekeeping.goto('/housekeeping')
   await housekeeping.getByLabel('Department PIN').fill(process.env.STAFF_PIN ?? '2468')
   await housekeeping.getByRole('button', { name: 'Sign in' }).click()
   await expect(housekeeping.getByTestId('live-status')).toHaveAttribute('data-status', /offline|connecting/)
