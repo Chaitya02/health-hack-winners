@@ -134,30 +134,58 @@ const HAND = (
 )
 
 /**
- * A tile's icon. The bathroom tile ("help to the bathroom") carries a small help sign, a raised
- * hand, so a short "Bathroom" label still reads as asking for help.
+ * Colour per request type, so low-vision patients can find a button by colour as well as shape
+ * (the label is always there too, so colour is never the only cue). Strong icon on a soft tint.
+ */
+const TONE: Record<string, string> = {
+  thirsty: 'bg-sky-100 text-sky-700',
+  water: 'bg-sky-100 text-sky-700',
+  ice: 'bg-cyan-100 text-cyan-800',
+  comfort: 'bg-indigo-100 text-indigo-700',
+  pillow: 'bg-indigo-100 text-indigo-700',
+  blanket: 'bg-violet-100 text-violet-700',
+  temperature: 'bg-orange-100 text-orange-700',
+  tv: 'bg-slate-200 text-slate-700',
+  foodMeds: 'bg-amber-100 text-amber-800',
+  food: 'bg-amber-100 text-amber-800',
+  medication: 'bg-rose-100 text-rose-700',
+  emotional: 'bg-pink-100 text-pink-700',
+  family: 'bg-emerald-100 text-emerald-700',
+  counseling: 'bg-teal-100 text-teal-700',
+  spiritual: 'bg-yellow-100 text-yellow-800',
+  bathroom: 'bg-blue-100 text-blue-700',
+}
+
+/**
+ * A tile's icon in its colour circle. The bathroom tile ("help to the bathroom") also carries a
+ * small help sign, a raised hand, so a short "Bathroom" label still reads as asking for help.
  */
 export function TileGlyph({ tile, gender, className }: { tile: string; gender?: Gender; className: string }) {
-  if (tile !== 'bathroom') return <TileIcon name={tile} className={className} />
   return (
-    <span className="relative inline-block shrink-0" data-help-badge>
+    <span
+      className={`relative inline-grid shrink-0 place-items-center rounded-full p-3 ${TONE[tile] ?? 'bg-curtain text-pine'}`}
+      data-tone={tile}
+      {...(tile === 'bathroom' ? { 'data-help-badge': true } : {})}
+    >
       <TileIcon name={iconFor(tile, gender)} className={className} />
-      <span className="absolute -bottom-1.5 -right-1.5 grid size-[55%] place-items-center rounded-full bg-care text-white ring-2 ring-paper">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-          focusable="false"
-          className="size-[70%]"
-          data-icon="help"
-        >
-          {HAND}
-        </svg>
-      </span>
+      {tile === 'bathroom' && (
+        <span className="absolute -bottom-1 -right-1 grid size-[45%] place-items-center rounded-full bg-care text-white ring-2 ring-paper">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+            className="size-[70%]"
+            data-icon="help"
+          >
+            {HAND}
+          </svg>
+        </span>
+      )}
     </span>
   )
 }

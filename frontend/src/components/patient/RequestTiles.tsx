@@ -84,7 +84,7 @@ export function RequestTiles({
   /** Off when embedded under the dashboard's "More requests" toggle. */
   showTitle?: boolean
 }) {
-  const iconClass = `shrink-0 text-pine ${large ? 'size-16' : 'size-14'}`
+  const iconClass = large ? 'size-14' : 'size-10'
   const [open, setOpen] = useState<TileGroupKey | null>(null)
   const tiles = MAIN_TILES.flatMap((m): MainTile[] => {
     if (m.kind === 'tile') return exclude.includes(m.key) ? [] : [m]

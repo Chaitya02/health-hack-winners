@@ -39,10 +39,10 @@ export function PersonalTiles({
               disabled={busy}
               onClick={() => onTap(key)}
               className={`flex h-full w-full flex-col items-center justify-center gap-3 rounded-3xl border-4 border-pine bg-paper p-3 text-center font-bold leading-tight hover:bg-care-tint ${
-                large ? 'min-h-44 text-[30px]' : 'min-h-36 text-[26px]'
+                large ? 'min-h-52 text-[30px]' : 'min-h-44 text-[26px]'
               }`}
             >
-              <TileGlyph tile={key} gender={gender} className={`shrink-0 text-pine ${large ? 'size-20' : 'size-16'}`} />
+              <TileGlyph tile={key} gender={gender} className={large ? 'size-16' : 'size-12'} />
               {t.tiles[key]}
             </button>
           </li>
