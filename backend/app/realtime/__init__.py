@@ -23,3 +23,8 @@ def channels_for(ticket: Ticket) -> list[str]:
     if ticket.escalated_from:
         channels.append(f"dept:{ticket.escalated_from}")
     return channels
+
+
+def is_staff_channel(channel: str) -> bool:
+    """dept:* channels require a staff login; room:* channels are open to the bedside screen."""
+    return channel.startswith("dept:")

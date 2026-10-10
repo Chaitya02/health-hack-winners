@@ -116,7 +116,9 @@ class Ticket(BaseModel):
 
 
 class PatientTicketView(BaseModel):
-    """Reduced projection returned to the patient UI (no audit / internals)."""
+    """What the bedside screen may see. Room endpoints and the room WebSocket channel need no
+    login, so this carries no patient words (original text, notes, English summary), no audit
+    and no safety reasons. Pydantic drops every other Ticket field when validating from one."""
 
     ticket_id: str
     department: Department
@@ -124,7 +126,6 @@ class PatientTicketView(BaseModel):
     tile: str | None = None
     priority: Priority
     status: Status
-    english_summary: str
     patient_confirmation: str
     created_at: str
     eta_minutes: int | None = None

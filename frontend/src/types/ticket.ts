@@ -91,6 +91,7 @@ export interface Ticket {
   audit: TicketAudit
 }
 
+/** What the bedside screen receives (REST and room channel): no patient words, audit or safety reasons. */
 export interface PatientTicketView {
   ticket_id: string
   department: Department
@@ -98,7 +99,6 @@ export interface PatientTicketView {
   tile: string | null
   priority: Priority
   status: Status
-  english_summary: string
   patient_confirmation: string
   created_at: string
   eta_minutes: number | null
