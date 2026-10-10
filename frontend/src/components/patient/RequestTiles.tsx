@@ -55,31 +55,83 @@ export const MAIN_TILES: MainTile[] = [
   { kind: 'tile', key: 'bathroom', icon: '🚻' },
 ]
 
-const tileClass = (large: boolean) =>
-  `flex w-full flex-col items-center justify-center gap-1 rounded-2xl bg-paper p-3 text-center font-bold hover:border-care hover:bg-care-tint ${
-    large ? 'min-h-40 border-4 border-pine text-[30px]' : 'min-h-28 border-2 border-line text-[22px]'
+const tileClass = (large: boolean, blocked: boolean) =>
+  `flex w-full flex-col items-center justify-center gap-1 rounded-2xl p-3 text-center font-bold ${
+    large ? 'min-h-40 border-4 text-[30px]' : 'min-h-28 border-2 text-[22px]'
+  } ${
+    blocked
+      ? 'border-dashed border-pine-soft bg-curtain-deep text-pine-soft'
+      : `bg-paper hover:border-care hover:bg-care-tint ${large ? 'border-pine' : 'border-line'}`
   }`
 
-/** `large` (low-vision layout, US-4): two columns, bigger targets and text, high-contrast borders. */
+type Blocked = Partial<Record<QuickTile, string>>
+
+/**
+ * `large` (low-vision layout, US-4): two columns, bigger targets and text, high-contrast borders.
+ * `blocked` (US-5): tiles the patient's profile rules out, e.g. drinks while NPO. They stay
+ * focusable and tappable (aria-disabled, not disabled) so tapping explains why.
+ */
 export function RequestTiles({
   t,
   busy,
   onTap,
   large = false,
+  blocked = {},
+  onBlocked,
 }: {
   t: Strings
   busy: boolean
   onTap: (tile: QuickTile) => void
   large?: boolean
+  blocked?: Blocked
+  onBlocked?: (reason: string) => void
 }) {
   const iconClass = large ? 'text-[56px]' : 'text-[36px]'
   const [open, setOpen] = useState<TileGroupKey | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const group = MAIN_TILES.find((m) => m.kind === 'group' && m.key === open)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
     if (open) headingRef.current?.focus()
   }, [open])
+
+  function explain(reason: string) {
+    setNotice(reason)
+    onBlocked?.(reason)
+  }
+
+  function tile(key: string, icon: string, label: string, reason: string | undefined, onPress: () => void) {
+    return (
+      <li key={key}>
+        <button
+          type="button"
+          disabled={busy}
+          aria-disabled={reason ? true : undefined}
+          data-blocked={reason ? 'true' : undefined}
+          onClick={() => {
+            if (reason) explain(reason)
+            else {
+              setNotice(null)
+              onPress()
+            }
+          }}
+          className={tileClass(large, !!reason)}
+        >
+          <span aria-hidden="true" className={iconClass}>
+            {reason ? '🚫' : icon}
+          </span>
+          {label}
+        </button>
+      </li>
+    )
+  }
+
+  const noticeBox = notice && (
+    <p role="alert" data-testid="tile-notice" className="mt-4 rounded-2xl bg-wait-tint p-4 font-bold text-pine">
+      {notice}
+    </p>
+  )
 
   if (group?.kind === 'group') {
     return (
@@ -91,7 +143,10 @@ export function RequestTiles({
           </h2>
           <button
             type="button"
-            onClick={() => setOpen(null)}
+            onClick={() => {
+              setNotice(null)
+              setOpen(null)
+            }}
             className="min-h-16 rounded-2xl border-2 border-pine bg-paper px-6 font-bold"
           >
             <span aria-hidden="true">← </span>
@@ -99,17 +154,9 @@ export function RequestTiles({
           </button>
         </div>
         <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-4'}`}>
-          {group.items.map((item) => (
-            <li key={item.key}>
-              <button type="button" disabled={busy} onClick={() => onTap(item.key)} className={tileClass(large)}>
-                <span aria-hidden="true" className={iconClass}>
-                  {item.icon}
-                </span>
-                {t.tiles[item.key]}
-              </button>
-            </li>
-          ))}
+          {group.items.map((item) => tile(item.key, item.icon, t.tiles[item.key], blocked[item.key], () => onTap(item.key)))}
         </ul>
+        {noticeBox}
       </section>
     )
   }
@@ -118,22 +165,18 @@ export function RequestTiles({
     <>
       <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>
       <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-3'}`}>
-        {MAIN_TILES.map((m) => (
-          <li key={m.key}>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => (m.kind === 'group' ? setOpen(m.key) : onTap(m.key))}
-              className={tileClass(large)}
-            >
-              <span aria-hidden="true" className={iconClass}>
-                {m.icon}
-              </span>
-              {m.kind === 'group' ? t.tileGroups[m.key] : t.tiles[m.key]}
-            </button>
-          </li>
-        ))}
+        {MAIN_TILES.map((m) => {
+          if (m.kind === 'tile') return tile(m.key, m.icon, t.tiles[m.key], blocked[m.key], () => onTap(m.key))
+          // A group is blocked only when every choice in it is (Thirsty while NPO, not Food & medication).
+          const reasons = m.items.map((i) => blocked[i.key])
+          const reason = reasons.every(Boolean) ? reasons[0] : undefined
+          return tile(m.key, m.icon, t.tileGroups[m.key], reason, () => {
+            setNotice(null)
+            setOpen(m.key)
+          })
+        })}
       </ul>
+      {noticeBox}
     </>
   )
 }

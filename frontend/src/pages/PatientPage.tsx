@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Confirmation } from '../components/patient/Confirmation'
 import { Header } from '../components/patient/Header'
 import { InputPanel } from '../components/patient/InputPanel'
 import { MyRequests } from '../components/patient/MyRequests'
 import { NurseButton } from '../components/patient/NurseButton'
+import { blockedTiles, profileRefusalMessage, raisedForFallRisk } from '../components/patient/profileRules'
 import { RequestTiles } from '../components/patient/RequestTiles'
 import { Screensaver } from '../components/patient/Screensaver'
 import { useIdle } from '../hooks/useIdle'
@@ -50,6 +51,7 @@ export default function PatientPage() {
   const t = STRINGS[lang]
   const screensaver = useIdle(IDLE_MS, !busy)
   const layout = layoutFor(room?.profile)
+  const nurseInFlight = useRef(false)
 
   useEffect(() => {
     api
@@ -96,7 +98,8 @@ export default function PatientPage() {
       }
       return true
     } catch (e) {
-      const message = e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed
+      const refusal = e instanceof ApiError ? profileRefusalMessage(e.status, e.message) : null
+      const message = refusal ?? (e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed)
       setError(message)
       if (layout.readAloud) speak(message, t.speechLang)
       return false
@@ -113,7 +116,14 @@ export default function PatientPage() {
     )
   }
 
-  const callNurse = () => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' }, t.tiles.nurse)
+  // The nurse button is never disabled (safety rule); a repeat press while one is in flight is ignored.
+  const callNurse = () => {
+    if (nurseInFlight.current) return
+    nurseInFlight.current = true
+    void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' }, t.tiles.nurse).finally(() => {
+      nurseInFlight.current = false
+    })
+  }
 
   return (
     <div className={`min-h-screen leading-snug ${layout.large ? 'text-[30px]' : 'text-[24px]'}`}>
@@ -134,7 +144,7 @@ export default function PatientPage() {
 
       <main className="mx-auto max-w-5xl px-5 pb-10 pt-6 sm:px-8">
         {result ? (
-          <Confirmation result={result} t={t} onDone={() => setResult(null)} />
+          <Confirmation result={result} t={t} raised={raisedForFallRisk(result)} onDone={() => setResult(null)} />
         ) : (
           <>
             <h1 className="text-[34px] font-bold leading-tight sm:text-[40px]">
@@ -142,11 +152,7 @@ export default function PatientPage() {
             </h1>
             <p className="mt-2 max-w-[38ch] text-pine-soft">{t.prompt}</p>
 
-            <NurseButton
-              t={t}
-              busy={busy}
-              onPress={callNurse}
-            />
+            <NurseButton t={t} onPress={callNurse} />
 
             <InputPanel
               t={t}
@@ -165,6 +171,8 @@ export default function PatientPage() {
               t={t}
               busy={busy}
               large={layout.large}
+              blocked={blockedTiles(room?.profile, t)}
+              onBlocked={(reason) => layout.readAloud && speak(reason, t.speechLang)}
               onTap={(tile) => void send({ text: t.tiles[tile], input_mode: 'quick_tap', tile }, t.tiles[tile])}
             />
           </>
