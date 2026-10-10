@@ -36,6 +36,7 @@ async function request<T>(path: string, init: RequestInit = {}, token?: string):
 }
 
 export interface Metrics {
+  since: string
   total: number
   by_category: Record<string, number>
   by_department: Record<string, number>
@@ -46,6 +47,7 @@ export interface Metrics {
   urgent_count: number
   urgent_avg_ack_seconds: number | null
   fallback_count: number
+  open_by_department: Record<string, number>
 }
 
 export const api = {

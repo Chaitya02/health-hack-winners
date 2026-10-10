@@ -27,12 +27,16 @@
 **Known issues / pending:** Bedrock-mode eval pending AWS credentials + model access (carried to Phase 3.4). The rules layer alone catches all 55 urgent rows, so urgent recall doesn't depend on the LLM. The mock classifier was tuned on the eval set, so its 100% accuracy isn't a real measure; Bedrock numbers will be. Per-room rate limiting is in-memory per process; API Gateway throttling is the outer limit in AWS.
 
 ## Phase 2 — Patient UI, staff dashboards and real-time routing
-- [ ] Playwright E2E (a)–(e) pass locally
-- [ ] Lighthouse accessibility ≥ 95 on /patient
-- [ ] Patient → dashboard real-time latency < 1s locally
-- [ ] Patient UI verified at 768px and 375px; screenshots in /docs/screenshots
-- [ ] Impact page computes hours + $ saved
-- [ ] All tests + CI green; merged; tagged phase-2-complete; pushed
+- [x] Playwright E2E (a)–(e) pass locally
+- [x] Lighthouse accessibility ≥ 95 on /patient
+- [x] Patient → dashboard real-time latency < 1s locally
+- [x] Patient UI verified at 768px and 375px; screenshots in /docs/screenshots
+- [x] Impact page computes hours + $ saved
+- [x] All tests + CI green; merged; tagged phase-2-complete; pushed
+
+**Completed:** 2026-10-10 · branch `phase-2-ui` head `411ec59` · tag `phase-2-complete`
+**Evidence:** Playwright E2E (a)–(e) 5/5 pass locally and in CI (run 38067956269, all jobs green); realtime tap → Housekeeping dashboard 62–79 ms locally; Lighthouse accessibility 100 on /patient/401 (docs/lighthouse-patient.json); screenshots at 768px and 375px in docs/screenshots; impact page: 30-bed 4,380 h / $262,800, 500-bed 73,000 h / $4.38M.
+**Known issues:** CI run 38027509779 failed on E2E (b): the urgent banner unmounts when nothing urgent is left, so `not.toContainText` found no element on a fresh DB. Fixed by asserting that no banner mentions Room 402. Impact model values nurse time at $60/h; mentor-supplied turnover figures are still to be added (see docs/TEAM_PLAN.md).
 
 ## Phase 3 — AWS deployment, hardening and demo readiness
 - [ ] `make deploy` succeeds; CloudFront URL, HTTP API URL, WebSocket URL printed
