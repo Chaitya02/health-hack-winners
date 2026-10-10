@@ -1,0 +1,32 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+credentials*
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+# node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+# cdk
+cdk.out/
+infra/*.js
+infra/*.d.ts
+!infra/jest.config.js
+# playwright
+test-results/
+playwright-report/
+blob-report/
+# misc
+.DS_Store
+.dynamodb/
+*.log
