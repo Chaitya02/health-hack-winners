@@ -78,6 +78,8 @@ class Ticket(BaseModel):
     patient_alias: str
     original_text: str = Field(max_length=MAX_TEXT_LEN)
     input_mode: InputMode
+    # Quick-tap tile key (e.g. "pillow") so the patient UI can name the request without free text.
+    tile: str | None = Field(default=None, max_length=20)
     detected_language: Language
     english_summary: str
     category: Category
@@ -114,14 +116,16 @@ class Ticket(BaseModel):
 
 
 class PatientTicketView(BaseModel):
-    """Reduced projection returned to the patient UI (no audit / internals)."""
+    """What the bedside screen may see. Room endpoints and the room WebSocket channel need no
+    login, so this carries no patient words (original text, notes, English summary), no audit
+    and no safety reasons. Pydantic drops every other Ticket field when validating from one."""
 
     ticket_id: str
     department: Department
     category: Category
+    tile: str | None = None
     priority: Priority
     status: Status
-    english_summary: str
     patient_confirmation: str
     created_at: str
     eta_minutes: int | None = None

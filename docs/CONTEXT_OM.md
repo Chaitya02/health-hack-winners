@@ -31,7 +31,7 @@ Ting-ting is an AI call-bell router for hospital inpatients (HealthHack Ops Unle
 |---|---|---|
 | O1 | Split `PatientPage.tsx` into `components/patient/*`, no behavior change | C0 (Phase 2 merged to `main`) |
 | O2 | New buttons: Thirsty, Comfort, Food & meds, Emotional support (+ Bathroom) | C1 (data contract), O1 |
-| O4 | "Mirror" status tracker: stepper, ETA, cancel / still waiting | C2 (status API), O1 |
+| O4 | "Mirror" status tracker: stepper, ETA, cancel / still waiting (**taken by Chaitya**) | C2 (status API), O1 |
 | O3 | Gray out tiles for NPO patients with a reason, plus a fall-risk message | C3 (rules), O2 |
 | O5 | Spoken status updates and waiting music, with on/off toggles | O4 |
 | O6 | Accessibility layouts from the patient profile (**taken by Chaitya**) | O2 |
@@ -94,6 +94,7 @@ Ticket statuses are `NEW → ACKNOWLEDGED → IN_PROGRESS → RESOLVED`, plus `E
 | `frontend/src/hooks/useLiveTickets.ts` | Live ticket list: WebSocket first, falls back to polling every 2s |
 | `frontend/src/components/patient/Screensaver.tsx`, `hooks/useIdle.ts`, `i18n/screensaver.ts` | O7 screensaver (Chaitya). Mounted at the top of `PatientPage`; idle time is `IDLE_MS` (`VITE_IDLE_SECONDS`, default 180). It reuses your `NurseButton`. |
 | `frontend/src/lib/accessibility.ts`, `lib/speak.ts` | O6 (Chaitya). `layoutFor(room.profile)` decides `showText` / `showMic` / `large` / `readAloud`; `InputPanel` and `RequestTiles` take these as optional props. **When you rebuild the tiles in O2, keep the `large` prop.** `speak()` is reusable for O5. |
+| `frontend/src/components/patient/RequestTracker.tsx`, `i18n/tracker.ts` | O4 (Chaitya). `MyRequests` shows a tracker card per open request: label (tile name, else a category label, never free text), steps with times, ETA, "Still waiting?" and confirmed cancel. Tickets now carry `tile`. **O5 hook:** react to status changes in `RequestTracker`, and reuse `speak()`. |
 | `frontend/src/lib/api.ts` | API client |
 | `frontend/src/types/ticket.ts` | TypeScript mirror of the backend models. **Chaitya owns it**, so ask before changing it. |
 | `backend/app/tiles.py` | Quick-tap tile → category mapping. Created in C1; owned by you from O2. |
