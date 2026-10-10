@@ -200,7 +200,7 @@ function Dashboard({
     <div className="min-h-screen">
       {isNursing && unackedHigh.length > 0 && (
         <div role="alert" className="bell-flash sticky top-0 z-10 px-5 py-3 text-xl font-bold text-white" data-testid="urgent-banner">
-          Urgent: Room {unackedHigh.map((t) => t.room_id).join(', Room ')} needs you now
+          Urgent: Room {[...new Set(unackedHigh.map((t) => t.room_id))].join(', Room ')} needs you now
         </div>
       )}
       <header className="flex flex-wrap items-center justify-between gap-4 border-b-2 border-line bg-paper px-5 py-4">
