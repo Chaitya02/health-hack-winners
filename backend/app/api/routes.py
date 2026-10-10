@@ -1,8 +1,10 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app import analytics
 from app.classifier import decide, profile_note
 from app.metrics import Metrics, compute, start_of_day
 from app.models import (
@@ -177,6 +179,39 @@ def update_ticket(ticket_id: str, body: ActionBody, request: Request, staff: Sta
     except InvalidTransition as e:
         raise HTTPException(409, str(e)) from e
     return updated
+
+
+def insights_reader(role: SignedIn) -> Role:
+    """Request data is for clinical and admin users only (US-1), not support teams."""
+    if role not in (Role.ADMIN, Role.NURSE):
+        raise HTTPException(403, "Request insights are limited to nurses and admins")
+    return role
+
+
+InsightsReader = Annotated[Role, Depends(insights_reader)]
+Days = Annotated[int, Query(ge=1, le=analytics.MAX_DAYS)]
+
+
+@router.get("/analytics", response_model=analytics.Analytics)
+def request_analytics(
+    request: Request,
+    _: InsightsReader,
+    days: Days = 1,
+    tz_offset_minutes: Annotated[int, Query(ge=-14 * 60, le=14 * 60)] = 0,
+) -> analytics.Analytics:
+    since = analytics.window_start(days)
+    return analytics.compute(request.app.state.tickets.since(since), since, days, tz_offset_minutes)
+
+
+@router.get("/analytics/export.csv")
+def export_csv(request: Request, _: InsightsReader, days: Days = 1) -> Response:
+    since = analytics.window_start(days)
+    body = analytics.to_csv(request.app.state.tickets.since(since))
+    return Response(
+        body,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="tingting-requests-{days}d.csv"'},
+    )
 
 
 @router.get("/metrics", response_model=Metrics)
