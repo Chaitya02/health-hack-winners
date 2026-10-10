@@ -420,7 +420,10 @@ function TicketRow({
         </ul>
       )}
       {department === 'nursing' && t.safety_reasons.length > 0 && (
-        <p className="mt-1 text-sm text-pine-soft">Why you: {t.safety_reasons.join(', ')}</p>
+        <details className="mt-1 text-sm text-pine-soft" data-testid="why-you">
+          <summary className="w-fit cursor-pointer font-bold">Why you</summary>
+          <p className="mt-1">{t.safety_reasons.join(', ')}</p>
+        </details>
       )}
       {showOriginal && (
         <p className="mt-2 rounded-xl bg-curtain p-3 italic" lang={t.detected_language}>
