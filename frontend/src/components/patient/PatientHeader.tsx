@@ -27,7 +27,7 @@ export function PatientHeader({
     <header className="flex flex-wrap items-center justify-between gap-4 px-5 py-4 sm:px-8">
       <h1 data-testid="patient-identity" className="leading-tight">
         <span className="text-[40px] font-bold">{name}</span>
-        {age != null && <span className="text-[28px] text-pine-soft">, {age}</span>}
+        {age != null && <span className="text-[28px] text-pine-soft">, {d.ageYears(age)}</span>}
       </h1>
       <div className="flex flex-wrap items-center gap-3">
         <LanguageSelect lang={lang} onChange={onLangChange} />

@@ -80,7 +80,7 @@ describe('Bedside intake → personalised dashboard', () => {
     expect(screen.getByLabelText('Your name')).toHaveValue('Sam')
     await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
     const identity = await screen.findByTestId('patient-identity')
-    expect(identity).toHaveTextContent(/^Sam, 54$/)
+    expect(identity).toHaveTextContent(/^Sam, 54 years$/)
     expect(screen.queryByText(/NPO|knee|anxious/i)).not.toBeInTheDocument() // notes never shown
     // Emergency button says just that; no greeting; icon buttons keep accessible names.
     expect(screen.getByRole('button', { name: /^emergency$/i })).toHaveTextContent(/^Emergency$/)
@@ -97,6 +97,8 @@ describe('Bedside intake → personalised dashboard', () => {
     await userEvent.click(screen.getByRole('button', { name: 'More requests' }))
     expect(document.querySelector('[data-icon="bathroom-male"]')).not.toBeNull()
     expect(document.querySelector('[data-icon="bathroom"]')).toBeNull()
+    // The bathroom tile carries the help sign.
+    expect(document.querySelector('[data-help-badge] [data-icon="help"]')).not.toBeNull()
   })
 
   it('start over clears the patient and returns to the form', async () => {
@@ -117,7 +119,7 @@ describe('Bedside intake → personalised dashboard', () => {
     const bubble = await screen.findByTestId('voice-bubble')
     expect(screen.queryByLabelText('Type your request')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
-    expect(within(screen.getByTestId('top-tiles')).getAllByRole('button')[0]).toHaveTextContent('Help to the bathroom')
+    expect(within(screen.getByTestId('top-tiles')).getAllByRole('button')[0]).toHaveTextContent(/^Bathroom$/)
     await userEvent.click(within(bubble).getByRole('button', { name: /tap and tell me/i }))
     FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'I need a blanket' }, isFinal: true, length: 1 }] })
     expect(await screen.findByTestId('voice-heard')).toHaveTextContent('I need a blanket')

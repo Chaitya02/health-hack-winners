@@ -17,6 +17,7 @@ export interface DashboardStrings {
   intakeFailed: string
   // Dashboard
   emergency: string
+  ageYears: (n: number) => string
   emergencyAgain: string
   forYou: string
   more: string
@@ -49,6 +50,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: 'Set up my screen',
     settingUp: 'Setting up…',
     intakeFailed: 'That didn’t save. Please try again.',
+    ageYears: (n) => `${n} years`,
     emergency: 'Emergency',
     emergencyAgain: 'Tap Emergency again to call your nurse.',
     forYou: 'For you',
@@ -78,6 +80,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: 'Preparar mi pantalla',
     settingUp: 'Preparando…',
     intakeFailed: 'No se guardó. Inténtelo de nuevo.',
+    ageYears: (n) => `${n} años`,
     emergency: 'Emergencia',
     emergencyAgain: 'Toque Emergencia otra vez para llamar a su enfermera.',
     forYou: 'Para usted',
@@ -107,6 +110,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: 'मेरी स्क्रीन तैयार करें',
     settingUp: 'तैयार हो रही है…',
     intakeFailed: 'सेव नहीं हुआ। कृपया फिर से कोशिश करें।',
+    ageYears: (n) => `${n} वर्ष`,
     emergency: 'आपातकाल',
     emergencyAgain: 'नर्स को बुलाने के लिए आपातकाल फिर से टैप करें।',
     forYou: 'आपके लिए',
@@ -136,6 +140,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: 'મારી સ્ક્રીન તૈયાર કરો',
     settingUp: 'તૈયાર થઈ રહી છે…',
     intakeFailed: 'સેવ ન થયું. કૃપા કરીને ફરી પ્રયાસ કરો.',
+    ageYears: (n) => `${n} વર્ષ`,
     emergency: 'કટોકટી',
     emergencyAgain: 'નર્સને બોલાવવા માટે કટોકટી ફરીથી ટેપ કરો.',
     forYou: 'તમારા માટે',
@@ -165,6 +170,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: '设置我的屏幕',
     settingUp: '正在设置…',
     intakeFailed: '未能保存，请重试。',
+    ageYears: (n) => `${n} 岁`,
     emergency: '紧急',
     emergencyAgain: '再次轻触“紧急”即可呼叫护士。',
     forYou: '为您推荐',
@@ -194,6 +200,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: 'Prepare ekran mwen',
     settingUp: 'N ap prepare…',
     intakeFailed: 'Li pa anrejistre. Tanpri eseye ankò.',
+    ageYears: (n) => `${n} an`,
     emergency: 'Ijans',
     emergencyAgain: 'Touche Ijans ankò pou rele enfimyè w.',
     forYou: 'Pou ou',
@@ -223,6 +230,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     setUp: 'Preparar minha tela',
     settingUp: 'Preparando…',
     intakeFailed: 'Não foi salvo. Tente de novo.',
+    ageYears: (n) => `${n} anos`,
     emergency: 'Emergência',
     emergencyAgain: 'Toque em Emergência de novo para chamar a enfermeira.',
     forYou: 'Para você',

@@ -27,11 +27,11 @@ describe('PatientPage', () => {
     renderPatient()
     expect(await screen.findByRole('heading', { name: 'Maya' })).toBeInTheDocument()
     const top = within(screen.getByTestId('top-tiles')).getAllByRole('button')
-    expect(top.map((b) => b.textContent)).toEqual(['Water', 'Pillow', 'Help to the bathroom'])
+    expect(top.map((b) => b.textContent)).toEqual(['Water', 'Pillow', 'Bathroom'])
     expect(screen.queryByRole('button', { name: 'Comfort' })).not.toBeInTheDocument()
     await openMore()
     // The top 3 aren't repeated in the dropdown (Bathroom is a top tile, so its main tile goes).
-    expect(screen.getAllByRole('button', { name: 'Help to the bathroom' })).toHaveLength(1)
+    expect(screen.getAllByRole('button', { name: 'Bathroom' })).toHaveLength(1)
     for (const label of ['Thirsty', 'Comfort', 'Food & medication', 'Emotional support']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }

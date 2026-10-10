@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Strings, TileGroupKey, TileKey } from '../../i18n/strings'
-import { iconFor, TileIcon, type Gender } from '../tileIcons'
+import { TileGlyph, TileIcon, type Gender } from '../tileIcons'
 
 export type QuickTile = Exclude<TileKey, 'nurse'>
 
@@ -114,7 +114,7 @@ export function RequestTiles({
           {group.items.map((item) => (
             <li key={item.key}>
               <button type="button" disabled={busy} onClick={() => onTap(item.key)} className={tileClass(large)}>
-                <TileIcon name={iconFor(item.key, gender)} className={iconClass} />
+                <TileGlyph tile={item.key} gender={gender} className={iconClass} />
                 {t.tiles[item.key]}
               </button>
             </li>
@@ -136,7 +136,7 @@ export function RequestTiles({
               onClick={() => (m.kind === 'group' ? setOpen(m.key) : onTap(m.key))}
               className={tileClass(large)}
             >
-              <TileIcon name={m.kind === 'group' ? m.key : iconFor(m.key, gender)} className={iconClass} />
+              <TileGlyph tile={m.key} gender={gender} className={iconClass} />
               {m.kind === 'group' ? t.tileGroups[m.key] : t.tiles[m.key]}
             </button>
           </li>

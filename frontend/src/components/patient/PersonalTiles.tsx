@@ -3,7 +3,7 @@ import { DASHBOARD } from '../../i18n/dashboard'
 import { ChevronDownIcon } from '../icons'
 import type { Strings } from '../../i18n/strings'
 import type { Language } from '../../types/ticket'
-import { iconFor, TileIcon, type Gender } from '../tileIcons'
+import { TileGlyph, type Gender } from '../tileIcons'
 import { RequestTiles, type QuickTile } from './RequestTiles'
 
 /** The patient's top buttons (personalised) and everything else behind "More requests". */
@@ -42,7 +42,7 @@ export function PersonalTiles({
                 large ? 'min-h-44 text-[30px]' : 'min-h-36 text-[24px]'
               }`}
             >
-              <TileIcon name={iconFor(key, gender)} className={`text-pine ${large ? 'size-16' : 'size-12'}`} />
+              <TileGlyph tile={key} gender={gender} className={`text-pine ${large ? 'size-16' : 'size-12'}`} />
               {t.tiles[key]}
             </button>
           </li>

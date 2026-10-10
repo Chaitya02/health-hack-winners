@@ -128,6 +128,39 @@ export function iconFor(key: string, gender: Gender = 'unspecified'): string {
   return key === 'bathroom' && gender !== 'unspecified' ? `bathroom-${gender}` : key
 }
 
+const HAND = (
+  <path d="M8 12.5V6.8a1.4 1.4 0 0 1 2.8 0V11m0-5.6V5a1.4 1.4 0 0 1 2.8 0v6m0-5.2a1.4 1.4 0 0 1 2.8 0V12m0-3.6a1.4 1.4 0 0 1 2.8 0v5.4a6 6 0 0 1-6 6h-.6a6 6 0 0 1-5-2.7l-2.3-3.5a1.4 1.4 0 0 1 2.3-1.6L8 13" />
+)
+
+/**
+ * A tile's icon. The bathroom tile ("help to the bathroom") carries a small help sign, a raised
+ * hand, so a short "Bathroom" label still reads as asking for help.
+ */
+export function TileGlyph({ tile, gender, className }: { tile: string; gender?: Gender; className: string }) {
+  if (tile !== 'bathroom') return <TileIcon name={tile} className={className} />
+  return (
+    <span className="relative inline-block" data-help-badge>
+      <TileIcon name={iconFor(tile, gender)} className={className} />
+      <span className="absolute -bottom-1 -right-3 grid size-[55%] place-items-center rounded-full bg-care text-white ring-2 ring-paper">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+          focusable="false"
+          className="size-[70%]"
+          data-icon="help"
+        >
+          {HAND}
+        </svg>
+      </span>
+    </span>
+  )
+}
+
 export function TileIcon({ name, className = 'size-10' }: { name: string; className?: string }) {
   return (
     <svg
