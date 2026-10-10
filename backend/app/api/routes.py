@@ -111,6 +111,7 @@ class IntakeBody(BaseModel):
 
     name: str = Field(min_length=1, max_length=40)
     age: int = Field(ge=0, le=120)
+    gender: Literal["female", "male", "unspecified"] = "unspecified"
     clinical_notes: str = Field(default="", max_length=MAX_NOTES_LEN)
     preferred_language: Language | None = None
 
@@ -136,6 +137,7 @@ def save_intake(room_id: str, body: IntakeBody, request: Request) -> dict:
         update={
             "patient_alias": body.name,
             "age": body.age,
+            "gender": body.gender,
             "clinical_notes": body.clinical_notes or None,
             "preferred_language": body.preferred_language or room.preferred_language,
             "profile": result.profile,
@@ -155,6 +157,7 @@ def reset_intake(room_id: str, request: Request) -> RoomView:
         update={
             "patient_alias": "",
             "age": None,
+            "gender": "unspecified",
             "clinical_notes": None,
             "profile": PatientProfile(),
             "intake_complete": False,

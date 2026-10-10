@@ -132,6 +132,8 @@ export interface Room {
   primary_nurse: string
   profile: PatientProfile
   age: number | null
+  /** Only used for the bathroom icon. */
+  gender: 'female' | 'male' | 'unspecified'
   /** False until the bedside intake form is filled in (the clinical notes are never sent back). */
   intake_complete: boolean
   intake_at: string | null
@@ -140,6 +142,7 @@ export interface Room {
 export interface IntakeBody {
   name: string
   age: number
+  gender: 'female' | 'male' | 'unspecified'
   clinical_notes: string
   preferred_language?: Language
 }

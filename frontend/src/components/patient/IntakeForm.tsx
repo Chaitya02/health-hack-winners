@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { DASHBOARD, DEMO_PATIENTS } from '../../i18n/dashboard'
-import { HTML_LANG, STRINGS } from '../../i18n/strings'
 import { api } from '../../lib/api'
-import { LANGUAGES, type Language, type Room } from '../../types/ticket'
+import type { Language, Room } from '../../types/ticket'
+import { LanguageSelect } from './LanguageSelect'
 
 /**
  * Bedside intake (hackathon: the patient fills it in). Name, age and clinical notes; the notes
@@ -22,6 +22,7 @@ export function IntakeForm({
   const d = DASHBOARD[lang]
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
+  const [gender, setGender] = useState<'female' | 'male' | 'unspecified'>('unspecified')
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,6 +35,7 @@ export function IntakeForm({
       const { room } = await api.saveIntake(roomId, {
         name: name.trim(),
         age: Number(age),
+        gender,
         clinical_notes: notes.trim(),
         preferred_language: lang,
       })
@@ -50,20 +52,7 @@ export function IntakeForm({
     <main className="mx-auto max-w-3xl px-5 py-8 text-[22px] sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[40px] font-bold leading-tight">{d.welcome}</h1>
-        <label className="flex items-center gap-3 text-[20px]">
-          <span>{STRINGS[lang].language}</span>
-          <select
-            value={lang}
-            onChange={(e) => onLangChange(e.target.value as Language)}
-            className="min-h-16 rounded-xl border-2 border-pine bg-paper px-4 text-[22px]"
-          >
-            {LANGUAGES.map((l) => (
-              <option key={l} value={l} lang={HTML_LANG[l]}>
-                {STRINGS[l].languageName}
-              </option>
-            ))}
-          </select>
-        </label>
+        <LanguageSelect lang={lang} onChange={onLangChange} />
       </div>
       <p className="mt-2 text-pine-soft">{d.intakeIntro}</p>
 
@@ -94,6 +83,29 @@ export function IntakeForm({
             />
           </label>
         </div>
+        <fieldset>
+          <legend className="font-bold">{d.gender}</legend>
+          <div className="mt-2 grid grid-cols-3 gap-3">
+            {(['female', 'male', 'unspecified'] as const).map((g) => (
+              <label
+                key={g}
+                className={`flex min-h-16 cursor-pointer items-center justify-center rounded-2xl border-2 px-3 text-center text-[20px] font-bold ${
+                  gender === g ? 'border-pine bg-pine text-white' : 'border-pine bg-paper text-pine'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="gender"
+                  value={g}
+                  checked={gender === g}
+                  onChange={() => setGender(g)}
+                  className="sr-only"
+                />
+                {g === 'female' ? d.female : g === 'male' ? d.male : d.preferNot}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <label className="block font-bold">
           {d.notes}
           <textarea
@@ -131,6 +143,7 @@ export function IntakeForm({
               onClick={() => {
                 setName(p.name)
                 setAge(String(p.age))
+                setGender(p.gender)
                 setNotes(p.clinical_notes)
               }}
               className="min-h-12 rounded-xl border-2 border-line bg-paper px-4 hover:border-pine"

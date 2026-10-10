@@ -32,12 +32,14 @@ describe('Screensaver', () => {
     expect(screen.getByText('Housekeeping')).toBeInTheDocument()
     expect(screen.getByText('On the way')).toBeInTheDocument()
     expect(screen.queryByText('Food Services')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
   })
 
-  it('a tap anywhere wakes; the nurse button calls the nurse instead', async () => {
+  it('a tap anywhere wakes; Emergency (tapped twice) calls the nurse instead', async () => {
     const { onWake, onNurse } = renderSaver()
-    await userEvent.click(screen.getByRole('button', { name: /i need my nurse/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^emergency$/i }))
+    expect(onNurse).not.toHaveBeenCalled() // first tap only asks
+    await userEvent.click(screen.getByRole('button', { name: /^emergency$/i }))
     expect(onNurse).toHaveBeenCalledOnce()
     expect(onWake).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: 'Tap anywhere to continue' }))

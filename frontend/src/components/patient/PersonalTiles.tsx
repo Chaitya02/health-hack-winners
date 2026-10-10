@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { DASHBOARD } from '../../i18n/dashboard'
+import { ChevronDownIcon } from '../icons'
 import type { Strings } from '../../i18n/strings'
 import type { Language } from '../../types/ticket'
-import { MAIN_TILES, RequestTiles, type QuickTile } from './RequestTiles'
-
-const ICON: Record<string, string> = Object.fromEntries(
-  MAIN_TILES.flatMap((m) => (m.kind === 'group' ? m.items : [m])).map((i) => [i.key, i.icon]),
-)
+import { iconFor, TileIcon, type Gender } from '../tileIcons'
+import { RequestTiles, type QuickTile } from './RequestTiles'
 
 /** The patient's top buttons (personalised) and everything else behind "More requests". */
 export function PersonalTiles({
@@ -16,6 +14,7 @@ export function PersonalTiles({
   busy,
   large,
   onTap,
+  gender = 'unspecified',
 }: {
   top: QuickTile[]
   t: Strings
@@ -23,6 +22,7 @@ export function PersonalTiles({
   busy: boolean
   large: boolean
   onTap: (tile: QuickTile) => void
+  gender?: Gender
 }) {
   const d = DASHBOARD[lang]
   const [more, setMore] = useState(false)
@@ -42,9 +42,7 @@ export function PersonalTiles({
                 large ? 'min-h-44 text-[30px]' : 'min-h-36 text-[24px]'
               }`}
             >
-              <span aria-hidden="true" className={large ? 'text-[60px]' : 'text-[48px]'}>
-                {ICON[key]}
-              </span>
+              <TileIcon name={iconFor(key, gender)} className={`text-pine ${large ? 'size-16' : 'size-12'}`} />
               {t.tiles[key]}
             </button>
           </li>
@@ -59,11 +57,11 @@ export function PersonalTiles({
         className="mt-4 flex min-h-16 w-full items-center justify-between rounded-2xl border-2 border-line bg-paper px-5 font-bold hover:border-pine"
       >
         {more ? d.fewer : d.more}
-        <span aria-hidden="true">{more ? '▲' : '▼'}</span>
+        <ChevronDownIcon className={`size-7 transition-transform motion-reduce:transition-none ${more ? 'rotate-180' : ''}`} />
       </button>
       {more && (
         <div id="more-requests" className="-mt-4">
-          <RequestTiles t={t} busy={busy} onTap={onTap} large={large} exclude={top} />
+          <RequestTiles t={t} busy={busy} onTap={onTap} large={large} exclude={top} gender={gender} />
         </div>
       )}
     </section>

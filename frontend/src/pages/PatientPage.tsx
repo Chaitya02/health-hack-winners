@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Confirmation } from '../components/patient/Confirmation'
 import { InputPanel } from '../components/patient/InputPanel'
 import { IntakeForm } from '../components/patient/IntakeForm'
-import { NurseButton } from '../components/patient/NurseButton'
+import { EmergencyButton } from '../components/patient/EmergencyButton'
 import { PatientHeader } from '../components/patient/PatientHeader'
 import { PersonalTiles } from '../components/patient/PersonalTiles'
 import { RequestsPanel } from '../components/patient/RequestsPanel'
@@ -12,6 +12,7 @@ import { Screensaver } from '../components/patient/Screensaver'
 import { VoiceBubble } from '../components/patient/VoiceBubble'
 import { useIdle } from '../hooks/useIdle'
 import { useLiveTickets } from '../hooks/useLiveTickets'
+import { DASHBOARD } from '../i18n/dashboard'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
 import { layoutFor } from '../lib/accessibility'
 import { api, ApiError } from '../lib/api'
@@ -117,6 +118,7 @@ function Dashboard({
   const [result, setResult] = useState<CreateRequestResponse | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const t = STRINGS[lang]
+  const d = DASHBOARD[lang]
   const screensaver = useIdle(IDLE_MS, !busy && !panelOpen)
   const audio = room.profile?.dashboard === 'audio'
   const base = layoutFor(room.profile)
@@ -161,7 +163,7 @@ function Dashboard({
     [roomId, lang, layout.readAloud, onLangChange, t],
   )
 
-  const callNurse = () => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' }, t.tiles.nurse)
+  const callNurse = () => void send({ text: t.tiles.nurse, input_mode: 'quick_tap', tile: 'nurse' }, d.emergency)
   const tap = (tile: QuickTile) => void send({ text: t.tiles[tile], input_mode: 'quick_tap', tile }, t.tiles[tile])
   const sendVoice = useCallback((text: string) => void send({ text, input_mode: 'voice' }), [send])
   const closePanel = useCallback(() => setPanelOpen(false), [])
@@ -186,7 +188,6 @@ function Dashboard({
         name={room.patient_alias}
         age={room.age}
         lang={lang}
-        t={t}
         openCount={openCount}
         onLangChange={onLangChange}
         onOpenRequests={() => setPanelOpen(true)}
@@ -198,8 +199,12 @@ function Dashboard({
           <Confirmation result={result} t={t} onDone={() => setResult(null)} />
         ) : (
           <>
-            <h1 className="text-[34px] font-bold leading-tight sm:text-[40px]">{t.greeting(room.patient_alias)}</h1>
-            <NurseButton t={t} busy={busy} onPress={callNurse} />
+            <EmergencyButton
+              lang={lang}
+              busy={busy}
+              onConfirm={callNurse}
+              onArm={(message) => layout.readAloud && speak(message, t.speechLang)}
+            />
             {audio ? (
               <VoiceBubble t={t} lang={lang} busy={busy} onSend={sendVoice} />
             ) : (
@@ -216,7 +221,7 @@ function Dashboard({
                 {error}
               </p>
             )}
-            <PersonalTiles top={top} t={t} lang={lang} busy={busy} large={layout.large} onTap={tap} />
+            <PersonalTiles top={top} t={t} lang={lang} busy={busy} large={layout.large} onTap={tap} gender={room.gender} />
           </>
         )}
       </main>

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useSpeech } from '../../hooks/useSpeech'
+import { MicIcon, StopIcon } from '../icons'
 import type { Strings } from '../../i18n/strings'
 import type { InputMode } from '../../types/ticket'
 
@@ -55,9 +56,7 @@ export function InputPanel({
               speech.listening ? 'bg-pine text-white' : 'bg-care text-white hover:bg-care-deep'
             }`}
           >
-            <span aria-hidden="true" className="text-[40px]">
-              {speech.listening ? '◼' : '🎙️'}
-            </span>
+            <span aria-hidden="true">{speech.listening ? <StopIcon /> : <MicIcon />}</span>
             <span className="text-[22px]">{speech.listening ? t.micStop : t.micStart}</span>
           </button>
         )}

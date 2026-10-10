@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSpeech } from '../../hooks/useSpeech'
 import { DASHBOARD } from '../../i18n/dashboard'
+import { MicIcon, StopIcon } from '../icons'
 import type { Strings } from '../../i18n/strings'
 import type { Language } from '../../types/ticket'
 
@@ -78,8 +79,8 @@ export function VoiceBubble({
             className={`absolute inset-0 rounded-full ${listening ? 'animate-spin motion-reduce:animate-none' : ''}`}
             style={{ background: SWIRL, animationDuration: '6s' }}
           />
-          <span aria-hidden="true" className="relative grid size-28 place-items-center rounded-full bg-white/90 text-[56px]">
-            {listening ? '◼' : '🎙️'}
+          <span aria-hidden="true" className="relative grid size-28 place-items-center rounded-full bg-white/90 text-pine">
+            {listening ? <StopIcon className="size-12" /> : <MicIcon className="size-14" />}
           </span>
         </button>
       </div>

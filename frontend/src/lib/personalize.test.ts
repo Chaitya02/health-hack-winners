@@ -31,3 +31,15 @@ describe('topTiles', () => {
     expect([...top, ...rest].sort()).toEqual([...ALL_TILES].sort())
   })
 })
+
+describe('iconFor (bathroom follows gender)', async () => {
+  const { iconFor } = await import('../components/tileIcons')
+  it.each([
+    ['female', 'bathroom-female'],
+    ['male', 'bathroom-male'],
+    ['unspecified', 'bathroom'],
+  ] as const)('%s → %s', (gender, icon) => {
+    expect(iconFor('bathroom', gender)).toBe(icon)
+    expect(iconFor('pillow', gender)).toBe('pillow')
+  })
+})

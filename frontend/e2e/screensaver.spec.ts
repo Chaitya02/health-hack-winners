@@ -18,7 +18,7 @@ test('(f) idle patient screen shows the screensaver with the nurse button and op
   await expect(saver).toBeVisible()
   // toBeVisible() is true even at opacity 0, so check the patient can actually see it.
   await expect(saver).toHaveCSS('opacity', '1')
-  await expect(saver.getByRole('button', { name: /i need my nurse/i })).toBeEnabled()
+  await expect(saver.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
   await expect(saver).toContainText('Housekeeping')
   if (SHOTS) await patient.screenshot({ path: `${SHOTS}/screensaver-tablet.png` })
 

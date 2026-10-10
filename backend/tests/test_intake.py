@@ -58,12 +58,13 @@ def test_npo_keeps_food_and_drink_out_of_the_top_buttons():
 
 def test_intake_saves_profile_and_never_returns_the_notes(client):
     assert client.get("/api/rooms/400").json()["intake_complete"] is False
-    r = intake(client, LOW_VISION, preferred_language="es")
+    r = intake(client, LOW_VISION, preferred_language="es", gender="female")
     assert r.status_code == 200
     body = r.json()
     assert body["detected"] == ["low_vision", "fall_risk", "frequent_bathroom"]
     room = body["room"]
     assert (room["patient_alias"], room["age"], room["preferred_language"]) == ("Rosa", 82, "es")
+    assert room["gender"] == "female"
     assert room["intake_complete"] is True and room["profile"]["dashboard"] == "audio"
     for r in (body, client.get("/api/rooms/400").json()):
         assert "clinical_notes" not in str(r) and "furosemide" not in str(r)
@@ -81,6 +82,7 @@ def test_reset_starts_over_and_hides_the_previous_patients_requests(client):
     assert len(client.get("/api/rooms/400/tickets").json()) == 1
     r = client.delete("/api/rooms/400/intake").json()
     assert r["intake_complete"] is False and r["patient_alias"] == "" and r["age"] is None
+    assert r["gender"] == "unspecified"
     assert r["profile"]["notes_flags"] == []
     assert client.get("/api/rooms/400/tickets").json() == []
     intake(client, POST_OP, name="Sam", age=54)
@@ -95,6 +97,7 @@ def test_reset_starts_over_and_hides_the_previous_patients_requests(client):
         {"name": "A", "age": 121},
         {"name": "A" * 41, "age": 50},
         {"name": "A", "age": 50, "clinical_notes": "x" * 1001},
+        {"name": "A", "age": 50, "gender": "robot"},
     ],
 )
 def test_intake_validation(client, body):

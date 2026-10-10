@@ -25,9 +25,9 @@ describe('PatientPage', () => {
   it('shows greeting, the top 3 buttons, the nurse button, and the rest under More requests', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
-    expect(await screen.findByRole('heading', { name: /hi maya/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Maya' })).toBeInTheDocument()
     const top = within(screen.getByTestId('top-tiles')).getAllByRole('button')
-    expect(top.map((b) => b.textContent)).toEqual(['💧Water', '🛏️Pillow', '🚻Help to the bathroom'])
+    expect(top.map((b) => b.textContent)).toEqual(['Water', 'Pillow', 'Help to the bathroom'])
     expect(screen.queryByRole('button', { name: 'Comfort' })).not.toBeInTheDocument()
     await openMore()
     // The top 3 aren't repeated in the dropdown (Bathroom is a top tile, so its main tile goes).
@@ -35,7 +35,7 @@ describe('PatientPage', () => {
     for (const label of ['Thirsty', 'Comfort', 'Food & medication', 'Emotional support']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
-    expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^emergency$/i })).toBeInTheDocument()
   })
 
   it.each([
@@ -51,7 +51,7 @@ describe('PatientPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: group }))
     expect(screen.getByRole('heading', { name: group })).toHaveFocus()
     for (const label of items) expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
     await userEvent.click(screen.getByRole('button', { name: /back/i }))
     expect(screen.getByRole('button', { name: 'Comfort' })).toBeInTheDocument()
   })
@@ -117,8 +117,8 @@ describe('PatientPage', () => {
     expect(document.documentElement.lang).toBe('es')
   })
 
-  it('shows a red nurse confirmation for clinical requests', async () => {
-    mockFetch({
+  it('Emergency needs a second tap, then shows a red nurse confirmation', async () => {
+    const calls = mockFetch({
       'GET /api/rooms/401/tickets': [],
       'GET /api/rooms/401': ROOM,
       'POST /api/requests': {
@@ -130,7 +130,12 @@ describe('PatientPage', () => {
       },
     })
     renderPatient()
-    await userEvent.click(await screen.findByRole('button', { name: /i need my nurse/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /^emergency$/i }))
+    // First tap: a toast asks to tap again; nothing is sent yet. Second tap on the same button sends.
+    expect(screen.getByTestId('emergency-toast')).toHaveTextContent('Tap Emergency again')
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: /^emergency$/i }))
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ tile: 'nurse', input_mode: 'quick_tap' })
     const box = await screen.findByTestId('confirmation')
     expect(box).toHaveTextContent('Your nurse has been alerted')
     expect(box.className).toContain('bg-bell')
@@ -139,7 +144,7 @@ describe('PatientPage', () => {
   it('updates request status live from the room channel', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
-    await screen.findByRole('heading', { name: /hi maya/i })
+    await screen.findByRole('heading', { name: 'Maya' })
     await waitFor(() => expect(FakeWebSocket.instances.length).toBeGreaterThan(0))
     const ws = FakeWebSocket.instances.at(-1)!
     ws.open()
@@ -160,7 +165,7 @@ describe('PatientPage', () => {
       mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
       renderPatient()
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-      await screen.findByRole('heading', { name: /hi maya/i })
+      await screen.findByRole('heading', { name: 'Maya' })
       await user.type(screen.getByLabelText(/type your request/i), 'extra pillow')
 
       act(() => vi.advanceTimersByTime(179_000))

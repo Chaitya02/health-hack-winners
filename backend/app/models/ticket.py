@@ -19,6 +19,8 @@ MAX_TEXT_LEN = 500
 MAX_NOTE_LEN = 200
 MAX_NOTES_LEN = 1000
 
+Gender = Literal["female", "male", "unspecified"]
+
 
 def utc_now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -54,6 +56,8 @@ class Room(BaseModel):
     primary_nurse: str
     profile: PatientProfile = Field(default_factory=PatientProfile)
     age: int | None = Field(default=None, ge=0, le=120)
+    # Only used to pick the bathroom icon on the bedside screen.
+    gender: Gender = "unspecified"
     # Free-text notes from the intake form. Stored for re-deriving the profile, never returned by
     # the open room endpoints (see RoomView).
     clinical_notes: str | None = Field(default=None, max_length=MAX_NOTES_LEN)
@@ -71,6 +75,7 @@ class RoomView(BaseModel):
     primary_nurse: str
     profile: PatientProfile
     age: int | None
+    gender: Gender = "unspecified"
     intake_complete: bool
     intake_at: str | None
 
