@@ -1,0 +1,10 @@
+@import 'tailwindcss';
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Noto Sans Devanagari',
+    'Noto Sans Gujarati', 'Noto Sans SC', sans-serif;
+}
