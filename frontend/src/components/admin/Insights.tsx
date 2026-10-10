@@ -286,7 +286,6 @@ function StaffWorkload({ staff }: { staff: StaffStats[] }) {
       <h3 id="staff-workload" className="font-bold">
         Staff on duty
       </h3>
-      <p className="text-sm text-pine-soft">Requests go to whoever is available with the fewest open tasks.</p>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[44rem] text-left text-sm">
           <thead className="text-pine-soft">

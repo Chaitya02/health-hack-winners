@@ -20,14 +20,11 @@ export function StaffPanel({ staff, now, waiting }: { staff: StaffView[]; now: n
         <h2 id="schedule" className="text-lg font-bold">
           Today’s schedule
         </h2>
-        <p className="text-sm text-pine-soft">
-          New requests go to whoever is available with the fewest open tasks
-          {waiting > 0 && (
-            <span className="ml-2 rounded-full bg-wait-tint px-2 py-0.5 font-bold text-wait" data-testid="waiting-count">
-              {waiting} waiting for someone available
-            </span>
-          )}
-        </p>
+        {waiting > 0 && (
+          <span className="rounded-full bg-wait-tint px-2 py-0.5 text-sm font-bold text-wait" data-testid="waiting-count">
+            {waiting} waiting for someone available
+          </span>
+        )}
       </div>
       <ul className="mt-3 space-y-3">
         {staff.map((s) => (
