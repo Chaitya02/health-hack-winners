@@ -1,15 +1,18 @@
+import asyncio
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import health, routes
+from app.api import health, routes, ws
 from app.classifier import Classifier, build_classifier
 from app.config import Settings, get_settings
 from app.logging_setup import configure_logging
 from app.realtime import NullPublisher, Publisher
+from app.realtime.hub import LocalHub
 from app.repo import RoomRepository, TicketRepository, dynamo_resource, ensure_tables
 from app.security import RateLimiter, StaffAuth
 from app.services import TicketService
@@ -26,7 +29,15 @@ def create_app(
     settings = settings or get_settings()
     configure_logging(settings.log_level)
 
-    app = FastAPI(title="Ting-ting Call Bell Router", version=settings.version)
+    hub = LocalHub()
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI):
+        hub.attach_loop(asyncio.get_running_loop())
+        yield
+
+    app = FastAPI(title="Ting-ting Call Bell Router", version=settings.version, lifespan=lifespan)
+    app.state.hub = hub
     app.state.settings = settings
 
     db = resource or dynamo_resource(settings)
@@ -40,7 +51,9 @@ def create_app(
         settings.staff_pin, settings.staff_token_secret, settings.staff_token_ttl_s
     )
     app.state.rate_limiter = RateLimiter(settings.rate_limit_per_minute)
-    app.state.publisher = publisher or NullPublisher()
+    if publisher is None:
+        publisher = hub if settings.realtime_mode == "local" else NullPublisher()
+    app.state.publisher = publisher
     app.state.service = TicketService(
         tickets=app.state.tickets,
         classifier=classifier or build_classifier(settings),
@@ -62,6 +75,7 @@ def create_app(
     )
     app.include_router(health.router)
     app.include_router(routes.router)
+    app.include_router(ws.router)
     log.info(
         "app started",
         extra={"classifier_mode": settings.classifier_mode, "app_env": settings.app_env},
