@@ -5,6 +5,7 @@ import { useNow } from '../hooks/useNow'
 import { STRINGS } from '../i18n/strings'
 import { playAlert, unlockAudio } from '../lib/alertSound'
 import { api, ApiError } from '../lib/api'
+import { autoSignIn, demoPins } from '../lib/config'
 import { aging, formatWait, secondsSince, type Aging } from '../lib/time'
 import {
   CLOSED_STATUSES,
@@ -52,16 +53,49 @@ export default function StaffPage() {
 
 function StaffGate({ department }: { department: Department }) {
   const [token, setToken] = useState<string | null>(() => readToken(department))
+  const auto = autoSignIn()
+  const [autoFailed, setAutoFailed] = useState(false)
   useEffect(() => {
     document.title = `${DEPARTMENT_LABELS[department]} · Ting-ting`
     document.documentElement.lang = 'en'
   }, [department])
 
-  if (!token) return <Login department={department} onToken={setToken} />
+  // Demo: sign in with the demo PIN so the link opens straight onto the dashboard.
+  useEffect(() => {
+    if (token || !auto || autoFailed) return
+    let alive = true
+    api
+      .login(department, demoPins().staff)
+      .then(({ token: t }) => {
+        if (!alive) return
+        try {
+          sessionStorage.setItem(tokenKey(department), t)
+        } catch {
+          // session storage unavailable: token lives in memory only
+        }
+        setToken(t)
+      })
+      .catch(() => alive && setAutoFailed(true)) // fall back to the PIN form
+    return () => {
+      alive = false
+    }
+  }, [token, auto, autoFailed, department])
+
+  if (!token) {
+    if (auto && !autoFailed) {
+      return (
+        <main className="grid min-h-screen place-items-center p-6 text-xl text-pine-soft" aria-busy="true">
+          Opening {DEPARTMENT_LABELS[department]}…
+        </main>
+      )
+    }
+    return <Login department={department} onToken={setToken} />
+  }
   return (
     <Dashboard
       department={department}
       token={token}
+      canSignOut={!auto}
       onSignOut={() => {
         try {
           sessionStorage.removeItem(tokenKey(department))
@@ -144,10 +178,12 @@ function Dashboard({
   department,
   token,
   onSignOut,
+  canSignOut = true,
 }: {
   department: Department
   token: string
   onSignOut: () => void
+  canSignOut?: boolean
 }) {
   const isNursing = department === 'nursing'
   const [diverted, setDiverted] = useState<number | null>(null)
@@ -225,9 +261,11 @@ function Dashboard({
             </p>
           )}
           <LiveBadge status={status} />
-          <button type="button" onClick={onSignOut} className="min-h-11 rounded-lg border-2 border-line px-3 hover:border-pine">
-            Sign out
-          </button>
+          {canSignOut && (
+            <button type="button" onClick={onSignOut} className="min-h-11 rounded-lg border-2 border-line px-3 hover:border-pine">
+              Sign out
+            </button>
+          )}
         </div>
       </header>
 

@@ -7,10 +7,20 @@ export const SHOTS = process.env.SCREENSHOTS ? '../docs/screenshots' : null
 export async function staffPage(browser: Browser, dept: string): Promise<Page> {
   const page = await (await browser.newContext({ viewport: { width: 1100, height: 900 } })).newPage()
   await page.goto(`/${dept}`)
-  await page.getByLabel('Department PIN').fill(PIN)
-  await page.getByRole('button', { name: 'Sign in' }).click()
+  await signInIfAsked(page)
   await expect(page.getByTestId('live-status')).toHaveAttribute('data-status', 'live')
   return page
+}
+
+/** Dashboards sign themselves in for demos (VITE_AUTO_SIGN_IN); enter the PIN only if asked. */
+export async function signInIfAsked(page: Page) {
+  const pin = page.getByLabel('Department PIN')
+  const dashboard = page.getByTestId('live-status')
+  await expect(pin.or(dashboard)).toBeVisible()
+  if (await pin.isVisible()) {
+    await pin.fill(PIN)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+  }
 }
 
 export async function patientPage(browser: Browser, room: string): Promise<Page> {
