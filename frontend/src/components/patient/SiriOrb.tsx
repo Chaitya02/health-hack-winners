@@ -3,7 +3,8 @@ import { MicIcon, StopIcon } from '../icons'
 const SWIRL = 'conic-gradient(from 90deg, #0f6e66, #3b82f6, #a855f7, #ec4899, #f59e0b, #0f6e66)'
 
 const SIZES = {
-  xl: { box: 'size-80', orb: 'size-72', core: 'size-36', mic: 'size-16', stop: 'size-14' },
+  // Shrinks with the window height so the dashboard fits shorter laptop screens.
+  xl: { box: 'size-[min(20rem,34vh)]', orb: 'size-[min(18rem,30vh)]', core: 'size-[min(9rem,15vh)]', mic: 'size-[min(4rem,7vh)]', stop: 'size-[min(3.5rem,6vh)]' },
   lg: { box: 'size-64', orb: 'size-56', core: 'size-28', mic: 'size-14', stop: 'size-12' },
   sm: { box: 'size-36', orb: 'size-32', core: 'size-16', mic: 'size-9', stop: 'size-8' },
 }
