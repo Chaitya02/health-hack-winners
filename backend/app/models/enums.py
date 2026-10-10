@@ -9,6 +9,9 @@ class Category(StrEnum):
     DIETARY = "DIETARY"
     TECH_AMENITIES = "TECH_AMENITIES"
     UNCLEAR = "UNCLEAR"
+    # Last on purpose: enum order is the merge-severity order in classifier/decision.py, so any
+    # clinical category outranks it when intents for the same department are merged.
+    EMOTIONAL_SUPPORT = "EMOTIONAL_SUPPORT"
 
 
 class Department(StrEnum):
@@ -30,6 +33,24 @@ class Status(StrEnum):
     IN_PROGRESS = "IN_PROGRESS"
     RESOLVED = "RESOLVED"
     ESCALATED = "ESCALATED"
+
+
+class Role(StrEnum):
+    """Who is acting. Staff roles map 1:1 to departments except admin."""
+
+    PATIENT = "patient"
+    NURSE = "nurse"
+    HOUSEKEEPING = "housekeeping"
+    FOOD = "food"
+    IT = "it"
+    ADMIN = "admin"
+    SYSTEM = "system"
+
+
+class AttendantPreference(StrEnum):
+    ANY = "any"
+    FEMALE = "female"
+    MALE = "male"
 
 
 class InputMode(StrEnum):

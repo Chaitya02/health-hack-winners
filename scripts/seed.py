@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.config import Settings
-from app.models import Language, Room
+from app.models import Accessibility, AttendantPreference, Language, PatientProfile, Room
 from app.repo import RoomRepository, dynamo_resource, ensure_tables
 
 UNIT = "4 West Med-Surg"
@@ -47,6 +47,17 @@ PATIENTS: list[tuple[str, Language]] = [
 ]
 
 
+# Demo patient profiles for the personalization stories (US-4, US-5). Rooms 401–405 are used by
+# the Playwright suite, so profiles live on 410–418 to keep those flows unchanged.
+PROFILES: dict[str, PatientProfile] = {
+    "410": PatientProfile(npo=True, npo_reason="Nothing to eat or drink before surgery today."),
+    "412": PatientProfile(fall_risk=True, attendant_preference=AttendantPreference.FEMALE),
+    "414": PatientProfile(accessibility=Accessibility(low_vision=True), diet="Low sodium"),
+    "416": PatientProfile(accessibility=Accessibility(speech_difficulty=True), fall_risk=True),
+    "418": PatientProfile(accessibility=Accessibility(cannot_write=True), diet="Diabetic"),
+}
+
+
 def build_rooms() -> list[Room]:
     return [
         Room(
@@ -55,6 +66,7 @@ def build_rooms() -> list[Room]:
             patient_alias=alias,
             preferred_language=lang,
             primary_nurse=NURSES[i // 5],
+            profile=PROFILES.get(str(401 + i), PatientProfile()),
         )
         for i, (alias, lang) in enumerate(PATIENTS)
     ]
@@ -87,6 +99,7 @@ def main() -> None:
     langs = Counter(str(r.preferred_language) for r in rooms)
     print("  preferred languages: " + ", ".join(f"{k}={v}" for k, v in sorted(langs.items())))
     nurses = Counter(r.primary_nurse for r in rooms)
+    print(f"  patient profiles: rooms {', '.join(sorted(PROFILES))}")
     print("  primary nurses: " + ", ".join(f"{k}={v}" for k, v in nurses.items()))
 
 

@@ -10,6 +10,20 @@ ROUTING: dict[Category, tuple[Department, Priority]] = {
     Category.COMFORT_SUPPLIES: (Department.HOUSEKEEPING, Priority.NORMAL),
     Category.DIETARY: (Department.FOOD, Priority.NORMAL),
     Category.TECH_AMENITIES: (Department.IT, Priority.LOW),
+    # Routed to the nurse until we decide on a dedicated support team (chaplain / social work).
+    Category.EMOTIONAL_SUPPORT: (Department.NURSING, Priority.NORMAL),
+}
+
+# Severity orders requests inside one department's queue: 5 = most severe, 1 = least.
+SEVERITY: dict[Category, int] = {
+    Category.URGENT_CLINICAL: 5,
+    Category.NON_URGENT_CLINICAL: 3,
+    Category.UNCLEAR: 3,
+    Category.EMOTIONAL_SUPPORT: 3,
+    Category.ENVIRONMENT_CLEANING: 2,
+    Category.COMFORT_SUPPLIES: 2,
+    Category.DIETARY: 2,
+    Category.TECH_AMENITIES: 1,
 }
 
 DEPARTMENT_LABELS: dict[Department, str] = {
@@ -22,3 +36,7 @@ DEPARTMENT_LABELS: dict[Department, str] = {
 
 def route(category: Category) -> tuple[Department, Priority]:
     return ROUTING[category]
+
+
+def default_severity(category: Category) -> int:
+    return SEVERITY[category]

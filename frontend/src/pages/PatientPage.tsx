@@ -44,6 +44,8 @@ function toView(e: TicketEvent): PatientTicketView {
     english_summary: t.english_summary,
     patient_confirmation: t.patient_confirmation,
     created_at: t.created_at,
+    eta_minutes: t.eta_minutes,
+    history: t.history,
   }
 }
 

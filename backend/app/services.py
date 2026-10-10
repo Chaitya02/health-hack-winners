@@ -16,37 +16,14 @@ from app.models import (
     Status,
     Ticket,
     TicketAudit,
+    default_severity,
     utc_now_iso,
 )
 from app.realtime import Publisher
 from app.repo import TicketRepository, new_id
+from app.tiles import QUICK_TAP_TILES
 
 log = logging.getLogger("tingting.service")
-
-# Quick-tap tiles are deterministic: no LLM call, instant and demo-proof.
-QUICK_TAP_TILES: dict[str, tuple[Category, str, list[str]]] = {
-    "water": (Category.DIETARY, "Patient requests water.", ["water"]),
-    "ice": (Category.DIETARY, "Patient requests ice.", ["ice"]),
-    "pillow": (Category.COMFORT_SUPPLIES, "Patient requests an extra pillow.", ["pillow"]),
-    "blanket": (Category.COMFORT_SUPPLIES, "Patient requests a blanket.", ["blanket"]),
-    "bathroom": (
-        Category.NON_URGENT_CLINICAL,
-        "Patient needs help getting to the bathroom (mobility / fall risk).",
-        [],
-    ),
-    "temperature": (
-        Category.ENVIRONMENT_CLEANING,
-        "Patient asks to adjust the room temperature.",
-        [],
-    ),
-    "tv": (Category.TECH_AMENITIES, "Patient needs help with the TV / remote.", ["tv remote"]),
-    "food": (Category.DIETARY, "Patient asks about food / the menu.", ["menu"]),
-    "nurse": (
-        Category.URGENT_CLINICAL,
-        "Patient pressed 'I need my nurse'.",
-        [],
-    ),
-}
 
 
 class InvalidTransition(Exception):
@@ -177,6 +154,7 @@ class TicketService:
             ticket.department = Department.NURSING
             ticket.category = Category.URGENT_CLINICAL
             ticket.priority = Priority.HIGH
+            ticket.severity = default_severity(Category.URGENT_CLINICAL)
             ticket.clinical_risk_flag = True
             ticket.status = Status.ESCALATED
             ticket.acknowledged_at = None

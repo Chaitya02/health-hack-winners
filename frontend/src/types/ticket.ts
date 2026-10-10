@@ -8,6 +8,7 @@ export const CATEGORIES = [
   'DIETARY',
   'TECH_AMENITIES',
   'UNCLEAR',
+  'EMOTIONAL_SUPPORT', // last on purpose: matches backend enum (merge-severity) order
 ] as const
 export type Category = (typeof CATEGORIES)[number]
 
@@ -17,6 +18,20 @@ export type Department = (typeof DEPARTMENTS)[number]
 export type Priority = 'HIGH' | 'NORMAL' | 'LOW'
 export type Status = 'NEW' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'ESCALATED'
 export type InputMode = 'text' | 'voice' | 'quick_tap'
+
+export const ROLES = ['patient', 'nurse', 'housekeeping', 'food', 'it', 'admin', 'system'] as const
+export type Role = (typeof ROLES)[number]
+
+export type AttendantPreference = 'any' | 'female' | 'male'
+
+/** 5 = most severe, 1 = least. Orders requests inside one department's queue. */
+export type Severity = 1 | 2 | 3 | 4 | 5
+
+export interface StatusChange {
+  status: Status
+  at: string
+  by_role: Role
+}
 
 export const LANGUAGES = ['en', 'es', 'hi', 'gu', 'zh', 'ht', 'pt'] as const
 export type Language = (typeof LANGUAGES)[number]
@@ -41,6 +56,7 @@ export interface Ticket {
   category: Category
   department: Department
   priority: Priority
+  severity: Severity
   confidence: number
   clinical_risk_flag: boolean
   safety_reasons: string[]
@@ -51,6 +67,8 @@ export interface Ticket {
   acknowledged_at: string | null
   resolved_at: string | null
   escalated_from: Department | null
+  eta_minutes: number | null
+  history: StatusChange[]
   model_id: string
   prompt_version: string
   latency_ms: number
@@ -66,6 +84,23 @@ export interface PatientTicketView {
   english_summary: string
   patient_confirmation: string
   created_at: string
+  eta_minutes: number | null
+  history: StatusChange[]
+}
+
+export interface Accessibility {
+  low_vision: boolean
+  speech_difficulty: boolean
+  cannot_write: boolean
+}
+
+export interface PatientProfile {
+  npo: boolean
+  npo_reason: string | null
+  fall_risk: boolean
+  diet: string | null
+  accessibility: Accessibility
+  attendant_preference: AttendantPreference
 }
 
 export interface Room {
@@ -74,6 +109,7 @@ export interface Room {
   patient_alias: string
   preferred_language: Language
   primary_nurse: string
+  profile: PatientProfile
 }
 
 export interface CreateRequestBody {
