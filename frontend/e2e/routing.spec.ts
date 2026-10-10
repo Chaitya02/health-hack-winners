@@ -76,7 +76,7 @@ test('(d) staff escalates a ticket → it appears in Nursing', async ({ browser 
   const id = tickets[0].ticket_id
   const hkCard = ticketCard(housekeeping, id)
   await expect(hkCard).toBeVisible()
-  await hkCard.getByRole('button', { name: /this is clinical/i }).click()
+  await hkCard.getByRole('button', { name: /send to nurse/i }).click()
   await expect(hkCard).toHaveCount(0)
   const nurseCard = ticketCard(nursing, id)
   await expect(nurseCard).toBeVisible()

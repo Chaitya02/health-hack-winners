@@ -94,6 +94,28 @@ describe('StaffPage', () => {
     expect(screen.getByText(/cancelled by patient/i)).toBeInTheDocument()
   })
 
+  it('each card shows the request icon and only its next step, plus Done', async () => {
+    sessionStorage.setItem('tingting.staff.housekeeping', 'tok')
+    const calls = mockFetch({
+      'GET /api/queues/housekeeping': [
+        ticket({ ticket_id: 'new', tile: 'pillow' }),
+        ticket({ ticket_id: 'seen', status: 'ACKNOWLEDGED', room_id: '402' }),
+        ticket({ ticket_id: 'going', status: 'IN_PROGRESS', room_id: '403' }),
+      ],
+      'PATCH /api/tickets/going': ticket({ status: 'RESOLVED' }),
+    })
+    renderStaff('housekeeping')
+    const rows = await screen.findAllByTestId('ticket')
+    const buttons = (row: HTMLElement) => within(row).getAllByRole('button').map((b) => b.textContent)
+    const byId = (id: string) => rows.find((r) => r.dataset.ticketId === id)!
+    expect(byId('new').querySelector('[data-icon="pillow"]')).not.toBeNull()
+    expect(buttons(byId('new'))).toEqual(['Acknowledge', 'Done', 'Clinical? Send to nurse'])
+    expect(buttons(byId('seen'))).toEqual(['On my way', 'Done', 'Clinical? Send to nurse'])
+    expect(buttons(byId('going'))).toEqual(['Done', 'Clinical? Send to nurse'])
+    await userEvent.click(within(byId('going')).getByRole('button', { name: 'Done' }))
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ action: 'resolve' })
+  })
+
   it('shows reconnecting status when the socket drops', async () => {
     sessionStorage.setItem('tingting.staff.food', 'tok')
     mockFetch({ 'GET /api/queues/food': [] })
