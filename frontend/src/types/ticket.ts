@@ -160,3 +160,13 @@ export const DEPARTMENT_LABELS: Record<Department, string> = {
   food: 'Food Services',
   it: 'Unit Clerk / IT',
 }
+
+/**
+ * 409 detail from POST /api/requests when the patient's profile rules out a tile (e.g. water
+ * while NPO). ApiError.message carries it as JSON; `message` is already in the patient's language.
+ */
+export interface ProfileRefusal {
+  code: 'npo'
+  reason: string | null
+  message: string
+}
