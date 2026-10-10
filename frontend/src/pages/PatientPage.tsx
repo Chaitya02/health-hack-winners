@@ -194,35 +194,39 @@ function Dashboard({
         onStartOver={onStartOver}
       />
 
-      <main className="mx-auto max-w-5xl px-5 pb-10 pt-6 sm:px-8">
+      <main className="px-5 pb-10 pt-2 sm:px-8">
         {result ? (
           <Confirmation result={result} t={t} onDone={() => setResult(null)} />
         ) : (
-          <>
-            <EmergencyButton
-              lang={lang}
-              busy={busy}
-              onConfirm={callNurse}
-              onArm={(message) => layout.readAloud && speak(message, t.speechLang)}
-            />
-            {audio ? (
-              <VoiceBubble t={t} lang={lang} busy={busy} onSend={sendVoice} />
-            ) : (
-              <InputPanel
-                t={t}
+          <div className="grid items-start gap-x-10 lg:grid-cols-2">
+            <div>
+              <EmergencyButton
+                lang={lang}
                 busy={busy}
-                onSubmit={(text, mode) => send({ text, input_mode: mode })}
-                showText={layout.showText}
-                showMic={layout.showMic}
+                onConfirm={callNurse}
+                onArm={(message) => layout.readAloud && speak(message, t.speechLang)}
               />
-            )}
-            {error && (
-              <p role="alert" className="mt-4 rounded-2xl bg-bell-tint p-4 font-bold text-bell-deep">
-                {error}
-              </p>
-            )}
-            <PersonalTiles top={top} t={t} lang={lang} busy={busy} large={layout.large} onTap={tap} gender={room.gender} />
-          </>
+              {audio ? (
+                <VoiceBubble t={t} lang={lang} busy={busy} onSend={sendVoice} />
+              ) : (
+                <InputPanel
+                  t={t}
+                  busy={busy}
+                  onSubmit={(text, mode) => send({ text, input_mode: mode })}
+                  showText={layout.showText}
+                  showMic={layout.showMic}
+                />
+              )}
+              {error && (
+                <p role="alert" className="mt-4 rounded-2xl bg-bell-tint p-4 font-bold text-bell-deep">
+                  {error}
+                </p>
+              )}
+            </div>
+            <div className="lg:mt-5">
+              <PersonalTiles top={top} t={t} lang={lang} busy={busy} large={layout.large} onTap={tap} gender={room.gender} />
+            </div>
+          </div>
         )}
       </main>
     </div>

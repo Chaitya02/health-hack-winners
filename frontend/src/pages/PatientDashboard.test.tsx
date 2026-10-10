@@ -77,7 +77,11 @@ describe('Bedside intake → personalised dashboard', () => {
     renderRoom()
     expect(await screen.findByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /sam, 54/i })) // demo patient fills the form
-    expect(screen.getByLabelText('Your name')).toHaveValue('Sam')
+    expect(screen.getByLabelText(/^your name/i)).toHaveValue('Sam')
+    // Required fields are marked (and announced); clinical notes have no placeholder.
+    expect(screen.getByLabelText(/^your name/i)).toBeRequired()
+    expect(screen.getByLabelText(/^your name/i).closest('label')).toHaveTextContent('(Required)')
+    expect(screen.getByLabelText('Clinical notes')).not.toHaveAttribute('placeholder')
     await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
     const identity = await screen.findByTestId('patient-identity')
     expect(identity).toHaveTextContent(/^Sam, 54 years$/)

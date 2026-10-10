@@ -24,7 +24,7 @@ describe('App routes', () => {
   it('home is the bedside intake form for the demo room (400)', async () => {
     renderAt('/')
     expect(await screen.findByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
-    expect(screen.getByLabelText('Your name')).toBeInTheDocument()
+    expect(screen.getByLabelText(/^your name/i)).toBeInTheDocument()
   })
 
   it.each(['nursing', 'housekeeping', 'food', 'it'])('/%s is that department’s dashboard', async (dept) => {

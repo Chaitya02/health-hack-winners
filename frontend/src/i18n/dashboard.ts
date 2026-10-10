@@ -3,6 +3,7 @@ import type { Language } from '../types/ticket'
 export interface DashboardStrings {
   // Intake form
   welcome: string
+  required: string
   name: string
   age: string
   gender: string
@@ -10,7 +11,6 @@ export interface DashboardStrings {
   male: string
   preferNot: string
   notes: string
-  notesHint: string
   setUp: string
   settingUp: string
   intakeFailed: string
@@ -37,6 +37,7 @@ export interface DashboardStrings {
 export const DASHBOARD: Record<Language, DashboardStrings> = {
   en: {
     welcome: 'Welcome',
+    required: 'Required',
     name: 'Your name',
     age: 'Your age',
     gender: 'Gender',
@@ -44,7 +45,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: 'Male',
     preferNot: 'Prefer not to say',
     notes: 'Clinical notes',
-    notesHint: 'For example: low vision, fall risk, uses the bathroom often, nothing to eat before surgery.',
     setUp: 'Set up my screen',
     settingUp: 'Setting up…',
     intakeFailed: 'That didn’t save. Please try again.',
@@ -66,6 +66,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   es: {
     welcome: 'Bienvenido',
+    required: 'Obligatorio',
     name: 'Su nombre',
     age: 'Su edad',
     gender: 'Género',
@@ -73,7 +74,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: 'Hombre',
     preferNot: 'Prefiero no decirlo',
     notes: 'Notas clínicas',
-    notesHint: 'Por ejemplo: baja visión, riesgo de caída, va al baño a menudo, nada de comer antes de la cirugía.',
     setUp: 'Preparar mi pantalla',
     settingUp: 'Preparando…',
     intakeFailed: 'No se guardó. Inténtelo de nuevo.',
@@ -95,6 +95,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   hi: {
     welcome: 'स्वागत है',
+    required: 'आवश्यक',
     name: 'आपका नाम',
     age: 'आपकी उम्र',
     gender: 'लिंग',
@@ -102,7 +103,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: 'पुरुष',
     preferNot: 'बताना नहीं चाहते',
     notes: 'क्लिनिकल नोट्स',
-    notesHint: 'जैसे: कम दिखाई देना, गिरने का खतरा, बार-बार बाथरूम जाना, सर्जरी से पहले कुछ न खाना।',
     setUp: 'मेरी स्क्रीन तैयार करें',
     settingUp: 'तैयार हो रही है…',
     intakeFailed: 'सेव नहीं हुआ। कृपया फिर से कोशिश करें।',
@@ -124,6 +124,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   gu: {
     welcome: 'સ્વાગત છે',
+    required: 'જરૂરી',
     name: 'તમારું નામ',
     age: 'તમારી ઉંમર',
     gender: 'જાતિ',
@@ -131,7 +132,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: 'પુરુષ',
     preferNot: 'જણાવવું નથી',
     notes: 'ક્લિનિકલ નોંધો',
-    notesHint: 'જેમ કે: ઓછું દેખાવું, પડી જવાનું જોખમ, વારંવાર બાથરૂમ જવું, સર્જરી પહેલાં કંઈ ન ખાવું.',
     setUp: 'મારી સ્ક્રીન તૈયાર કરો',
     settingUp: 'તૈયાર થઈ રહી છે…',
     intakeFailed: 'સેવ ન થયું. કૃપા કરીને ફરી પ્રયાસ કરો.',
@@ -153,6 +153,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   zh: {
     welcome: '欢迎',
+    required: '必填',
     name: '您的姓名',
     age: '您的年龄',
     gender: '性别',
@@ -160,7 +161,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: '男',
     preferNot: '不愿透露',
     notes: '临床记录',
-    notesHint: '例如：视力不佳、跌倒风险、经常上厕所、术前禁食。',
     setUp: '设置我的屏幕',
     settingUp: '正在设置…',
     intakeFailed: '未能保存，请重试。',
@@ -182,6 +182,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   ht: {
     welcome: 'Byenvini',
+    required: 'Obligatwa',
     name: 'Non ou',
     age: 'Laj ou',
     gender: 'Sèks',
@@ -189,7 +190,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: 'Gason',
     preferNot: 'Mwen pa vle di',
     notes: 'Nòt klinik',
-    notesHint: 'Pa egzanp: je pa wè byen, risk pou tonbe, ale nan twalèt souvan, pa manje anvan operasyon.',
     setUp: 'Prepare ekran mwen',
     settingUp: 'N ap prepare…',
     intakeFailed: 'Li pa anrejistre. Tanpri eseye ankò.',
@@ -211,6 +211,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
   },
   pt: {
     welcome: 'Bem-vindo',
+    required: 'Obrigatório',
     name: 'Seu nome',
     age: 'Sua idade',
     gender: 'Gênero',
@@ -218,7 +219,6 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     male: 'Masculino',
     preferNot: 'Prefiro não dizer',
     notes: 'Notas clínicas',
-    notesHint: 'Por exemplo: baixa visão, risco de queda, vai ao banheiro com frequência, jejum antes da cirurgia.',
     setUp: 'Preparar minha tela',
     settingUp: 'Preparando…',
     intakeFailed: 'Não foi salvo. Tente de novo.',

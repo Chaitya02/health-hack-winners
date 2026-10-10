@@ -71,10 +71,11 @@ const PATHS: Record<string, ReactNode> = {
     </>
   ),
   medication: (
-    <>
-      <path d="M10.6 3.6a5 5 0 0 1 7.1 7.1l-7 7a5 5 0 0 1-7.1-7.1z" />
-      <path d="M7.1 10.6l6.3 6.3" />
-    </>
+    <g transform="rotate(-45 12 12)">
+      <rect x="3" y="8.25" width="18" height="7.5" rx="3.75" />
+      <path d="M12 8.25v7.5" />
+      <path d="M12 8.25h5.25a3.75 3.75 0 0 1 0 7.5H12z" fill="currentColor" stroke="none" />
+    </g>
   ),
   // Emotional support → family, someone to talk to, spiritual care
   emotional: <path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.5 2.4C19.5 15.4 12 20 12 20z" />,

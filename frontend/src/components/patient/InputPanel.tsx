@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useSpeech } from '../../hooks/useSpeech'
-import { MicIcon, StopIcon } from '../icons'
+import { SiriOrb } from './SiriOrb'
 import type { Strings } from '../../i18n/strings'
 import type { InputMode } from '../../types/ticket'
 
@@ -48,17 +48,17 @@ export function InputPanel({
     <>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-stretch">
         {mic && (
-          <button
-            type="button"
-            onClick={speech.listening ? speech.stop : speech.start}
-            aria-pressed={speech.listening}
-            className={`flex min-h-24 shrink-0 items-center justify-center gap-3 rounded-3xl px-6 font-bold sm:w-48 sm:flex-col ${
-              speech.listening ? 'bg-pine text-white' : 'bg-care text-white hover:bg-care-deep'
-            }`}
-          >
-            <span aria-hidden="true">{speech.listening ? <StopIcon /> : <MicIcon />}</span>
-            <span className="text-[22px]">{speech.listening ? t.micStop : t.micStart}</span>
-          </button>
+          <div className="flex shrink-0 flex-col items-center justify-center gap-1 sm:w-48">
+            <SiriOrb
+              size="sm"
+              listening={speech.listening}
+              label={speech.listening ? t.micStop : t.micStart}
+              onClick={speech.listening ? speech.stop : speech.start}
+            />
+            <span aria-hidden="true" className="text-center text-[20px] font-bold">
+              {speech.listening ? t.micStop : t.micStart}
+            </span>
+          </div>
         )}
         <div className="flex flex-1 flex-col gap-3">
           {showText ? (

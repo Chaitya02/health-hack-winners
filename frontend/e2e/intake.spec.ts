@@ -1,4 +1,12 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+/** Demo patients live in a right sidebar: open on wide screens, behind a button on tablets. */
+async function pickDemo(page: Page, name: RegExp) {
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible() // form is back
+  const sidebar = page.locator('#demo-sidebar')
+  if (!(await sidebar.isVisible())) await page.getByRole('button', { name: 'Demo patients', exact: true }).click()
+  await sidebar.getByRole('button', { name }).click()
+}
 
 const API = process.env.API_URL ?? 'http://localhost:8000'
 
@@ -9,7 +17,7 @@ test('(h) bedside intake: notes pick the dashboard and the top buttons; start ov
   await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible()
 
   // Rosa: low vision + bathroom often → audio dashboard, Bathroom first.
-  await page.getByRole('button', { name: /Rosa, 82/ }).click()
+  await pickDemo(page, /Rosa, 82/)
   await expect(page.getByRole('radio', { name: 'Female' })).toBeChecked()
   if (process.env.INTAKE_SHOTS) await page.screenshot({ path: `${process.env.INTAKE_SHOTS}/intake-form.png`, fullPage: true })
   await page.getByRole('button', { name: 'Set up my screen' }).click()
@@ -25,7 +33,7 @@ test('(h) bedside intake: notes pick the dashboard and the top buttons; start ov
 
   // Start over → Sam: post-op, NPO → standard dashboard, medication first, no food/drink on top.
   await page.getByRole('button', { name: 'Start over' }).click()
-  await page.getByRole('button', { name: /Sam, 54/ }).click()
+  await pickDemo(page, /Sam, 54/)
   await page.getByRole('button', { name: 'Set up my screen' }).click()
   await expect(page.getByTestId('patient-identity')).toHaveText('Sam, 54 years')
   await expect(page.locator('[data-dashboard]')).toHaveAttribute('data-dashboard', 'standard')

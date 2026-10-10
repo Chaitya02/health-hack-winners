@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSpeech } from '../../hooks/useSpeech'
 import { DASHBOARD } from '../../i18n/dashboard'
-import { MicIcon, StopIcon } from '../icons'
+import { SiriOrb } from './SiriOrb'
 import type { Strings } from '../../i18n/strings'
 import type { Language } from '../../types/ticket'
-
-const SWIRL = 'conic-gradient(from 90deg, #0f6e66, #3b82f6, #a855f7, #ec4899, #f59e0b, #0f6e66)'
 
 /**
  * Audio dashboard centrepiece (Siri-style): tap, speak, and the request is sent when you stop
@@ -51,39 +49,19 @@ export function VoiceBubble({
   const listening = speech.listening
   return (
     <section className="mt-6 flex flex-col items-center gap-4" data-testid="voice-bubble">
-      <div className="relative grid size-64 place-items-center">
-        <span
-          aria-hidden="true"
-          className={`absolute inset-0 rounded-full opacity-60 blur-2xl ${listening ? 'animate-pulse motion-reduce:animate-none' : ''}`}
-          style={{ background: SWIRL }}
-        />
-        <button
-          type="button"
-          disabled={busy}
-          aria-pressed={listening}
-          aria-label={listening ? d.listening : d.tapToTalk}
-          onClick={() => {
-            if (listening) speech.stop()
-            else {
-              heardRef.current = ''
-              setHeard('')
-              speech.start()
-            }
-          }}
-          className={`relative grid size-56 place-items-center rounded-full shadow-2xl transition-transform motion-reduce:transition-none ${
-            listening ? 'scale-105' : 'hover:scale-[1.02]'
-          }`}
-        >
-          <span
-            aria-hidden="true"
-            className={`absolute inset-0 rounded-full ${listening ? 'animate-spin motion-reduce:animate-none' : ''}`}
-            style={{ background: SWIRL, animationDuration: '6s' }}
-          />
-          <span aria-hidden="true" className="relative grid size-28 place-items-center rounded-full bg-white/90 text-pine">
-            {listening ? <StopIcon className="size-12" /> : <MicIcon className="size-14" />}
-          </span>
-        </button>
-      </div>
+      <SiriOrb
+        listening={listening}
+        disabled={busy}
+        label={listening ? d.listening : d.tapToTalk}
+        onClick={() => {
+          if (listening) speech.stop()
+          else {
+            heardRef.current = ''
+            setHeard('')
+            speech.start()
+          }
+        }}
+      />
       <p className="text-center text-[28px] font-bold" aria-live="polite">
         {listening ? d.listening : d.tapToTalk}
       </p>

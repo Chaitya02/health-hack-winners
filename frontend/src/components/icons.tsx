@@ -71,3 +71,22 @@ export function ChevronDownIcon({ className = 'size-6' }: IconProps) {
     </svg>
   )
 }
+
+export function UsersIcon({ className = 'size-6' }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3.5 20a5.5 5.5 0 0 1 11 0" />
+      <circle cx="17" cy="9.5" r="2.5" />
+      <path d="M15.6 14.4A4.5 4.5 0 0 1 21 19" />
+    </svg>
+  )
+}
+
+export function CloseIcon({ className = 'size-6' }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  )
+}
