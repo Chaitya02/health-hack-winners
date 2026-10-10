@@ -360,7 +360,6 @@ function TicketRow({
   department: Department
   onAction: (t: Ticket, a: TicketAction) => void
 }) {
-  const [showOriginal, setShowOriginal] = useState(false)
   const waited = secondsSince(t.created_at, now)
   const age = aging(waited)
   const high = t.priority === 'HIGH'
@@ -425,11 +424,6 @@ function TicketRow({
           <p className="mt-1">{t.safety_reasons.join(', ')}</p>
         </details>
       )}
-      {showOriginal && (
-        <p className="mt-2 rounded-xl bg-curtain p-3 italic" lang={t.detected_language}>
-          “{t.original_text}”
-        </p>
-      )}
       <div className="mt-4 flex flex-wrap gap-2">
         {actions.map((a) => (
           <button
@@ -441,14 +435,6 @@ function TicketRow({
             {a.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => setShowOriginal((v) => !v)}
-          aria-expanded={showOriginal}
-          className="min-h-12 rounded-xl border-2 border-line px-4 hover:border-pine"
-        >
-          {showOriginal ? 'Hide original' : 'Show original'}
-        </button>
         {department !== 'nursing' && (
           <button
             type="button"

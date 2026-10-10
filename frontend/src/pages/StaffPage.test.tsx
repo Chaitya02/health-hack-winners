@@ -62,8 +62,7 @@ describe('StaffPage', () => {
     })
     renderStaff('housekeeping')
     const row = await screen.findByTestId('ticket')
-    await userEvent.click(within(row).getByRole('button', { name: /show original/i }))
-    expect(within(row).getByText(/extra pillow please/)).toBeInTheDocument()
+    expect(within(row).queryByRole('button', { name: /show original/i })).not.toBeInTheDocument()
     await userEvent.click(within(row).getByRole('button', { name: /acknowledge/i }))
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ action: 'acknowledge' })
 
