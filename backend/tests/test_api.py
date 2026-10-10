@@ -26,6 +26,23 @@ def test_pillow_goes_to_housekeeping_not_nursing(client):
     assert len(hk) == 1 and nurse == []
 
 
+def test_staff_queue_shows_where_and_who(client):
+    client.app.state.rooms.put(
+        Room(room_id="401", unit="4 West", patient_alias="Rosa", age=82, primary_nurse="n")
+    )
+    submit(client, "extra pillow please")
+    [card] = client.get("/api/queues/housekeeping", headers=login(client)).json()
+    assert (card["room_id"], card["unit"], card["patient_alias"], card["patient_age"]) == (
+        "401",
+        "4 West",
+        "Rosa",
+        82,
+    )
+    # The patient's own view stays minimal.
+    [mine] = client.get("/api/rooms/401/tickets").json()
+    assert "patient_age" not in mine and "unit" not in mine
+
+
 def test_urgent_goes_to_nursing_high(client):
     body = submit(client, "My surgical incision is throbbing and I feel dizzy.")
     (t,) = body["tickets"]

@@ -7,7 +7,7 @@ import { api, ApiError } from '../lib/api'
 import { autoSignIn, demoPins } from '../lib/config'
 import { aging, formatWait, secondsSince, type Aging } from '../lib/time'
 import { StaffPanel } from '../components/staff/StaffPanel'
-import { ChevronDownIcon } from '../components/icons'
+import { ChevronDownIcon, PersonIcon, PinIcon } from '../components/icons'
 import { TileGlyph } from '../components/tileIcons'
 import {
   CLOSED_STATUSES,
@@ -472,7 +472,19 @@ function TicketRow({
               </span>
             )}
           </div>
-          <p className="mt-2 text-[22px] leading-snug">{t.english_summary}</p>
+          <p className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-[17px] font-bold text-pine-soft" data-testid="where-who">
+            <span className="flex items-center gap-1.5">
+              <PinIcon className="size-5" />
+              {t.unit ? `${t.unit}, Room ${t.room_id}` : `Room ${t.room_id}`}
+            </span>
+            {t.patient_alias && (
+              <span className="flex items-center gap-1.5">
+                <PersonIcon className="size-5" />
+                {t.patient_age != null ? `${t.patient_alias}, ${t.patient_age} years` : t.patient_alias}
+              </span>
+            )}
+          </p>
+          <p className="mt-1 text-[22px] leading-snug">{t.english_summary}</p>
         </div>
         <span className={`text-[24px] font-bold tabular-nums ${AGING_TEXT[age]}`} aria-label={`Waiting ${formatWait(waited)}`}>
           {formatWait(waited)}

@@ -42,6 +42,7 @@ describe('StaffPage', () => {
     const rows = await screen.findAllByTestId('ticket')
     expect(rows[0]).toHaveAttribute('data-priority', 'HIGH')
     expect(within(rows[0]).getByText('409')).toBeInTheDocument()
+    expect(within(rows[0]).getByTestId('where-who')).toHaveTextContent('4 West, Room 409Maya, 67 years')
     expect(screen.getByTestId('urgent-banner')).toHaveTextContent('Room 409')
     // Safety reasons are hidden until the nurse opens "Why you".
     const why = within(rows[0]).getByTestId('why-you')

@@ -60,6 +60,9 @@ export interface Ticket {
   request_id: string
   room_id: string
   patient_alias: string
+  /** The room's unit and the patient's age, for the staff card. */
+  unit?: string | null
+  patient_age?: number | null
   original_text: string
   input_mode: InputMode
   /** Quick-tap tile key, e.g. "pillow"; null for typed or spoken requests. */
