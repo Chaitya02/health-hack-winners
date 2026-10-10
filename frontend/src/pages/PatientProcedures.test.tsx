@@ -9,7 +9,7 @@ import PatientPage from './PatientPage'
 
 // Procedures: shown on the dashboard and announced when set up, 15 min before, and at the time.
 
-vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn() }))
+vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn(), mute: vi.fn() }))
 
 const inMin = (m: number) => new Date(Date.now() + m * 60_000).toISOString()
 const room = (procedures: { name: string; at: string }[], over: Record<string, unknown> = {}) => ({
