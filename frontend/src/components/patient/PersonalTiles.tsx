@@ -31,18 +31,18 @@ export function PersonalTiles({
       <h2 id="for-you" className="text-[26px] font-bold">
         {d.forYou}
       </h2>
-      <ul className="mt-3 grid grid-cols-3 gap-3" data-testid="top-tiles">
+      <ul className="mt-3 flex flex-col gap-3" data-testid="top-tiles">
         {top.map((key) => (
           <li key={key}>
             <button
               type="button"
               disabled={busy}
               onClick={() => onTap(key)}
-              className={`flex h-full w-full flex-col items-center justify-center gap-2 rounded-3xl border-4 border-pine bg-paper p-3 text-center font-bold hover:bg-care-tint ${
-                large ? 'min-h-44 text-[30px]' : 'min-h-36 text-[24px]'
+              className={`flex w-full items-center gap-5 rounded-3xl border-4 border-pine bg-paper px-6 text-left font-bold hover:bg-care-tint ${
+                large ? 'min-h-28 text-[32px]' : 'min-h-24 text-[26px]'
               }`}
             >
-              <TileGlyph tile={key} gender={gender} className={`text-pine ${large ? 'size-16' : 'size-12'}`} />
+              <TileGlyph tile={key} gender={gender} className={`shrink-0 text-pine ${large ? 'size-14' : 'size-12'}`} />
               {t.tiles[key]}
             </button>
           </li>
@@ -60,8 +60,8 @@ export function PersonalTiles({
         <ChevronDownIcon className={`size-7 transition-transform motion-reduce:transition-none ${more ? 'rotate-180' : ''}`} />
       </button>
       {more && (
-        <div id="more-requests" className="-mt-4">
-          <RequestTiles t={t} busy={busy} onTap={onTap} large={large} exclude={top} gender={gender} />
+        <div id="more-requests" className="mt-1">
+          <RequestTiles t={t} busy={busy} onTap={onTap} large={large} exclude={top} gender={gender} showTitle={false} />
         </div>
       )}
     </section>

@@ -56,9 +56,11 @@ export const MAIN_TILES: MainTile[] = [
   { kind: 'tile', key: 'bathroom', icon: '🚻' },
 ]
 
+/** One request per row (a single column): icon left, label right. `large` is the low-vision
+ * layout (US-4): taller rows, bigger text, high-contrast borders. */
 const tileClass = (large: boolean) =>
-  `flex w-full flex-col items-center justify-center gap-1 rounded-2xl bg-paper p-3 text-center font-bold hover:border-care hover:bg-care-tint ${
-    large ? 'min-h-40 border-4 border-pine text-[30px]' : 'min-h-28 border-2 border-line text-[22px]'
+  `flex w-full items-center gap-5 rounded-2xl bg-paper px-5 text-left font-bold hover:border-care hover:bg-care-tint ${
+    large ? 'min-h-24 border-4 border-pine text-[30px]' : 'min-h-20 border-2 border-line text-[24px]'
   }`
 
 /** `large` (low-vision layout, US-4): two columns, bigger targets and text, high-contrast borders. */
@@ -69,6 +71,7 @@ export function RequestTiles({
   large = false,
   exclude = [],
   gender = 'unspecified',
+  showTitle = true,
 }: {
   t: Strings
   busy: boolean
@@ -78,8 +81,10 @@ export function RequestTiles({
   exclude?: QuickTile[]
   /** Picks the bathroom icon (woman / man / neutral). */
   gender?: Gender
+  /** Off when embedded under the dashboard's "More requests" toggle. */
+  showTitle?: boolean
 }) {
-  const iconClass = `text-pine ${large ? 'size-14' : 'size-10'}`
+  const iconClass = `shrink-0 text-pine ${large ? 'size-12' : 'size-10'}`
   const [open, setOpen] = useState<TileGroupKey | null>(null)
   const tiles = MAIN_TILES.flatMap((m): MainTile[] => {
     if (m.kind === 'tile') return exclude.includes(m.key) ? [] : [m]
@@ -110,7 +115,7 @@ export function RequestTiles({
             {t.back}
           </button>
         </div>
-        <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-4'}`}>
+        <ul className="mt-3 flex flex-col gap-3">
           {group.items.map((item) => (
             <li key={item.key}>
               <button type="button" disabled={busy} onClick={() => onTap(item.key)} className={tileClass(large)}>
@@ -126,8 +131,8 @@ export function RequestTiles({
 
   return (
     <>
-      <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>
-      <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-3'}`}>
+      {showTitle && <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>}
+      <ul className="mt-3 flex flex-col gap-3">
         {tiles.map((m) => (
           <li key={m.key}>
             <button

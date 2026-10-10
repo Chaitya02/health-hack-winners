@@ -90,7 +90,7 @@ describe('Patient accessibility layouts (US-4)', () => {
     expect(textBox()).toBeInTheDocument()
     expect(mic()).toBeInTheDocument()
     // Pillow is one of the default top 3 buttons.
-    expect(screen.getByRole('button', { name: 'Pillow' }).className).toContain('min-h-36')
+    expect(screen.getByRole('button', { name: 'Pillow' }).className).toContain('min-h-24')
     await userEvent.click(screen.getByRole('button', { name: 'Pillow' }))
     await screen.findByTestId('confirmation')
     expect(spoken).toEqual([])
@@ -101,7 +101,7 @@ describe('Patient accessibility layouts (US-4)', () => {
     await screen.findByRole('heading', { name: 'Alex' })
     await waitFor(() => expect(textBox()).not.toBeInTheDocument())
     expect(mic()).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Pillow' }).className).toContain('min-h-44')
+    expect(screen.getByRole('button', { name: 'Pillow' }).className).toContain('min-h-28')
     expect(screen.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
     await userEvent.click(screen.getByRole('button', { name: 'Pillow' }))
     await screen.findByTestId('confirmation')

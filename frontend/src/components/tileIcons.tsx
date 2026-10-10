@@ -140,9 +140,9 @@ const HAND = (
 export function TileGlyph({ tile, gender, className }: { tile: string; gender?: Gender; className: string }) {
   if (tile !== 'bathroom') return <TileIcon name={tile} className={className} />
   return (
-    <span className="relative inline-block" data-help-badge>
+    <span className="relative inline-block shrink-0" data-help-badge>
       <TileIcon name={iconFor(tile, gender)} className={className} />
-      <span className="absolute -bottom-1 -right-3 grid size-[55%] place-items-center rounded-full bg-care text-white ring-2 ring-paper">
+      <span className="absolute -bottom-1.5 -right-1.5 grid size-[55%] place-items-center rounded-full bg-care text-white ring-2 ring-paper">
         <svg
           viewBox="0 0 24 24"
           fill="none"

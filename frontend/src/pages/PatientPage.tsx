@@ -198,7 +198,7 @@ function Dashboard({
         {result ? (
           <Confirmation result={result} t={t} onDone={() => setResult(null)} />
         ) : (
-          <div className="grid items-start gap-x-10 lg:grid-cols-2">
+          <div className="grid items-start gap-x-10 lg:grid-cols-[minmax(0,1fr)_26rem]">
             <div>
               <EmergencyButton
                 lang={lang}
