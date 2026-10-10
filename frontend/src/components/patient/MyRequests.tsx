@@ -1,12 +1,13 @@
 import type { Strings } from '../../i18n/strings'
-import type { PatientTicketView } from '../../types/ticket'
+import type { PatientTicketView, Status } from '../../types/ticket'
 
-const STATUS_STYLE: Record<string, string> = {
+const STATUS_STYLE: Record<Status, string> = {
   NEW: 'bg-curtain-deep text-pine',
   ACKNOWLEDGED: 'bg-care-tint text-care-deep',
   IN_PROGRESS: 'bg-care text-white',
   RESOLVED: 'bg-fresh-tint text-fresh',
   ESCALATED: 'bg-bell-tint text-bell-deep',
+  CANCELLED: 'bg-curtain-deep text-pine-soft',
 }
 
 export function MyRequests({ requests, t }: { requests: PatientTicketView[]; t: Strings }) {
