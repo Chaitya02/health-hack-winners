@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { DASHBOARD, DEMO_PATIENTS } from '../../i18n/dashboard'
 import { api } from '../../lib/api'
 import { DEPARTMENT_LABELS, DEPARTMENTS, type AttendantPreference, type Language, type Room } from '../../types/ticket'
-import { CloseIcon, UsersIcon } from '../icons'
+import { CalendarIcon, CloseIcon, UsersIcon } from '../icons'
 import { LanguageSelect } from './LanguageSelect'
 
 type Gender = 'female' | 'male' | 'unspecified'
@@ -47,6 +47,8 @@ export function IntakeForm({
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [demosOpen, setDemosOpen] = useState(wideScreen)
+  // The demo patient filled in, while the name still matches it.
+  const demo = DEMO_PATIENTS.find((p) => p.name === name)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -60,6 +62,11 @@ export function IntakeForm({
         attendant_preference: attendant,
         clinical_notes: notes.trim(),
         preferred_language: lang,
+        // Demo patients come with procedures, timed from now so reminders happen during the demo.
+        procedures: (demo?.procedures ?? []).map((p) => ({
+          name: p.name,
+          at: new Date(Date.now() + p.inMinutes * 60_000).toISOString(),
+        })),
       })
       onDone(room)
     } catch {
@@ -235,6 +242,10 @@ export function IntakeForm({
             >
               <span className="block font-bold">{p.label}</span>
               <span className="mt-1 line-clamp-3 block text-[16px] text-pine-soft">{p.clinical_notes}</span>
+              <span className="mt-2 flex items-start gap-2 text-[16px] font-bold text-care-deep">
+                <CalendarIcon className="size-5 shrink-0" />
+                {p.procedures.map((x) => `${x.name} in ${fromNow(x.inMinutes)}`).join(' · ')}
+              </span>
             </button>
           ))}
 
@@ -260,6 +271,11 @@ export function IntakeForm({
       )}
     </div>
   )
+}
+
+/** "10 min", "3 h", "20 h" for the demo cards. */
+function fromNow(minutes: number): string {
+  return minutes < 60 ? `${minutes} min` : `${Math.round(minutes / 60)} h`
 }
 
 /** Asterisk for sighted users, "(required)" for screen readers. */

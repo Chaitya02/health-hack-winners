@@ -11,6 +11,7 @@ from app.metrics import Metrics, compute, start_of_day
 from app.models import (
     MAX_NOTE_LEN,
     MAX_NOTES_LEN,
+    MAX_PROCEDURES,
     MAX_TEXT_LEN,
     ROLE_DEPARTMENT,
     STAFF_ROLE,
@@ -21,6 +22,7 @@ from app.models import (
     Language,
     PatientProfile,
     PatientTicketView,
+    Procedure,
     Role,
     Room,
     RoomView,
@@ -118,6 +120,8 @@ class IntakeBody(BaseModel):
     attendant_preference: AttendantPreference = AttendantPreference.ANY
     clinical_notes: str = Field(default="", max_length=MAX_NOTES_LEN)
     preferred_language: Language | None = None
+    # Scheduled procedures to tell the patient about (demo patients bring their own).
+    procedures: list[Procedure] = Field(default_factory=list, max_length=MAX_PROCEDURES)
 
 
 def _view(room: Room) -> RoomView:
@@ -147,6 +151,7 @@ def save_intake(room_id: str, body: IntakeBody, request: Request) -> dict:
             "profile": result.profile.model_copy(
                 update={"attendant_preference": body.attendant_preference}
             ),
+            "procedures": sorted(body.procedures, key=lambda p: p.at),
             "intake_complete": True,
             "intake_at": utc_now_iso(),
         }
@@ -166,6 +171,7 @@ def reset_intake(room_id: str, request: Request) -> RoomView:
             "gender": "unspecified",
             "clinical_notes": None,
             "profile": PatientProfile(),
+            "procedures": [],
             "intake_complete": False,
             "intake_at": utc_now_iso(),
         }

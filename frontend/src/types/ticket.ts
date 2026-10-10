@@ -144,6 +144,14 @@ export interface Room {
   /** False until the bedside intake form is filled in (the clinical notes are never sent back). */
   intake_complete: boolean
   intake_at: string | null
+  /** Scheduled procedures the bedside screen tells the patient about, soonest first. */
+  procedures?: Procedure[]
+}
+
+export interface Procedure {
+  name: string
+  /** ISO time with zone. */
+  at: string
 }
 
 export interface IntakeBody {
@@ -153,6 +161,7 @@ export interface IntakeBody {
   attendant_preference?: AttendantPreference
   clinical_notes: string
   preferred_language?: Language
+  procedures?: Procedure[]
 }
 
 export interface CreateRequestBody {
