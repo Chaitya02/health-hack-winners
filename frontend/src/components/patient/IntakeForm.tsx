@@ -1,11 +1,17 @@
 import { useState, type FormEvent } from 'react'
 import { DASHBOARD, DEMO_PATIENTS } from '../../i18n/dashboard'
 import { api } from '../../lib/api'
-import type { Language, Room } from '../../types/ticket'
+import { DEPARTMENT_LABELS, DEPARTMENTS, type AttendantPreference, type Language, type Room } from '../../types/ticket'
 import { CloseIcon, UsersIcon } from '../icons'
 import { LanguageSelect } from './LanguageSelect'
 
 type Gender = 'female' | 'male' | 'unspecified'
+
+/** Demo navigation: every staff and admin screen, one tap from the bedside home page. */
+const SCREENS = [
+  ...DEPARTMENTS.map((d) => ({ href: `/${d}`, label: DEPARTMENT_LABELS[d] })),
+  { href: '/admin', label: 'Admin & insights' },
+]
 
 /** Wide screens show the demo sidebar from the start; smaller ones open it on demand. */
 function wideScreen(): boolean {
@@ -36,6 +42,7 @@ export function IntakeForm({
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [gender, setGender] = useState<Gender>('unspecified')
+  const [attendant, setAttendant] = useState<AttendantPreference>('any')
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -50,6 +57,7 @@ export function IntakeForm({
         name: name.trim(),
         age: Number(age),
         gender,
+        attendant_preference: attendant,
         clinical_notes: notes.trim(),
         preferred_language: lang,
       })
@@ -140,6 +148,29 @@ export function IntakeForm({
               ))}
             </div>
           </fieldset>
+          <fieldset>
+            <legend className="font-bold">{d.attendant}</legend>
+            <div className="mt-2 grid grid-cols-3 gap-3">
+              {(['any', 'female', 'male'] as const).map((a) => (
+                <label
+                  key={a}
+                  className={`flex min-h-16 items-center justify-center rounded-2xl border-2 px-3 text-center text-[20px] font-bold ${
+                    attendant === a ? 'border-pine bg-pine text-white' : 'border-pine bg-paper text-pine'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="attendant"
+                    value={a}
+                    checked={attendant === a}
+                    onChange={() => setAttendant(a)}
+                    className="sr-only"
+                  />
+                  {a === 'any' ? d.attendantAny : a === 'female' ? d.attendantFemale : d.attendantMale}
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label className="block font-bold">
             {d.notes}
             <textarea
@@ -196,6 +227,7 @@ export function IntakeForm({
                 setName(p.name)
                 setAge(String(p.age))
                 setGender(p.gender)
+                setAttendant(p.attendant_preference)
                 setNotes(p.clinical_notes)
                 if (!wideScreen()) setDemosOpen(false)
               }}
@@ -205,6 +237,25 @@ export function IntakeForm({
               <span className="mt-1 line-clamp-3 block text-[16px] text-pine-soft">{p.clinical_notes}</span>
             </button>
           ))}
+
+          <h2 className="mt-4 text-[22px] font-bold">Open a screen</h2>
+          <p className="-mt-2 text-pine-soft">Opens in a new tab, so this bedside screen stays open.</p>
+          <nav aria-label="Staff and admin screens" className="flex flex-col gap-2">
+            {SCREENS.map((s) => (
+              <a
+                key={s.href}
+                href={s.href}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-between rounded-2xl border-2 border-line bg-paper px-4 py-3 font-bold hover:border-pine"
+              >
+                {s.label}
+                <span aria-hidden="true" className="text-pine-soft">
+                  ↗
+                </span>
+              </a>
+            ))}
+          </nav>
         </aside>
       )}
     </div>

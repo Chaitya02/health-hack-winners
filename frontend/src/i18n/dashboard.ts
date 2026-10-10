@@ -16,6 +16,12 @@ export interface DashboardStrings {
   intakeFailed: string
   // Dashboard
   emergency: string
+  voiceUpdates: string
+  waitingMusic: string
+  attendant: string
+  attendantAny: string
+  attendantFemale: string
+  attendantMale: string
   ageYears: (n: number) => string
   room: (id: string) => string
   emergencyAgain: string
@@ -52,6 +58,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} years`,
     room: (id) => `Room ${id}`,
     emergency: 'Emergency',
+    voiceUpdates: 'Spoken updates',
+    waitingMusic: 'Waiting music',
+    attendant: 'Bathroom help from',
+    attendantAny: 'No preference',
+    attendantFemale: 'Female staff',
+    attendantMale: 'Male staff',
     emergencyAgain: 'Tap Emergency again to call your nurse.',
     forYou: 'For you',
     more: 'More requests',
@@ -82,6 +94,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} años`,
     room: (id) => `Habitación ${id}`,
     emergency: 'Emergencia',
+    voiceUpdates: 'Avisos hablados',
+    waitingMusic: 'Música de espera',
+    attendant: 'Ayuda para el baño de',
+    attendantAny: 'Sin preferencia',
+    attendantFemale: 'Personal femenino',
+    attendantMale: 'Personal masculino',
     emergencyAgain: 'Toque Emergencia otra vez para llamar a su enfermera.',
     forYou: 'Para usted',
     more: 'Más pedidos',
@@ -112,6 +130,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} वर्ष`,
     room: (id) => `कमरा ${id}`,
     emergency: 'आपातकाल',
+    voiceUpdates: 'बोलकर अपडेट',
+    waitingMusic: 'प्रतीक्षा संगीत',
+    attendant: 'बाथरूम में मदद कौन करे',
+    attendantAny: 'कोई पसंद नहीं',
+    attendantFemale: 'महिला स्टाफ',
+    attendantMale: 'पुरुष स्टाफ',
     emergencyAgain: 'नर्स को बुलाने के लिए आपातकाल फिर से टैप करें।',
     forYou: 'आपके लिए',
     more: 'और अनुरोध',
@@ -142,6 +166,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} વર્ષ`,
     room: (id) => `રૂમ ${id}`,
     emergency: 'કટોકટી',
+    voiceUpdates: 'બોલીને અપડેટ',
+    waitingMusic: 'રાહ જોવાનું સંગીત',
+    attendant: 'બાથરૂમમાં મદદ કોણ કરે',
+    attendantAny: 'કોઈ પસંદગી નથી',
+    attendantFemale: 'મહિલા સ્ટાફ',
+    attendantMale: 'પુરુષ સ્ટાફ',
     emergencyAgain: 'નર્સને બોલાવવા માટે કટોકટી ફરીથી ટેપ કરો.',
     forYou: 'તમારા માટે',
     more: 'વધુ વિનંતીઓ',
@@ -172,6 +202,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} 岁`,
     room: (id) => `房间 ${id}`,
     emergency: '紧急',
+    voiceUpdates: '语音提醒',
+    waitingMusic: '等候音乐',
+    attendant: '如厕协助人员',
+    attendantAny: '无偏好',
+    attendantFemale: '女性工作人员',
+    attendantMale: '男性工作人员',
     emergencyAgain: '再次轻触“紧急”即可呼叫护士。',
     forYou: '为您推荐',
     more: '更多请求',
@@ -202,6 +238,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} an`,
     room: (id) => `Chanm ${id}`,
     emergency: 'Ijans',
+    voiceUpdates: 'Mizajou pale',
+    waitingMusic: 'Mizik datant',
+    attendant: 'Èd pou twalèt pa',
+    attendantAny: 'Pa gen preferans',
+    attendantFemale: 'Anplwaye fanm',
+    attendantMale: 'Anplwaye gason',
     emergencyAgain: 'Touche Ijans ankò pou rele enfimyè w.',
     forYou: 'Pou ou',
     more: 'Plis demann',
@@ -232,6 +274,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     ageYears: (n) => `${n} anos`,
     room: (id) => `Quarto ${id}`,
     emergency: 'Emergência',
+    voiceUpdates: 'Avisos falados',
+    waitingMusic: 'Música de espera',
+    attendant: 'Ajuda no banheiro de',
+    attendantAny: 'Sem preferência',
+    attendantFemale: 'Equipe feminina',
+    attendantMale: 'Equipe masculina',
     emergencyAgain: 'Toque em Emergência de novo para chamar a enfermeira.',
     forYou: 'Para você',
     more: 'Mais pedidos',
@@ -255,6 +303,7 @@ export const DEMO_PATIENTS = [
     name: 'Rosa',
     gender: 'female' as const,
     age: 82,
+    attendant_preference: 'female' as const,
     clinical_notes:
       'Macular degeneration, poor eyesight. Uses the bathroom a lot at night (on furosemide). Unsteady on her feet.',
   },
@@ -263,6 +312,7 @@ export const DEMO_PATIENTS = [
     name: 'Sam',
     gender: 'male' as const,
     age: 54,
+    attendant_preference: 'any' as const,
     clinical_notes: 'Post-op day 1 after knee replacement. NPO for a second procedure tomorrow. Anxious about surgery.',
   },
   {
@@ -270,6 +320,7 @@ export const DEMO_PATIENTS = [
     name: 'Lena',
     gender: 'female' as const,
     age: 37,
+    attendant_preference: 'any' as const,
     clinical_notes: 'Recovering from pneumonia. Feels cold and has trouble sleeping. Mildly dehydrated.',
   },
 ] as const

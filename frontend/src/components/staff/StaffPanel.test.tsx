@@ -16,12 +16,13 @@ const STAFF: StaffView[] = [
     staff_id: 'n-jordan',
     name: 'Nurse Jordan',
     department: 'nursing',
+    gender: 'male',
     schedule: [shift, { start: iso(-10), end: iso(20), kind: 'break' }],
     status: 'break',
     status_until: iso(20),
     open_tasks: 0,
   },
-  { staff_id: 'n-priya', name: 'Nurse Priya', department: 'nursing', schedule: [shift], status: 'available', status_until: iso(120), open_tasks: 2 },
+  { staff_id: 'n-priya', name: 'Nurse Priya', department: 'nursing', gender: 'female', schedule: [shift], status: 'available', status_until: iso(120), open_tasks: 2 },
 ]
 
 describe('StaffPanel', () => {
@@ -43,7 +44,7 @@ describe('Department dashboard with staff', () => {
     mockFetch({
       'GET /api/queues/nursing': [
         ticket({ ticket_id: 'a', department: 'nursing', room_id: '401', assigned_to: 'n-priya', assigned_name: 'Nurse Priya' }),
-        ticket({ ticket_id: 'b', department: 'nursing', room_id: '402' }),
+        ticket({ ticket_id: 'b', department: 'nursing', room_id: '402', attendant_preference: 'female', attendant_preference_met: false }),
       ],
       'GET /api/staff/nursing': STAFF,
       'GET /api/metrics': { diverted_from_nursing: 0 },
@@ -57,6 +58,7 @@ describe('Department dashboard with staff', () => {
     )
     expect(await screen.findByTestId('staff-panel')).toBeInTheDocument()
     expect(screen.getAllByTestId('assignee').map((n) => n.textContent)).toEqual(['Assigned to Nurse Priya', 'Waiting for someone available'])
+    expect(screen.getByTestId('attendant-pref')).toHaveTextContent('Prefers female staff · none available, assigned to the next available')
     await userEvent.click(screen.getByRole('button', { name: 'Nurse Priya (1)' }))
     expect(screen.getAllByTestId('ticket')).toHaveLength(1)
     await userEvent.click(screen.getByRole('button', { name: 'Waiting (1)' }))

@@ -1,5 +1,5 @@
 import { DASHBOARD } from '../../i18n/dashboard'
-import { BellIcon, HomeIcon } from '../icons'
+import { BellIcon, HomeIcon, MusicIcon, SpeakerIcon } from '../icons'
 import { LanguageSelect } from './LanguageSelect'
 import type { Language } from '../../types/ticket'
 
@@ -9,6 +9,8 @@ export function PatientHeader({
   name,
   age,
   roomId,
+  audio,
+  onToggleAudio,
   lang,
   openCount,
   onLangChange,
@@ -18,6 +20,9 @@ export function PatientHeader({
   name: string
   age: number | null
   roomId: string
+  /** US-7: spoken updates and waiting music on/off. */
+  audio: { voice: boolean; music: boolean }
+  onToggleAudio: (name: 'voice' | 'music') => void
   lang: Language
   openCount: number
   onLangChange: (l: Language) => void
@@ -34,6 +39,28 @@ export function PatientHeader({
       </h1>
       <div className="flex flex-wrap items-center gap-3">
         <LanguageSelect lang={lang} onChange={onLangChange} />
+        <button
+          type="button"
+          aria-pressed={audio.voice}
+          aria-label={d.voiceUpdates}
+          title={d.voiceUpdates}
+          onClick={() => onToggleAudio('voice')}
+          data-testid="toggle-voice"
+          className={`grid size-16 place-items-center rounded-2xl border-2 border-pine ${audio.voice ? 'bg-pine text-white' : 'bg-paper text-pine hover:bg-curtain'}`}
+        >
+          <SpeakerIcon className="size-8" off={!audio.voice} />
+        </button>
+        <button
+          type="button"
+          aria-pressed={audio.music}
+          aria-label={d.waitingMusic}
+          title={d.waitingMusic}
+          onClick={() => onToggleAudio('music')}
+          data-testid="toggle-music"
+          className={`grid size-16 place-items-center rounded-2xl border-2 border-pine ${audio.music ? 'bg-pine text-white' : 'bg-paper text-pine hover:bg-curtain'}`}
+        >
+          <MusicIcon className="size-8" off={!audio.music} />
+        </button>
         <button
           type="button"
           onClick={onStartOver}

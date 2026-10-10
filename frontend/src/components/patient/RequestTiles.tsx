@@ -72,6 +72,8 @@ export function RequestTiles({
   exclude = [],
   gender = 'unspecified',
   showTitle = true,
+  blocked = {},
+  onBlocked,
 }: {
   t: Strings
   busy: boolean
@@ -83,7 +85,20 @@ export function RequestTiles({
   gender?: Gender
   /** Off when embedded under the dashboard's "More requests" toggle. */
   showTitle?: boolean
+  /** US-5: tiles the patient's profile rules out (e.g. food and drink while NPO), with why. */
+  blocked?: Partial<Record<QuickTile, string>>
+  /** Tapping a blocked tile explains instead of sending. */
+  onBlocked?: (why: string) => void
 }) {
+  // A group is blocked when every item in it is (Thirsty while NPO); Food & medication stays
+  // open because Medication is clinical and still allowed.
+  const whyBlocked = (m: MainTile): string | undefined =>
+    m.kind === 'tile'
+      ? blocked[m.key]
+      : m.items.every((i) => blocked[i.key])
+        ? blocked[m.items[0].key]
+        : undefined
+  const blockedClass = 'cursor-not-allowed opacity-50 hover:border-line hover:bg-paper'
   const iconClass = large ? 'size-14' : 'size-10'
   const [open, setOpen] = useState<TileGroupKey | null>(null)
   const tiles = MAIN_TILES.flatMap((m): MainTile[] => {
@@ -116,14 +131,24 @@ export function RequestTiles({
           </button>
         </div>
         <ul className="mt-3 flex flex-col gap-3">
-          {group.items.map((item) => (
-            <li key={item.key}>
-              <button type="button" disabled={busy} onClick={() => onTap(item.key)} className={tileClass(large)}>
-                <TileGlyph tile={item.key} gender={gender} className={iconClass} />
-                {t.tiles[item.key]}
-              </button>
-            </li>
-          ))}
+          {group.items.map((item) => {
+            const why = blocked[item.key]
+            return (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-disabled={why ? true : undefined}
+                  data-blocked={why ? true : undefined}
+                  onClick={() => (why ? onBlocked?.(why) : onTap(item.key))}
+                  className={`${tileClass(large)} ${why ? blockedClass : ''}`}
+                >
+                  <TileGlyph tile={item.key} gender={gender} className={iconClass} />
+                  {t.tiles[item.key]}
+                </button>
+              </li>
+            )
+          })}
         </ul>
       </section>
     )
@@ -133,19 +158,24 @@ export function RequestTiles({
     <>
       {showTitle && <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>}
       <ul className="mt-3 flex flex-col gap-3">
-        {tiles.map((m) => (
-          <li key={m.key}>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => (m.kind === 'group' ? setOpen(m.key) : onTap(m.key))}
-              className={tileClass(large)}
-            >
-              <TileGlyph tile={m.key} gender={gender} className={iconClass} />
-              {m.kind === 'group' ? t.tileGroups[m.key] : t.tiles[m.key]}
-            </button>
-          </li>
-        ))}
+        {tiles.map((m) => {
+          const why = whyBlocked(m)
+          return (
+            <li key={m.key}>
+              <button
+                type="button"
+                disabled={busy}
+                aria-disabled={why ? true : undefined}
+                data-blocked={why ? true : undefined}
+                onClick={() => (why ? onBlocked?.(why) : m.kind === 'group' ? setOpen(m.key) : onTap(m.key))}
+                className={`${tileClass(large)} ${why ? blockedClass : ''}`}
+              >
+                <TileGlyph tile={m.key} gender={gender} className={iconClass} />
+                {m.kind === 'group' ? t.tileGroups[m.key] : t.tiles[m.key]}
+              </button>
+            </li>
+          )
+        })}
       </ul>
     </>
   )

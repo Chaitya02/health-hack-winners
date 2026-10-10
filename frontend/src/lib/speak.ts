@@ -1,3 +1,5 @@
+import { duck } from './waitingMusic'
+
 /** Read text aloud with the browser's speech synthesis; silently does nothing where unsupported. */
 export function speak(text: string, lang: string): void {
   try {
@@ -7,6 +9,9 @@ export function speak(text: string, lang: string): void {
     const utterance = new SpeechSynthesisUtterance(text)
     utterance.lang = lang
     utterance.rate = 0.95
+    // Waiting music dips while speaking so the announcement is clear.
+    utterance.onstart = () => duck(true)
+    utterance.onend = utterance.onerror = () => duck(false)
     synth.speak(utterance)
   } catch {
     // Speech is a convenience; the screen still shows everything.

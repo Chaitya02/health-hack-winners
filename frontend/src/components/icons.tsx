@@ -98,3 +98,23 @@ export function CheckIcon({ className = 'size-6' }: IconProps) {
     </svg>
   )
 }
+
+export function SpeakerIcon({ className = 'size-6', off = false }: IconProps & { off?: boolean }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" />
+      {off ? <path d="m16 9.5 5 5m0-5-5 5" /> : <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />}
+    </svg>
+  )
+}
+
+export function MusicIcon({ className = 'size-6', off = false }: IconProps & { off?: boolean }) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M9 18V5.5l10-2V16" />
+      <circle cx="6.5" cy="18" r="2.5" />
+      <circle cx="16.5" cy="16" r="2.5" />
+      {off && <path d="M3.5 3.5l17 17" />}
+    </svg>
+  )
+}

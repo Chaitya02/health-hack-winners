@@ -1,5 +1,6 @@
 import { HTML_LANG, type Strings } from '../../i18n/strings'
 import { BellIcon, CheckIcon } from '../icons'
+import { raisedForFallRisk } from './profileRules'
 import type { CreateRequestResponse } from '../../types/ticket'
 
 export function Confirmation({
@@ -26,6 +27,11 @@ export function Confirmation({
       >
         {clinical ? <BellIcon className="size-14" /> : <CheckIcon className="size-14" />}
       </span>
+      {raisedForFallRisk(result) && (
+        <p className="mx-auto mt-4 w-fit rounded-full bg-wait-tint px-4 py-1 text-[20px] font-bold text-wait" data-testid="priority-badge">
+          {t.higherPriority}
+        </p>
+      )}
       <p
         className="mx-auto mt-5 max-w-[28ch] text-[34px] font-bold leading-tight"
         lang={HTML_LANG[result.confirmation_language]}

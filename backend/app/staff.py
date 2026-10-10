@@ -20,10 +20,13 @@ StaffStatus = Literal["available", "break", "off"]
 
 STAFFED_DEPARTMENTS = (Department.NURSING, Department.HOUSEKEEPING, Department.FOOD)
 
-DEMO_STAFF: dict[Department, list[tuple[str, str]]] = {
-    Department.NURSING: [("n-jordan", "Nurse Jordan"), ("n-priya", "Nurse Priya")],
-    Department.HOUSEKEEPING: [("h-ana", "Ana"), ("h-marcus", "Marcus")],
-    Department.FOOD: [("f-leo", "Leo"), ("f-grace", "Grace")],
+DEMO_STAFF: dict[Department, list[tuple[str, str, str]]] = {
+    Department.NURSING: [
+        ("n-jordan", "Nurse Jordan", "male"),
+        ("n-priya", "Nurse Priya", "female"),
+    ],
+    Department.HOUSEKEEPING: [("h-ana", "Ana", "female"), ("h-marcus", "Marcus", "male")],
+    Department.FOOD: [("f-leo", "Leo", "male"), ("f-grace", "Grace", "female")],
 }
 
 
@@ -37,6 +40,8 @@ class StaffMember(BaseModel):
     staff_id: str
     name: str
     department: Department
+    # Used to honour a patient's attendant preference for bathroom help (US-6).
+    gender: Literal["female", "male"] | None = None
     schedule: list[ScheduleBlock] = Field(default_factory=list)
 
 
@@ -66,11 +71,11 @@ def generate_roster(
     rng = random.Random(seed)
     shift_start = now.replace(minute=0, second=0, microsecond=0) - timedelta(hours=3)
     shift_end = shift_start + timedelta(hours=12)
-    on_break_now = rng.choice([sid for people in DEMO_STAFF.values() for sid, _ in people])
+    on_break_now = rng.choice([sid for people in DEMO_STAFF.values() for sid, _, _ in people])
     roster: list[StaffMember] = []
     for dept, people in DEMO_STAFF.items():
         taken: list[tuple[datetime, datetime]] = []
-        for staff_id, name in people:
+        for staff_id, name, gender in people:
             blocks = [ScheduleBlock(start=_iso(shift_start), end=_iso(shift_end), kind="shift")]
             todo = (30, 15)
             if break_now and staff_id == on_break_now:
@@ -92,7 +97,9 @@ def generate_roster(
                         blocks.append(ScheduleBlock(start=_iso(start), end=_iso(end), kind="break"))
                         break
             roster.append(
-                StaffMember(staff_id=staff_id, name=name, department=dept, schedule=blocks)
+                StaffMember(
+                    staff_id=staff_id, name=name, department=dept, gender=gender, schedule=blocks
+                )
             )
     return roster
 
@@ -128,8 +135,11 @@ def choose_assignee(
     *,
     urgent: bool,
     preferred_name: str | None = None,
+    attendant: str | None = None,
 ) -> StaffMember | None:
     """Available + least busy; ties go to the preferred person (the primary nurse), then by name.
+    With an attendant preference (US-6, "female"/"male"), available staff of that gender go first;
+    if none are available the request still goes to someone available rather than waiting.
     Nobody available: urgent → the least busy person still on shift (else anyone); otherwise None
     (the request waits as unassigned)."""
 
@@ -138,6 +148,10 @@ def choose_assignee(
 
     status = {m.staff_id: status_at(m, now)[0] for m in staff}
     available = [m for m in staff if status[m.staff_id] == "available"]
+    if attendant:
+        matching = [m for m in available if m.gender == attendant]
+        if matching:
+            return min(matching, key=rank)
     if available:
         return min(available, key=rank)
     if not urgent or not staff:

@@ -44,6 +44,9 @@ export interface Strings {
   sendFailed: string
   tooMany: string
   unknownRoom: string
+  /** US-5: shown when a patient taps a tile their profile rules out (e.g. water while NPO). */
+  npoBlocked: string
+  higherPriority: string
 }
 
 export const STRINGS: Record<Language, Strings> = {
@@ -104,6 +107,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: 'We couldn’t send that. Please press the call bell on your bed rail.',
     tooMany: 'You’ve sent several requests in a row. If you need help now, tap “I need my nurse”.',
     unknownRoom: 'This tablet isn’t set up for a room yet. Please ask a staff member.',
+    npoBlocked: 'You can’t eat or drink right now. Ask your nurse if you have questions.',
+    higherPriority: 'Marked higher priority',
   },
   es: {
     languageName: 'Español',
@@ -162,6 +167,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: 'No se pudo enviar. Presione el timbre de llamada de su cama.',
     tooMany: 'Ha enviado varios pedidos seguidos. Si necesita ayuda ya, toque “Necesito a mi enfermera”.',
     unknownRoom: 'Esta tableta aún no tiene cuarto asignado. Pida ayuda al personal.',
+    npoBlocked: 'Ahora no puede comer ni beber. Pregunte a su enfermera si tiene dudas.',
+    higherPriority: 'Marcado como prioridad alta',
   },
   hi: {
     languageName: 'हिन्दी',
@@ -220,6 +227,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: 'भेजा नहीं जा सका। कृपया बिस्तर पर लगी कॉल बेल दबाएँ।',
     tooMany: 'आपने कई अनुरोध भेजे हैं। अभी मदद चाहिए तो “मुझे नर्स चाहिए” दबाएँ।',
     unknownRoom: 'यह टैबलेट अभी किसी कमरे से जुड़ा नहीं है। कृपया स्टाफ़ से पूछें।',
+    npoBlocked: 'अभी आप कुछ खा या पी नहीं सकते। कोई सवाल हो तो अपनी नर्स से पूछें।',
+    higherPriority: 'उच्च प्राथमिकता दी गई',
   },
   gu: {
     languageName: 'ગુજરાતી',
@@ -278,6 +287,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: 'મોકલી શકાયું નહીં. કૃપા કરીને પલંગ પરની કૉલ બેલ દબાવો.',
     tooMany: 'તમે ઘણી વિનંતીઓ મોકલી છે. હમણાં મદદ જોઈએ તો “મને મારી નર્સ જોઈએ” દબાવો.',
     unknownRoom: 'આ ટેબ્લેટ હજુ કોઈ રૂમ સાથે જોડાયેલું નથી. કૃપા કરીને સ્ટાફને પૂછો.',
+    npoBlocked: 'હમણાં તમે કંઈ ખાઈ કે પી શકતા નથી. કોઈ પ્રશ્ન હોય તો તમારી નર્સને પૂછો.',
+    higherPriority: 'ઉચ્ચ પ્રાથમિકતા આપી',
   },
   zh: {
     languageName: '中文',
@@ -336,6 +347,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: '发送失败，请按床边的呼叫铃。',
     tooMany: '您已连续发送多个请求。如需立即帮助，请点按“我需要护士”。',
     unknownRoom: '此平板尚未绑定病房，请联系工作人员。',
+    npoBlocked: '您现在不能进食或喝水。如有疑问，请询问您的护士。',
+    higherPriority: '已标为优先',
   },
   ht: {
     languageName: 'Kreyòl ayisyen',
@@ -394,6 +407,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: 'Nou pa t ka voye l. Tanpri peze sonèt ki sou kabann ou.',
     tooMany: 'Ou voye plizyè demann youn dèyè lòt. Si w bezwen èd kounye a, peze “Mwen bezwen enfimyè m”.',
     unknownRoom: 'Tablèt sa a poko gen chanm. Tanpri mande yon anplwaye.',
+    npoBlocked: 'Ou pa ka manje ni bwè kounye a. Mande enfimyè w si ou gen kesyon.',
+    higherPriority: 'Make kòm priyorite',
   },
   pt: {
     languageName: 'Português',
@@ -452,6 +467,8 @@ export const STRINGS: Record<Language, Strings> = {
     sendFailed: 'Não foi possível enviar. Aperte a campainha da sua cama.',
     tooMany: 'Você enviou vários pedidos seguidos. Se precisa de ajuda agora, toque em “Preciso da minha enfermeira”.',
     unknownRoom: 'Este tablet ainda não está ligado a um quarto. Peça ajuda à equipe.',
+    npoBlocked: 'Você não pode comer nem beber agora. Pergunte à sua enfermeira se tiver dúvidas.',
+    higherPriority: 'Marcado como prioridade',
   },
 }
 

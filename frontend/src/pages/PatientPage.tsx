@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Confirmation } from '../components/patient/Confirmation'
 import { InputPanel } from '../components/patient/InputPanel'
@@ -10,7 +10,10 @@ import { RequestsPanel } from '../components/patient/RequestsPanel'
 import type { QuickTile } from '../components/patient/RequestTiles'
 import { Screensaver } from '../components/patient/Screensaver'
 import { VoiceBubble } from '../components/patient/VoiceBubble'
+import { useAudioPrefs } from '../hooks/useAudioPrefs'
 import { useIdle } from '../hooks/useIdle'
+import * as waitingMusic from '../lib/waitingMusic'
+import { requestLabel } from '../components/patient/RequestTracker'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { DASHBOARD } from '../i18n/dashboard'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
@@ -18,6 +21,7 @@ import { layoutFor } from '../lib/accessibility'
 import { api, ApiError } from '../lib/api'
 import { DEFAULT_ROOM, IDLE_MS } from '../lib/config'
 import { topTiles } from '../lib/personalize'
+import { blockedTiles, profileRefusalMessage } from '../components/patient/profileRules'
 import { speak } from '../lib/speak'
 import {
   CLOSED_STATUSES,
@@ -134,6 +138,24 @@ function Dashboard({
     fromEvent,
   })
   const openCount = requests.filter((r) => !CLOSED_STATUSES.includes(r.status)).length
+
+  // US-7: waiting music while any request is open; spoken status changes. Both toggleable.
+  const { prefs: audioPrefs, toggle: toggleAudio } = useAudioPrefs(roomId)
+  useEffect(() => {
+    if (audioPrefs.music && openCount > 0) waitingMusic.start()
+    else waitingMusic.stop()
+  }, [audioPrefs.music, openCount])
+  useEffect(() => () => waitingMusic.stop(), [])
+  const lastStatus = useRef<Map<string, string> | null>(null)
+  useEffect(() => {
+    const prev = lastStatus.current
+    lastStatus.current = new Map(requests.map((r) => [r.ticket_id, r.status]))
+    if (prev === null || !audioPrefs.voice) return // first load: nothing to announce
+    const changes = requests
+      .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== r.status)
+      .map((r) => `${requestLabel(r, t, lang)}: ${t.status[r.status]}`) // same words as on screen
+    if (changes.length) speak(changes.join('. '), t.speechLang)
+  }, [requests, audioPrefs.voice, t, lang])
   const { top } = useMemo(() => topTiles(room.profile, requests), [room.profile, requests])
 
   /** `spokenLabel`: what the patient pressed, read aloud with the result when read-aloud is on. */
@@ -152,7 +174,9 @@ function Dashboard({
         }
         return true
       } catch (e) {
-        const message = e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed
+        // A profile refusal (409, e.g. water while NPO) carries a patient-language reason.
+        const refusal = e instanceof ApiError ? profileRefusalMessage(e.status, e.message) : null
+        const message = refusal ?? (e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed)
         setError(message)
         if (layout.readAloud) speak(message, t.speechLang)
         return false
@@ -168,8 +192,24 @@ function Dashboard({
   const sendVoice = useCallback((text: string) => void send({ text, input_mode: 'voice' }), [send])
   const closePanel = useCallback(() => setPanelOpen(false), [])
 
+  // US-5: tiles the profile rules out; tapping one explains why (and reads it aloud).
+  const blocked = useMemo(() => blockedTiles(room.profile, t), [room.profile, t])
+  const [notice, setNotice] = useState<string | null>(null)
+  useEffect(() => {
+    if (!notice) return
+    const id = setTimeout(() => setNotice(null), 6000)
+    return () => clearTimeout(id)
+  }, [notice])
+  const explainBlocked = (why: string) => {
+    setNotice(why)
+    if (layout.readAloud) speak(why, t.speechLang)
+  }
+
   return (
-    <div className={`min-h-screen leading-snug ${layout.large ? 'text-[30px]' : 'text-[24px]'}`} data-dashboard={audio ? 'audio' : 'standard'}>
+    <div
+      onPointerDownCapture={waitingMusic.prime}
+      onKeyDownCapture={waitingMusic.prime}
+      className={`min-h-screen leading-snug ${layout.large ? 'text-[30px]' : 'text-[24px]'}`} data-dashboard={audio ? 'audio' : 'standard'}>
       {screensaver.idle && (
         <Screensaver
           roomId={roomId}
@@ -183,11 +223,20 @@ function Dashboard({
           }}
         />
       )}
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-5">
+        {notice && (
+          <p role="status" data-testid="blocked-notice" className="max-w-xl rounded-2xl bg-pine px-6 py-4 text-center text-[22px] font-bold text-white shadow-2xl">
+            {notice}
+          </p>
+        )}
+      </div>
       {panelOpen && <RequestsPanel requests={requests} roomId={roomId} lang={lang} t={t} onClose={closePanel} />}
       <PatientHeader
         name={room.patient_alias}
         age={room.age}
         roomId={roomId}
+        audio={audioPrefs}
+        onToggleAudio={toggleAudio}
         lang={lang}
         openCount={openCount}
         onLangChange={onLangChange}
@@ -226,7 +275,17 @@ function Dashboard({
             </div>
             {/* Wide screens: the request column scrolls in place; the page itself doesn't move. */}
             <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:px-2 lg:pb-4" data-testid="request-column">
-              <PersonalTiles top={top} t={t} lang={lang} busy={busy} large={layout.large} onTap={tap} gender={room.gender} />
+              <PersonalTiles
+                top={top}
+                t={t}
+                lang={lang}
+                busy={busy}
+                large={layout.large}
+                onTap={tap}
+                gender={room.gender}
+                blocked={blocked}
+                onBlocked={explainBlocked}
+              />
             </div>
           </div>
         )}
