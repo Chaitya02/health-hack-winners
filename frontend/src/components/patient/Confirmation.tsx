@@ -1,4 +1,5 @@
 import { HTML_LANG, type Strings } from '../../i18n/strings'
+import { BellIcon, CheckIcon } from '../icons'
 import type { CreateRequestResponse } from '../../types/ticket'
 
 export function Confirmation({
@@ -18,11 +19,15 @@ export function Confirmation({
       data-testid="confirmation"
       className={`rounded-3xl p-8 text-center ${clinical ? 'bg-bell text-white' : 'bg-care-tint text-pine'}`}
     >
-      <p aria-hidden="true" className="text-[64px]">
-        {clinical ? '🔔' : '✓'}
-      </p>
+      <span
+        aria-hidden="true"
+        className={`mx-auto grid size-24 place-items-center rounded-full ${clinical ? 'bg-white/20 text-white' : 'bg-care text-white'}`}
+        data-icon={clinical ? 'bell' : 'check'}
+      >
+        {clinical ? <BellIcon className="size-14" /> : <CheckIcon className="size-14" />}
+      </span>
       <p
-        className="mx-auto max-w-[28ch] text-[34px] font-bold leading-tight"
+        className="mx-auto mt-5 max-w-[28ch] text-[34px] font-bold leading-tight"
         lang={HTML_LANG[result.confirmation_language]}
       >
         {result.confirmation}
