@@ -1,4 +1,4 @@
-from app.classifier.confirmations import confirmation_for
+from app.classifier.confirmations import confirmation_for, profile_note
 from app.classifier.decision import Classifier, Decision, FinalIntent, decide
 from app.classifier.mock import MockClassifier, detect_language
 from app.classifier.schema import (
@@ -37,4 +37,5 @@ __all__ = [
     "confirmation_for",
     "decide",
     "detect_language",
+    "profile_note",
 ]

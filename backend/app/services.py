@@ -7,7 +7,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from statistics import median
 
-from app.classifier import Classifier, Decision, FinalIntent, confirmation_for, decide
+from app.classifier import (
+    Classifier,
+    Decision,
+    FinalIntent,
+    confirmation_for,
+    decide,
+    profile_note,
+)
 from app.metrics import start_of_day
 from app.models import (
     CLINICAL_CATEGORIES,
@@ -29,6 +36,7 @@ from app.models import (
     default_severity,
     utc_now_iso,
 )
+from app.profile_rules import apply_profile, check_tile
 from app.realtime import Publisher
 from app.repo import TicketRepository, new_id
 from app.safety import scan
@@ -116,17 +124,21 @@ class TicketService:
         ticket.history.append(StatusChange(status=ticket.status, at=at, by_role=by_role))
 
     def create(self, req: CreateRequest, room: Room) -> CreateRequestResponse:
-        if req.input_mode == InputMode.QUICK_TAP and req.tile in QUICK_TAP_TILES:
-            decision = self._quick_tap_decision(req.tile, req.language_hint or Language.EN)
+        tile = req.tile if req.input_mode == InputMode.QUICK_TAP else None
+        if tile in QUICK_TAP_TILES:
+            check_tile(room.profile, tile, QUICK_TAP_TILES[tile][0])  # raises ProfileRefusal
+            decision = self._quick_tap_decision(tile, req.language_hint or Language.EN)
         else:
             decision = decide(req.text, self.classifier, self.confidence_threshold)
+        profile = apply_profile(room.profile, decision.intents, req.text, tile)
 
         language = req.language_hint or decision.detected_language
         request_id = new_id("r_")
         now = utc_now_iso()
         tickets: list[Ticket] = []
-        for intent in decision.intents:
+        for intent, adj in zip(decision.intents, profile.adjustments, strict=True):
             urgent = intent.category == Category.URGENT_CLINICAL
+            priority = adj.priority or intent.priority
             ticket = Ticket(
                 ticket_id=new_id("t_"),
                 request_id=request_id,
@@ -138,14 +150,15 @@ class TicketService:
                 english_summary=intent.english_summary,
                 category=intent.category,
                 department=intent.department,
-                priority=intent.priority,
+                priority=priority,
+                severity=adj.severity,
                 confidence=intent.confidence,
                 clinical_risk_flag=intent.clinical_risk_flag,
                 safety_reasons=intent.safety_reasons,
                 requested_items=intent.requested_items,
                 patient_confirmation=confirmation_for(language, [intent.department], urgent),
                 created_at=now,
-                eta_minutes=self.eta_minutes(intent.department, intent.priority),
+                eta_minutes=self.eta_minutes(intent.department, priority),
                 history=[StatusChange(status=Status.NEW, at=now, by_role=Role.PATIENT)],
                 model_id=decision.model_id,
                 prompt_version=decision.prompt_version,
@@ -154,7 +167,7 @@ class TicketService:
                     rules_pre=decision.rules_pre,
                     rules_post=intent.rules_post,
                     llm_decision=decision.llm_output,
-                    final_decision=intent.as_dict(),
+                    final_decision=intent.as_dict() | {"priority": str(priority)},
                     fallback=decision.fallback,
                 ),
             )
@@ -183,7 +196,16 @@ class TicketService:
         return CreateRequestResponse(
             request_id=request_id,
             tickets=tickets,
-            confirmation=confirmation_for(language, decision.departments, decision.is_clinical),
+            confirmation=" ".join(
+                [
+                    confirmation_for(language, decision.departments, decision.is_clinical),
+                    *(
+                        profile_note(language, f)
+                        for f in ("npo", "fall_risk")
+                        if f in profile.flags
+                    ),
+                ]
+            ),
             confirmation_language=language,
             is_clinical=decision.is_clinical,
         )

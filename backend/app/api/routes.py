@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.classifier import decide
+from app.classifier import decide, profile_note
 from app.metrics import Metrics, compute, start_of_day
 from app.models import (
     MAX_NOTE_LEN,
@@ -16,6 +16,7 @@ from app.models import (
     Status,
     Ticket,
 )
+from app.profile_rules import ProfileRefusal
 from app.services import STAFF_ROLE, InvalidTransition, TicketService
 
 router = APIRouter(prefix="/api")
@@ -82,7 +83,14 @@ def create_request(body: CreateRequest, request: Request) -> CreateRequestRespon
     room = _room(request, body.room_id)
     if not request.app.state.rate_limiter.allow(room.room_id):
         raise HTTPException(429, "Too many requests from this room. Tap 'I need my nurse'.")
-    return _service(request).create(body, room)
+    try:
+        return _service(request).create(body, room)
+    except ProfileRefusal as e:
+        language = body.language_hint or room.preferred_language
+        raise HTTPException(
+            409,
+            {"code": e.code, "reason": e.reason, "message": profile_note(language, "npo_tile")},
+        ) from e
 
 
 @router.get("/rooms/{room_id}/tickets", response_model=list[PatientTicketView])
