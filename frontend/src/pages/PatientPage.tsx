@@ -29,6 +29,7 @@ function toView(e: TicketEvent): PatientTicketView {
     ticket_id: t.ticket_id,
     department: t.department,
     category: t.category,
+    tile: t.tile,
     priority: t.priority,
     status: t.status,
     english_summary: t.english_summary,
@@ -170,7 +171,7 @@ export default function PatientPage() {
           </>
         )}
 
-        <MyRequests requests={requests} t={t} />
+        <MyRequests requests={requests} t={t} roomId={roomId} lang={lang} />
       </main>
     </div>
   )

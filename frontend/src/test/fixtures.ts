@@ -9,6 +9,7 @@ export function ticket(overrides: Partial<Ticket> = {}): Ticket {
     patient_alias: 'Maya',
     original_text: 'extra pillow please',
     input_mode: 'text',
+    tile: null,
     detected_language: 'en',
     english_summary: 'Patient requests an extra pillow.',
     category: 'COMFORT_SUPPLIES',
