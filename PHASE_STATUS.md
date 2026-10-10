@@ -1,13 +1,17 @@
 # Phase Status
 
 ## Phase 0 — Spec, foundation and synthetic data
-- [ ] specs/requirements.md, design.md, tasks.md complete
-- [ ] `make dev` → GET /health returns 200
-- [ ] `make seed` populates DynamoDB Local (print counts)
-- [ ] dataset.jsonl: ≥150 rows, ≥40 urgent, ≥25 non-English
-- [ ] `npm run build` succeeds; all 3 routes render
-- [ ] lint + all tests pass; CI green on GitHub
-- [ ] PHASE_STATUS.md updated; merged; tagged phase-0-complete; pushed
+- [x] specs/requirements.md, design.md, tasks.md complete
+- [x] `make dev` → GET /health returns 200
+- [x] `make seed` populates DynamoDB Local (print counts)
+- [x] dataset.jsonl: ≥150 rows, ≥40 urgent, ≥25 non-English
+- [x] `npm run build` succeeds; all 3 routes render
+- [x] lint + all tests pass; CI green on GitHub
+- [x] PHASE_STATUS.md updated; merged; tagged phase-0-complete; pushed
+
+**Completed:** 2026-10-10 · branch `phase-0-foundation` head `211c2f0` · tag `phase-0-complete` (merge commit on main)
+**Evidence:** /health 200 (mock mode); seed 20 rooms (401–420); dataset 167 rows / 55 urgent / 54 non-English; vite build OK; 3 routes render in headless Chrome; ruff + pytest (5) + eslint + tsc + vitest (3) green; CI run 38025254564 green.
+**Known issues:** none blocking. Frontend pages are placeholders until Phase 2. Bedrock (AWS credentials) not yet configured; needed for Phase 1 bedrock-mode criteria.
 
 ## Phase 1 — AI classification engine and safety guardrails
 - [ ] URGENT_CLINICAL recall = 100% on eval set (bedrock mode)
