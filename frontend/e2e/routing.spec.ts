@@ -63,7 +63,7 @@ test('(c) Spanish ice-water request → Food Services with Spanish confirmation'
   expect(confirmation).toMatch(/alimentación/i)
   await expect(patient.getByTestId('confirmation')).toContainText('Servicios de alimentación va en camino')
   await expect(patient.getByRole('button', { name: 'Hacer otro pedido' })).toBeVisible()
-  await expect(ticketCard(food, tickets[0].ticket_id)).toContainText('ES')
+  await expect(ticketCard(food, tickets[0].ticket_id)).toBeVisible()
 })
 
 test('(d) staff escalates a ticket → it appears in Nursing', async ({ browser }) => {

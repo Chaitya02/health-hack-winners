@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Link, useParams } from 'react-router-dom'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { useNow } from '../hooks/useNow'
-import { STRINGS } from '../i18n/strings'
 import { playAlert, unlockAudio } from '../lib/alertSound'
 import { api, ApiError } from '../lib/api'
 import { autoSignIn, demoPins } from '../lib/config'
@@ -365,7 +364,6 @@ function TicketRow({
   const waited = secondsSince(t.created_at, now)
   const age = aging(waited)
   const high = t.priority === 'HIGH'
-  const lang = STRINGS[t.detected_language]
   const actions: { action: TicketAction; label: string }[] = []
   if (t.status === 'NEW' || t.status === 'ESCALATED') actions.push({ action: 'acknowledge', label: 'Acknowledge' })
   if (t.status !== 'IN_PROGRESS') actions.push({ action: 'start', label: 'On my way' })
@@ -387,9 +385,6 @@ function TicketRow({
             }`}
           >
             {high ? 'HIGH' : t.priority === 'LOW' ? 'Low' : 'Normal'}
-          </span>
-          <span className="rounded-full border border-line px-3 py-1 text-sm" title={lang.languageName}>
-            {t.detected_language.toUpperCase()} · {lang.languageName}
           </span>
           {t.status !== 'NEW' && <span className="text-sm text-pine-soft">{t.status.replace('_', ' ').toLowerCase()}</span>}
           {t.nudge_count > 0 && (
