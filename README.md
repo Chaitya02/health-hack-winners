@@ -15,8 +15,8 @@ make dev                # DynamoDB Local + FastAPI (:8000) + Vite (:5173)
 make seed               # synthetic unit "4 West Med-Surg", rooms 401–420
 ```
 
-- Patient tablet: http://localhost:5173/patient/401
-- Staff dashboards: http://localhost:5173/staff/housekeeping (also `food`, `it`, `nursing`)
+- Patient tablet (home page): http://localhost:5173/ shows room 401 (set `VITE_DEFAULT_ROOM` per device); any room: http://localhost:5173/patient/410
+- Staff dashboards: http://localhost:5173/nursing, `/housekeeping`, `/food`, `/it` (demo PIN 2468)
 - Admin / impact: http://localhost:5173/admin
 - API health: http://localhost:8000/health
 

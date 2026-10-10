@@ -55,8 +55,8 @@ cd frontend && npm ci && cd ..   # for running lint, tests and Playwright outsid
 ```
 
 **Where to look:**
-- **Patient screen:** http://localhost:5173/patient/401
-- **Staff dashboards:** http://localhost:5173/staff/housekeeping (also `nursing`, `food` and `it`). The demo PIN is **2468**.
+- **Patient screen:** http://localhost:5173/ (the home page shows room 401). For another room use http://localhost:5173/patient/410. Rooms 410–418 have demo profiles: 410 NPO, 412 fall risk, 414 low vision, 416 speech difficulty, 418 can't write.
+- **Staff dashboards:** http://localhost:5173/nursing (also `/housekeeping`, `/food` and `/it`). The demo PIN is **2468**.
 - **Admin / impact page:** http://localhost:5173/admin
 - **API health check:** http://localhost:8000/health
 - **Quick demo:** open the patient screen and the housekeeping dashboard side by side, then tap "Pillow". It appears on Housekeeping within a second.

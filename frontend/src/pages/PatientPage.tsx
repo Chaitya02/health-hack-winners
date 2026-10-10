@@ -4,6 +4,7 @@ import { useLiveTickets } from '../hooks/useLiveTickets'
 import { useSpeech } from '../hooks/useSpeech'
 import { HTML_LANG, STRINGS, type Strings, type TileKey } from '../i18n/strings'
 import { api, ApiError } from '../lib/api'
+import { DEFAULT_ROOM } from '../lib/config'
 import type {
   CreateRequestResponse,
   InputMode,
@@ -50,7 +51,7 @@ function toView(e: TicketEvent): PatientTicketView {
 }
 
 export default function PatientPage() {
-  const { roomId = '' } = useParams()
+  const { roomId = DEFAULT_ROOM } = useParams()
   const [room, setRoom] = useState<Room | null>(null)
   const [roomError, setRoomError] = useState(false)
   const [lang, setLang] = useState<Language>('en')

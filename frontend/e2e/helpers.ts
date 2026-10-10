@@ -6,7 +6,7 @@ export const SHOTS = process.env.SCREENSHOTS ? '../docs/screenshots' : null
 
 export async function staffPage(browser: Browser, dept: string): Promise<Page> {
   const page = await (await browser.newContext({ viewport: { width: 1100, height: 900 } })).newPage()
-  await page.goto(`/staff/${dept}`)
+  await page.goto(`/${dept}`)
   await page.getByLabel('Department PIN').fill(PIN)
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page.getByTestId('live-status')).toHaveAttribute('data-status', 'live')

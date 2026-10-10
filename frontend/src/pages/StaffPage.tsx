@@ -32,7 +32,16 @@ export default function StaffPage() {
       <main className="p-8">
         <h1 className="text-3xl font-bold">Unknown department</h1>
         <p className="mt-2">
-          Open <Link className="text-care underline" to="/">the home page</Link> to pick a dashboard.
+          Dashboards:{' '}
+          {DEPARTMENTS.map((d, i) => (
+            <span key={d}>
+              {i > 0 && ', '}
+              <Link className="text-care underline" to={`/${d}`}>
+                {DEPARTMENT_LABELS[d]}
+              </Link>
+            </span>
+          ))}
+          .
         </p>
       </main>
     )
