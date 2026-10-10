@@ -14,7 +14,6 @@ const view = (overrides: Partial<PatientTicketView> = {}): PatientTicketView => 
   tile: 'pillow',
   priority: 'NORMAL',
   status: 'ACKNOWLEDGED',
-  english_summary: '',
   patient_confirmation: '',
   created_at: created,
   eta_minutes: 10,
