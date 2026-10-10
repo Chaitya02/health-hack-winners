@@ -1,6 +1,6 @@
 # Classifier Evaluation Report
 
-- **Generated:** 2026-10-10 05:04 UTC
+- **Generated:** 2026-10-10 05:05 UTC
 - **Mode:** `mock` · **Model:** `mock-keyword` · **Prompt:** `mock-v1`
 - **Dataset:** `backend/eval/dataset.jsonl` — 167 synthetic rows, 55 URGENT_CLINICAL
 - **Confidence threshold:** 0.7
