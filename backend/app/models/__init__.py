@@ -1,5 +1,6 @@
 from app.models.enums import (
     CLINICAL_CATEGORIES,
+    CLOSED_STATUSES,
     OPEN_STATUSES,
     AttendantPreference,
     Category,
@@ -12,6 +13,7 @@ from app.models.enums import (
 )
 from app.models.routing import DEPARTMENT_LABELS, ROUTING, SEVERITY, default_severity, route
 from app.models.ticket import (
+    MAX_NOTE_LEN,
     MAX_TEXT_LEN,
     Accessibility,
     CreateRequest,
@@ -22,12 +24,15 @@ from app.models.ticket import (
     StatusChange,
     Ticket,
     TicketAudit,
+    TicketNote,
     utc_now_iso,
 )
 
 __all__ = [
     "CLINICAL_CATEGORIES",
+    "CLOSED_STATUSES",
     "DEPARTMENT_LABELS",
+    "MAX_NOTE_LEN",
     "MAX_TEXT_LEN",
     "OPEN_STATUSES",
     "ROUTING",
@@ -49,6 +54,7 @@ __all__ = [
     "StatusChange",
     "Ticket",
     "TicketAudit",
+    "TicketNote",
     "default_severity",
     "route",
     "utc_now_iso",

@@ -31,6 +31,7 @@ const STATUS_STYLE: Record<string, string> = {
   IN_PROGRESS: 'bg-care text-white',
   RESOLVED: 'bg-fresh-tint text-fresh',
   ESCALATED: 'bg-bell-tint text-bell-deep',
+  CANCELLED: 'bg-curtain-deep text-pine-soft',
 }
 
 function toView(e: TicketEvent): PatientTicketView {

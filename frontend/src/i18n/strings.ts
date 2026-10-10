@@ -73,6 +73,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: 'On the way',
       RESOLVED: 'Done',
       ESCALATED: 'Sent to your nurse',
+      CANCELLED: 'Cancelled',
     },
     departments: {
       nursing: 'Your nurse',
@@ -119,6 +120,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: 'En camino',
       RESOLVED: 'Listo',
       ESCALATED: 'Enviado a su enfermera',
+      CANCELLED: 'Cancelado',
     },
     departments: {
       nursing: 'Su enfermera',
@@ -165,6 +167,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: 'आ रहे हैं',
       RESOLVED: 'हो गया',
       ESCALATED: 'नर्स को भेजा गया',
+      CANCELLED: 'रद्द किया गया',
     },
     departments: {
       nursing: 'आपकी नर्स',
@@ -211,6 +214,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: 'આવી રહ્યા છે',
       RESOLVED: 'થઈ ગયું',
       ESCALATED: 'નર્સને મોકલ્યું',
+      CANCELLED: 'રદ કર્યું',
     },
     departments: {
       nursing: 'તમારી નર્સ',
@@ -257,6 +261,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: '正在赶来',
       RESOLVED: '已完成',
       ESCALATED: '已转给护士',
+      CANCELLED: '已取消',
     },
     departments: {
       nursing: '您的护士',
@@ -303,6 +308,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: 'Y ap vini',
       RESOLVED: 'Fini',
       ESCALATED: 'Voye bay enfimyè w',
+      CANCELLED: 'Anile',
     },
     departments: {
       nursing: 'Enfimyè w',
@@ -349,6 +355,7 @@ export const STRINGS: Record<Language, Strings> = {
       IN_PROGRESS: 'A caminho',
       RESOLVED: 'Concluído',
       ESCALATED: 'Enviado à enfermeira',
+      CANCELLED: 'Cancelado',
     },
     departments: {
       nursing: 'Sua enfermeira',
