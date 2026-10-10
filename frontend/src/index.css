@@ -55,3 +55,18 @@ body {
     animation: none;
   }
 }
+
+/* Tailwind v4 gives buttons the default arrow cursor; everything clickable gets the hand. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  select,
+  summary,
+  label:has(> input[type='radio']),
+  label:has(> input[type='checkbox']) {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}

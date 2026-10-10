@@ -3,6 +3,7 @@ import type {
   CreateRequestBody,
   CreateRequestResponse,
   Department,
+  IntakeBody,
   PatientAction,
   PatientTicketView,
   Role,
@@ -91,6 +92,13 @@ export const api = {
   room: (roomId: string) => request<Room>(`/api/rooms/${encodeURIComponent(roomId)}`),
   createRequest: (body: CreateRequestBody) =>
     request<CreateRequestResponse>('/api/requests', { method: 'POST', body: JSON.stringify(body) }),
+  saveIntake: (roomId: string, body: IntakeBody) =>
+    request<{ room: Room; detected: string[] }>(`/api/rooms/${encodeURIComponent(roomId)}/intake`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    }),
+  resetIntake: (roomId: string) =>
+    request<Room>(`/api/rooms/${encodeURIComponent(roomId)}/intake`, { method: 'DELETE' }),
   roomTickets: (roomId: string) =>
     request<PatientTicketView[]>(`/api/rooms/${encodeURIComponent(roomId)}/tickets`),
   login: (department: Department, pin: string) =>

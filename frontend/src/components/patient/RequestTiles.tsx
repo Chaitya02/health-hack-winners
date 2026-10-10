@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Strings, TileGroupKey, TileKey } from '../../i18n/strings'
+import { TileGlyph, TileIcon, type Gender } from '../tileIcons'
 
 export type QuickTile = Exclude<TileKey, 'nurse'>
 
@@ -55,9 +56,11 @@ export const MAIN_TILES: MainTile[] = [
   { kind: 'tile', key: 'bathroom', icon: '🚻' },
 ]
 
+/** One card per line (a single column): big icon above the label. `large` is the low-vision
+ * layout (US-4): taller cards, bigger text, high-contrast borders. */
 const tileClass = (large: boolean) =>
-  `flex w-full flex-col items-center justify-center gap-1 rounded-2xl bg-paper p-3 text-center font-bold hover:border-care hover:bg-care-tint ${
-    large ? 'min-h-40 border-4 border-pine text-[30px]' : 'min-h-28 border-2 border-line text-[22px]'
+  `flex w-full flex-col items-center justify-center gap-2 rounded-2xl bg-paper p-4 text-center font-bold hover:border-care hover:bg-care-tint ${
+    large ? 'min-h-40 border-4 border-pine text-[28px]' : 'min-h-32 border-2 border-line text-[24px]'
   }`
 
 /** `large` (low-vision layout, US-4): two columns, bigger targets and text, high-contrast borders. */
@@ -66,15 +69,29 @@ export function RequestTiles({
   busy,
   onTap,
   large = false,
+  exclude = [],
+  gender = 'unspecified',
+  showTitle = true,
 }: {
   t: Strings
   busy: boolean
   onTap: (tile: QuickTile) => void
   large?: boolean
+  /** Tiles already shown elsewhere (the patient's top 3); groups left empty are dropped. */
+  exclude?: QuickTile[]
+  /** Picks the bathroom icon (woman / man / neutral). */
+  gender?: Gender
+  /** Off when embedded under the dashboard's "More requests" toggle. */
+  showTitle?: boolean
 }) {
-  const iconClass = large ? 'text-[56px]' : 'text-[36px]'
+  const iconClass = large ? 'size-14' : 'size-10'
   const [open, setOpen] = useState<TileGroupKey | null>(null)
-  const group = MAIN_TILES.find((m) => m.kind === 'group' && m.key === open)
+  const tiles = MAIN_TILES.flatMap((m): MainTile[] => {
+    if (m.kind === 'tile') return exclude.includes(m.key) ? [] : [m]
+    const items = m.items.filter((i) => !exclude.includes(i.key))
+    return items.length ? [{ ...m, items }] : []
+  })
+  const group = tiles.find((m) => m.kind === 'group' && m.key === open)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -86,7 +103,7 @@ export function RequestTiles({
       <section aria-labelledby="tile-group-title" className="mt-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="tile-group-title" ref={headingRef} tabIndex={-1} className="text-[26px] font-bold">
-            <span aria-hidden="true">{group.icon} </span>
+            <TileIcon name={group.key} className="mr-2 inline size-8 align-[-0.2em] text-pine" />
             {t.tileGroups[group.key]}
           </h2>
           <button
@@ -98,13 +115,11 @@ export function RequestTiles({
             {t.back}
           </button>
         </div>
-        <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-4'}`}>
+        <ul className="mt-3 flex flex-col gap-3">
           {group.items.map((item) => (
             <li key={item.key}>
               <button type="button" disabled={busy} onClick={() => onTap(item.key)} className={tileClass(large)}>
-                <span aria-hidden="true" className={iconClass}>
-                  {item.icon}
-                </span>
+                <TileGlyph tile={item.key} gender={gender} className={iconClass} />
                 {t.tiles[item.key]}
               </button>
             </li>
@@ -116,9 +131,9 @@ export function RequestTiles({
 
   return (
     <>
-      <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>
-      <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-3'}`}>
-        {MAIN_TILES.map((m) => (
+      {showTitle && <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>}
+      <ul className="mt-3 flex flex-col gap-3">
+        {tiles.map((m) => (
           <li key={m.key}>
             <button
               type="button"
@@ -126,9 +141,7 @@ export function RequestTiles({
               onClick={() => (m.kind === 'group' ? setOpen(m.key) : onTap(m.key))}
               className={tileClass(large)}
             >
-              <span aria-hidden="true" className={iconClass}>
-                {m.icon}
-              </span>
+              <TileGlyph tile={m.key} gender={gender} className={iconClass} />
               {m.kind === 'group' ? t.tileGroups[m.key] : t.tiles[m.key]}
             </button>
           </li>

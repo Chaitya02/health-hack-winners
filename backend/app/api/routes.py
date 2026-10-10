@@ -6,20 +6,26 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app import analytics
 from app.classifier import decide, profile_note
+from app.intake import derive_profile
 from app.metrics import Metrics, compute, start_of_day
 from app.models import (
     MAX_NOTE_LEN,
+    MAX_NOTES_LEN,
     MAX_TEXT_LEN,
     ROLE_DEPARTMENT,
     STAFF_ROLE,
     CreateRequest,
     CreateRequestResponse,
     Department,
+    Language,
+    PatientProfile,
     PatientTicketView,
     Role,
     Room,
+    RoomView,
     Status,
     Ticket,
+    utc_now_iso,
 )
 from app.profile_rules import ProfileRefusal
 from app.services import InvalidTransition, TicketService
@@ -100,9 +106,66 @@ def staff_department(role: SignedIn) -> Department:
 StaffDept = Annotated[Department, Depends(staff_department)]
 
 
-@router.get("/rooms/{room_id}", response_model=Room)
-def get_room(room_id: str, request: Request) -> Room:
-    return _room(request, room_id)
+class IntakeBody(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=40)
+    age: int = Field(ge=0, le=120)
+    gender: Literal["female", "male", "unspecified"] = "unspecified"
+    clinical_notes: str = Field(default="", max_length=MAX_NOTES_LEN)
+    preferred_language: Language | None = None
+
+
+def _view(room: Room) -> RoomView:
+    return RoomView.model_validate(room.model_dump())
+
+
+@router.get("/rooms/{room_id}", response_model=RoomView)
+def get_room(room_id: str, request: Request) -> RoomView:
+    return _view(_room(request, room_id))
+
+
+@router.put("/rooms/{room_id}/intake")
+def save_intake(room_id: str, body: IntakeBody, request: Request) -> dict:
+    """Bedside intake (hackathon: the patient fills it in, no login). The notes set the profile,
+    dashboard and priority buttons; the raw notes are stored but never sent back."""
+    room = _room(request, room_id)
+    if not request.app.state.rate_limiter.allow(room.room_id):
+        raise HTTPException(429, "Too many requests from this room. Tap 'I need my nurse'.")
+    result = derive_profile(body.clinical_notes)
+    updated = room.model_copy(
+        update={
+            "patient_alias": body.name,
+            "age": body.age,
+            "gender": body.gender,
+            "clinical_notes": body.clinical_notes or None,
+            "preferred_language": body.preferred_language or room.preferred_language,
+            "profile": result.profile,
+            "intake_complete": True,
+            "intake_at": utc_now_iso(),
+        }
+    )
+    request.app.state.rooms.put(updated)
+    return {"room": _view(updated), "detected": result.flags}
+
+
+@router.delete("/rooms/{room_id}/intake", response_model=RoomView)
+def reset_intake(room_id: str, request: Request) -> RoomView:
+    """Start over for the next patient on this tablet (demo/testing)."""
+    room = _room(request, room_id)
+    cleared = room.model_copy(
+        update={
+            "patient_alias": "",
+            "age": None,
+            "gender": "unspecified",
+            "clinical_notes": None,
+            "profile": PatientProfile(),
+            "intake_complete": False,
+            "intake_at": utc_now_iso(),
+        }
+    )
+    request.app.state.rooms.put(cleared)
+    return _view(cleared)
 
 
 @router.post("/requests", status_code=201, response_model=CreateRequestResponse)
@@ -122,8 +185,9 @@ def create_request(body: CreateRequest, request: Request) -> CreateRequestRespon
 
 @router.get("/rooms/{room_id}/tickets", response_model=list[PatientTicketView])
 def room_tickets(room_id: str, request: Request) -> list[PatientTicketView]:
-    _room(request, room_id)
-    since = start_of_day()
+    room = _room(request, room_id)
+    # Today's requests, minus anything from before the current patient's intake.
+    since = max(start_of_day(), room.intake_at or "")
     tickets = [t for t in request.app.state.tickets.by_room(room_id) if t.created_at >= since]
     return [PatientTicketView.model_validate(t.model_dump()) for t in tickets]
 

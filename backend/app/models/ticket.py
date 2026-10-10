@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -17,6 +17,9 @@ from app.models.routing import default_severity
 
 MAX_TEXT_LEN = 500
 MAX_NOTE_LEN = 200
+MAX_NOTES_LEN = 1000
+
+Gender = Literal["female", "male", "unspecified"]
 
 
 def utc_now_iso() -> str:
@@ -38,6 +41,11 @@ class PatientProfile(BaseModel):
     diet: str | None = Field(default=None, max_length=60)
     accessibility: Accessibility = Field(default_factory=Accessibility)
     attendant_preference: AttendantPreference = AttendantPreference.ANY
+    # Set from the intake notes (app/intake.py): which dashboard to show and which request
+    # buttons come first; notes_flags names what was recognised.
+    dashboard: Literal["standard", "audio"] = "standard"
+    priority_tiles: list[str] = Field(default_factory=list)
+    notes_flags: list[str] = Field(default_factory=list)
 
 
 class Room(BaseModel):
@@ -47,6 +55,29 @@ class Room(BaseModel):
     preferred_language: Language = Language.EN
     primary_nurse: str
     profile: PatientProfile = Field(default_factory=PatientProfile)
+    age: int | None = Field(default=None, ge=0, le=120)
+    # Only used to pick the bathroom icon on the bedside screen.
+    gender: Gender = "unspecified"
+    # Free-text notes from the intake form. Stored for re-deriving the profile, never returned by
+    # the open room endpoints (see RoomView).
+    clinical_notes: str | None = Field(default=None, max_length=MAX_NOTES_LEN)
+    intake_complete: bool = True
+    intake_at: str | None = None  # requests before this belong to the previous patient
+
+
+class RoomView(BaseModel):
+    """What the bedside screen gets for its room: everything except the clinical notes."""
+
+    room_id: str
+    unit: str
+    patient_alias: str
+    preferred_language: Language
+    primary_nurse: str
+    profile: PatientProfile
+    age: int | None
+    gender: Gender = "unspecified"
+    intake_complete: bool
+    intake_at: str | None
 
 
 class TicketAudit(BaseModel):

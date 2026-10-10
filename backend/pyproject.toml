@@ -37,3 +37,4 @@ pythonpath = ["."]
 "app/safety/lexicon.py" = ["E501"]  # long regex alternations / multilingual phrases
 "app/classifier/prompt.py" = ["E501"]  # few-shot JSON examples
 "app/classifier/confirmations.py" = ["E501"]  # multilingual patient templates
+"app/intake.py" = ["E501"]  # keyword pattern alternations

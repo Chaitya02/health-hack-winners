@@ -7,7 +7,6 @@ test('(a) pillow on the tablet appears live in Housekeeping and never in Nursing
   const patient = await patientPage(browser, '401')
 
   let t0 = 0
-  await patient.getByRole('button', { name: 'Comfort', exact: true }).click()
   const { tickets } = await submitAndCapture(patient, async () => {
     t0 = Date.now()
     await patient.getByRole('button', { name: 'Pillow', exact: true }).click()

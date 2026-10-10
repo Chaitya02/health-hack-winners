@@ -8,6 +8,9 @@ const profile = (a: Partial<PatientProfile['accessibility']>): PatientProfile =>
   fall_risk: false,
   diet: null,
   attendant_preference: 'any',
+  dashboard: 'standard',
+  priority_tiles: [],
+  notes_flags: [],
   accessibility: { low_vision: false, speech_difficulty: false, cannot_write: false, ...a },
 })
 

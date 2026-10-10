@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
@@ -18,29 +18,40 @@ function renderPatient() {
   )
 }
 
+/** Everything beyond the patient's top 3 sits behind "More requests". */
+const openMore = async () => userEvent.click(await screen.findByRole('button', { name: 'More requests' }))
+
 describe('PatientPage', () => {
-  it('shows greeting, the main tiles and the nurse button', async () => {
+  it('shows greeting, the top 3 buttons, the nurse button, and the rest under More requests', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
-    expect(await screen.findByRole('heading', { name: /hi maya/i })).toBeInTheDocument()
-    for (const label of ['Thirsty', 'Comfort', 'Food & medication', 'Emotional support', 'Help to the bathroom']) {
+    expect(await screen.findByRole('heading', { name: 'Maya' })).toBeInTheDocument()
+    const top = within(screen.getByTestId('top-tiles')).getAllByRole('button')
+    expect(top.map((b) => b.textContent)).toEqual(['Water', 'Pillow', 'Bathroom'])
+    expect(screen.queryByRole('button', { name: 'Comfort' })).not.toBeInTheDocument()
+    await openMore()
+    // The top 3 aren't repeated in the dropdown (Bathroom is a top tile, so its main tile goes).
+    expect(screen.getAllByRole('button', { name: 'Bathroom' })).toHaveLength(1)
+    for (const label of ['Thirsty', 'Comfort', 'Food & medication', 'Emotional support']) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
-    expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^emergency$/i })).toBeInTheDocument()
   })
 
   it.each([
-    ['Thirsty', ['Water', 'Ice']],
-    ['Comfort', ['Pillow', 'Blanket', 'Room temperature', 'TV / remote']],
+    // Water and Pillow are default top tiles, so their groups only list the rest.
+    ['Thirsty', ['Ice']],
+    ['Comfort', ['Blanket', 'Room temperature', 'TV / remote']],
     ['Food & medication', ['Food / menu', 'Medication']],
     ['Emotional support', ['Contact my family', 'Someone to talk to', 'Spiritual care']],
   ])('%s opens its choices, keeps the nurse button, and Back returns', async (group, items) => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
+    await openMore()
     await userEvent.click(await screen.findByRole('button', { name: group }))
     expect(screen.getByRole('heading', { name: group })).toHaveFocus()
     for (const label of items) expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /i need my nurse/i })).toBeEnabled()
+    expect(screen.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
     await userEvent.click(screen.getByRole('button', { name: /back/i }))
     expect(screen.getByRole('button', { name: 'Comfort' })).toBeInTheDocument()
   })
@@ -58,6 +69,7 @@ describe('PatientPage', () => {
       },
     })
     renderPatient()
+    await openMore()
     await userEvent.click(await screen.findByRole('button', { name: 'Food & medication' }))
     await userEvent.click(screen.getByRole('button', { name: 'Medication' }))
     await screen.findByTestId('confirmation')
@@ -78,8 +90,8 @@ describe('PatientPage', () => {
       },
     })
     renderPatient()
-    await userEvent.click(await screen.findByRole('button', { name: 'Comfort' }))
-    await userEvent.click(screen.getByRole('button', { name: /pillow/i }))
+    // Pillow is one of the default top 3.
+    await userEvent.click(await screen.findByRole('button', { name: 'Pillow' }))
     expect(await screen.findByTestId('confirmation')).toHaveTextContent('Housekeeping is on the way.')
     const post = calls.find((c) => c.method === 'POST')
     expect(post?.body).toMatchObject({ room_id: '401', input_mode: 'quick_tap', tile: 'pillow', language_hint: 'en' })
@@ -105,8 +117,8 @@ describe('PatientPage', () => {
     expect(document.documentElement.lang).toBe('es')
   })
 
-  it('shows a red nurse confirmation for clinical requests', async () => {
-    mockFetch({
+  it('Emergency needs a second tap, then shows a red nurse confirmation', async () => {
+    const calls = mockFetch({
       'GET /api/rooms/401/tickets': [],
       'GET /api/rooms/401': ROOM,
       'POST /api/requests': {
@@ -118,7 +130,12 @@ describe('PatientPage', () => {
       },
     })
     renderPatient()
-    await userEvent.click(await screen.findByRole('button', { name: /i need my nurse/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /^emergency$/i }))
+    // First tap: a toast asks to tap again; nothing is sent yet. Second tap on the same button sends.
+    expect(screen.getByTestId('emergency-toast')).toHaveTextContent('Tap Emergency again')
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: /^emergency$/i }))
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ tile: 'nurse', input_mode: 'quick_tap' })
     const box = await screen.findByTestId('confirmation')
     expect(box).toHaveTextContent('Your nurse has been alerted')
     expect(box.className).toContain('bg-bell')
@@ -127,13 +144,15 @@ describe('PatientPage', () => {
   it('updates request status live from the room channel', async () => {
     mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
     renderPatient()
-    await screen.findByRole('heading', { name: /hi maya/i })
+    await screen.findByRole('heading', { name: 'Maya' })
     await waitFor(() => expect(FakeWebSocket.instances.length).toBeGreaterThan(0))
     const ws = FakeWebSocket.instances.at(-1)!
     ws.open()
     expect(JSON.parse(ws.sent[0])).toMatchObject({ action: 'subscribe', channels: ['room:401'] })
     ws.emit({ type: 'subscribed', channels: ['room:401'] })
     ws.emit({ type: 'ticket.updated', ticket: ticket({ status: 'IN_PROGRESS' }), ts: '' })
+    // Requests live behind the header bell; its badge counts open ones.
+    await userEvent.click(await screen.findByRole('button', { name: /your requests: 1 open request/i }))
     const row = await screen.findByTestId('patient-request')
     expect(row).toHaveAttribute('data-status', 'IN_PROGRESS')
     // The tracker lists every step; the current one is marked.
@@ -146,7 +165,7 @@ describe('PatientPage', () => {
       mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM })
       renderPatient()
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
-      await screen.findByRole('heading', { name: /hi maya/i })
+      await screen.findByRole('heading', { name: 'Maya' })
       await user.type(screen.getByLabelText(/type your request/i), 'extra pillow')
 
       act(() => vi.advanceTimersByTime(179_000))

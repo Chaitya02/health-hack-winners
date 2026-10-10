@@ -3,7 +3,7 @@ import { useNow } from '../../hooks/useNow'
 import { SCREENSAVER } from '../../i18n/screensaver'
 import { HTML_LANG, type Strings } from '../../i18n/strings'
 import { CLOSED_STATUSES, type Language, type PatientTicketView } from '../../types/ticket'
-import { NurseButton } from './NurseButton'
+import { EmergencyButton } from './EmergencyButton'
 
 const TIP_MS = 8000
 
@@ -96,7 +96,7 @@ export function Screensaver({
           )}
 
           <div className="pointer-events-auto">
-            <NurseButton t={t} busy={false} onPress={onNurse} />
+            <EmergencyButton lang={lang} busy={false} onConfirm={onNurse} />
           </div>
         </div>
 
