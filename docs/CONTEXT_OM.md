@@ -55,7 +55,7 @@ cd frontend && npm ci && cd ..   # for running lint, tests and Playwright outsid
 ```
 
 **Where to look:**
-- **Patient screen:** http://localhost:5173/ (the home page shows room 401). For another room use http://localhost:5173/patient/410. Rooms 410–418 have demo profiles: 410 NPO, 412 fall risk, 414 low vision, 416 speech difficulty, 418 can't write.
+- **Patient screen:** http://localhost:5173/ is bedside room 400: an intake form first (name, age, clinical notes; three demo patients for testing), then a personalised dashboard. Seeded rooms skip the form, e.g. http://localhost:5173/patient/410. Rooms 410–418 have demo profiles: 410 NPO, 412 fall risk, 414 low vision (audio dashboard), 416 speech difficulty, 418 can't write.
 - **Staff dashboards:** http://localhost:5173/nursing (also `/housekeeping`, `/food` and `/it`). The demo PIN is **2468**.
 - **Admin page:** http://localhost:5173/admin. The admin PIN is **1357**.
 - **API health check:** http://localhost:8000/health
@@ -87,7 +87,7 @@ Ticket statuses are `NEW → ACKNOWLEDGED → IN_PROGRESS → RESOLVED`, plus `E
 
 | File | What it is |
 |---|---|
-| `frontend/src/pages/PatientPage.tsx` | The whole patient screen today. O1 splits it. |
+| `frontend/src/pages/PatientPage.tsx` | Intake form until `room.intake_complete`, then `Dashboard` (keyed by `intake_at`): `PatientHeader` (name + age, bell → `RequestsPanel`), nurse button, `VoiceBubble` (audio) or `InputPanel`, `PersonalTiles` (top 3 from `lib/personalize.ts` + your grouped `RequestTiles` under "More requests", with `exclude`). `Header` and `MyRequests` are no longer used. Texts: `i18n/dashboard.ts`. |
 | `frontend/src/components/patient/*` | Created by you in O1, owned by you |
 | `frontend/src/i18n/strings.ts` | All patient-facing text in 7 languages. TypeScript makes every language required. Shared with Chaitya, so rebase before pushing. |
 | `frontend/src/hooks/useSpeech.ts` | Voice input (browser speech API) |

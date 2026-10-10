@@ -1,10 +1,14 @@
 import { expect, test, type Page } from '@playwright/test'
-import { patientPage, staffPage, submitAndCapture, tapTile, ticketCard } from './helpers'
+import { openRequests, patientPage, staffPage, submitAndCapture, tapTile, ticketCard } from './helpers'
 
 const SHOT = process.env.TRACKER_SHOT
 
+// Requests live in the panel behind the header bell.
 const card = (page: Page, label: string) =>
-  page.getByTestId('patient-request').filter({ has: page.getByTestId('request-label').getByText(label, { exact: true }) })
+  page
+    .getByTestId('requests-panel')
+    .getByTestId('patient-request')
+    .filter({ has: page.getByTestId('request-label').getByText(label, { exact: true }) })
 
 test('(g) patient tracker follows staff updates; still waiting and cancel reach the department', async ({ browser }) => {
   const housekeeping = await staffPage(browser, 'housekeeping')
@@ -16,7 +20,9 @@ test('(g) patient tracker follows staff updates; still waiting and cancel reach 
   await patient.getByRole('button', { name: /make another request/i }).click()
   const [pillowId, blanketId] = [pillow.tickets[0].ticket_id, blanket.tickets[0].ticket_id]
 
-  // Staff acknowledges the pillow → the patient's tracker moves to "Seen" live.
+  // The bell counts both; open the panel. Staff acknowledges the pillow → "Seen" live.
+  await expect(patient.getByTestId('requests-bell')).toHaveAccessibleName(/2 open requests/)
+  await openRequests(patient)
   await ticketCard(housekeeping, pillowId).getByRole('button', { name: 'Acknowledge' }).click()
   await expect(card(patient, 'Pillow').locator('[aria-current="step"]')).toHaveText(/Seen/)
   await expect(card(patient, 'Pillow').getByTestId('eta')).toContainText(/About \d+ min|Any minute now/)
@@ -30,6 +36,8 @@ test('(g) patient tracker follows staff updates; still waiting and cancel reach 
   // Cancelling the blanket (after confirming) takes it off the housekeeping queue.
   await card(patient, 'Blanket').getByRole('button', { name: 'Cancel request' }).click()
   await card(patient, 'Blanket').getByRole('button', { name: 'Yes, cancel' }).click()
-  await expect(card(patient, 'Blanket')).toHaveAttribute('data-status', 'CANCELLED')
+  // Closed requests leave the panel; the bell count drops.
+  await expect(card(patient, 'Blanket')).toHaveCount(0)
+  await expect(patient.getByTestId('requests-bell')).toHaveAccessibleName(/1 open request/)
   await expect(ticketCard(housekeeping, blanketId)).toHaveCount(0)
 })

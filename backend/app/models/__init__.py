@@ -23,6 +23,7 @@ from app.models.routing import (
 )
 from app.models.ticket import (
     MAX_NOTE_LEN,
+    MAX_NOTES_LEN,
     MAX_TEXT_LEN,
     Accessibility,
     CreateRequest,
@@ -30,6 +31,7 @@ from app.models.ticket import (
     PatientProfile,
     PatientTicketView,
     Room,
+    RoomView,
     StatusChange,
     Ticket,
     TicketAudit,
@@ -42,6 +44,7 @@ __all__ = [
     "CLOSED_STATUSES",
     "DEPARTMENT_LABELS",
     "LOGIN_ROLES",
+    "MAX_NOTES_LEN",
     "MAX_NOTE_LEN",
     "MAX_TEXT_LEN",
     "OPEN_STATUSES",
@@ -62,6 +65,7 @@ __all__ = [
     "Priority",
     "Role",
     "Room",
+    "RoomView",
     "Status",
     "StatusChange",
     "Ticket",

@@ -4,14 +4,14 @@ import { describe, expect, it } from 'vitest'
 import App from './App'
 import { mockFetch } from './test/fixtures'
 
-const ROOM = { room_id: '401', unit: '4 West Med-Surg', patient_alias: 'Maya', preferred_language: 'en', primary_nurse: 'N' }
+const ROOM = { room_id: '400', unit: '4 West Med-Surg', patient_alias: '', preferred_language: 'en', primary_nurse: 'N', intake_complete: false }
 
 function Where() {
   return <output data-testid="path">{useLocation().pathname}</output>
 }
 
 function renderAt(path: string) {
-  mockFetch({ 'GET /api/rooms/401/tickets': [], 'GET /api/rooms/401': ROOM, 'GET /api/metrics': {} })
+  mockFetch({ 'GET /api/rooms/400/tickets': [], 'GET /api/rooms/400': ROOM, 'GET /api/metrics': {} })
   return render(
     <MemoryRouter initialEntries={[path]}>
       <App />
@@ -21,10 +21,10 @@ function renderAt(path: string) {
 }
 
 describe('App routes', () => {
-  it('home is the patient screen for the default room', async () => {
+  it('home is the bedside intake form for the demo room (400)', async () => {
     renderAt('/')
-    expect(await screen.findByRole('heading', { name: /hi maya/i })).toBeInTheDocument()
-    expect(screen.getByLabelText('Room 401')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Welcome' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Your name')).toBeInTheDocument()
   })
 
   it.each(['nursing', 'housekeeping', 'food', 'it'])('/%s is that department’s dashboard', async (dept) => {

@@ -118,6 +118,10 @@ export interface PatientProfile {
   diet: string | null
   accessibility: Accessibility
   attendant_preference: AttendantPreference
+  /** From the intake notes: dashboard type, buttons to put first, and what was recognised. */
+  dashboard: 'standard' | 'audio'
+  priority_tiles: string[]
+  notes_flags: string[]
 }
 
 export interface Room {
@@ -127,6 +131,17 @@ export interface Room {
   preferred_language: Language
   primary_nurse: string
   profile: PatientProfile
+  age: number | null
+  /** False until the bedside intake form is filled in (the clinical notes are never sent back). */
+  intake_complete: boolean
+  intake_at: string | null
+}
+
+export interface IntakeBody {
+  name: string
+  age: number
+  clinical_notes: string
+  preferred_language?: Language
 }
 
 export interface CreateRequestBody {

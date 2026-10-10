@@ -1,0 +1,224 @@
+import type { Language } from '../types/ticket'
+
+export interface DashboardStrings {
+  // Intake form
+  welcome: string
+  intakeIntro: string
+  name: string
+  age: string
+  notes: string
+  notesHint: string
+  setUp: string
+  settingUp: string
+  intakeFailed: string
+  // Dashboard
+  ageYears: (n: number) => string
+  forYou: string
+  more: string
+  fewer: string
+  requests: string
+  openCount: (n: number) => string
+  noOpen: string
+  close: string
+  startOver: string
+  // Audio dashboard
+  tapToTalk: string
+  listening: string
+  heard: string
+  voiceUnavailable: string
+}
+
+/** Intake form and personalised dashboard. Kept apart from strings.ts (patient-UI track). */
+export const DASHBOARD: Record<Language, DashboardStrings> = {
+  en: {
+    welcome: 'Welcome',
+    intakeIntro: 'Tell us a little about you so we can set up your screen.',
+    name: 'Your name',
+    age: 'Your age',
+    notes: 'Clinical notes',
+    notesHint: 'For example: low vision, fall risk, uses the bathroom often, nothing to eat before surgery.',
+    setUp: 'Set up my screen',
+    settingUp: 'Setting up…',
+    intakeFailed: 'That didn’t save. Please try again.',
+    ageYears: (n) => `${n} years`,
+    forYou: 'For you',
+    more: 'More requests',
+    fewer: 'Show fewer',
+    requests: 'Your requests',
+    openCount: (n) => `${n} open ${n === 1 ? 'request' : 'requests'}`,
+    noOpen: 'No open requests.',
+    close: 'Close',
+    startOver: 'Start over',
+    tapToTalk: 'Tap and tell me what you need',
+    listening: 'Listening…',
+    heard: 'I heard:',
+    voiceUnavailable: 'Voice isn’t available on this device. Please use the buttons below.',
+  },
+  es: {
+    welcome: 'Bienvenido',
+    intakeIntro: 'Cuéntenos un poco sobre usted para preparar su pantalla.',
+    name: 'Su nombre',
+    age: 'Su edad',
+    notes: 'Notas clínicas',
+    notesHint: 'Por ejemplo: baja visión, riesgo de caída, va al baño a menudo, nada de comer antes de la cirugía.',
+    setUp: 'Preparar mi pantalla',
+    settingUp: 'Preparando…',
+    intakeFailed: 'No se guardó. Inténtelo de nuevo.',
+    ageYears: (n) => `${n} años`,
+    forYou: 'Para usted',
+    more: 'Más pedidos',
+    fewer: 'Mostrar menos',
+    requests: 'Sus pedidos',
+    openCount: (n) => `${n} ${n === 1 ? 'pedido abierto' : 'pedidos abiertos'}`,
+    noOpen: 'No hay pedidos abiertos.',
+    close: 'Cerrar',
+    startOver: 'Empezar de nuevo',
+    tapToTalk: 'Toque y dígame lo que necesita',
+    listening: 'Escuchando…',
+    heard: 'Escuché:',
+    voiceUnavailable: 'La voz no está disponible en este dispositivo. Use los botones de abajo.',
+  },
+  hi: {
+    welcome: 'स्वागत है',
+    intakeIntro: 'अपने बारे में थोड़ा बताएँ ताकि हम आपकी स्क्रीन तैयार कर सकें।',
+    name: 'आपका नाम',
+    age: 'आपकी उम्र',
+    notes: 'क्लिनिकल नोट्स',
+    notesHint: 'जैसे: कम दिखाई देना, गिरने का खतरा, बार-बार बाथरूम जाना, सर्जरी से पहले कुछ न खाना।',
+    setUp: 'मेरी स्क्रीन तैयार करें',
+    settingUp: 'तैयार हो रही है…',
+    intakeFailed: 'सेव नहीं हुआ। कृपया फिर से कोशिश करें।',
+    ageYears: (n) => `${n} वर्ष`,
+    forYou: 'आपके लिए',
+    more: 'और अनुरोध',
+    fewer: 'कम दिखाएँ',
+    requests: 'आपके अनुरोध',
+    openCount: (n) => `${n} खुले अनुरोध`,
+    noOpen: 'कोई खुला अनुरोध नहीं।',
+    close: 'बंद करें',
+    startOver: 'फिर से शुरू करें',
+    tapToTalk: 'टैप करें और बताएँ आपको क्या चाहिए',
+    listening: 'सुन रहे हैं…',
+    heard: 'मैंने सुना:',
+    voiceUnavailable: 'इस डिवाइस पर आवाज़ उपलब्ध नहीं है। कृपया नीचे के बटन इस्तेमाल करें।',
+  },
+  gu: {
+    welcome: 'સ્વાગત છે',
+    intakeIntro: 'તમારા વિશે થોડું જણાવો જેથી અમે તમારી સ્ક્રીન તૈયાર કરી શકીએ.',
+    name: 'તમારું નામ',
+    age: 'તમારી ઉંમર',
+    notes: 'ક્લિનિકલ નોંધો',
+    notesHint: 'જેમ કે: ઓછું દેખાવું, પડી જવાનું જોખમ, વારંવાર બાથરૂમ જવું, સર્જરી પહેલાં કંઈ ન ખાવું.',
+    setUp: 'મારી સ્ક્રીન તૈયાર કરો',
+    settingUp: 'તૈયાર થઈ રહી છે…',
+    intakeFailed: 'સેવ ન થયું. કૃપા કરીને ફરી પ્રયાસ કરો.',
+    ageYears: (n) => `${n} વર્ષ`,
+    forYou: 'તમારા માટે',
+    more: 'વધુ વિનંતીઓ',
+    fewer: 'ઓછું બતાવો',
+    requests: 'તમારી વિનંતીઓ',
+    openCount: (n) => `${n} ખુલ્લી વિનંતીઓ`,
+    noOpen: 'કોઈ ખુલ્લી વિનંતી નથી.',
+    close: 'બંધ કરો',
+    startOver: 'ફરીથી શરૂ કરો',
+    tapToTalk: 'ટેપ કરો અને કહો તમારે શું જોઈએ છે',
+    listening: 'સાંભળી રહ્યા છીએ…',
+    heard: 'મેં સાંભળ્યું:',
+    voiceUnavailable: 'આ ઉપકરણ પર અવાજ ઉપલબ્ધ નથી. કૃપા કરીને નીચેના બટન વાપરો.',
+  },
+  zh: {
+    welcome: '欢迎',
+    intakeIntro: '请简单介绍一下您自己，以便我们为您设置屏幕。',
+    name: '您的姓名',
+    age: '您的年龄',
+    notes: '临床记录',
+    notesHint: '例如：视力不佳、跌倒风险、经常上厕所、术前禁食。',
+    setUp: '设置我的屏幕',
+    settingUp: '正在设置…',
+    intakeFailed: '未能保存，请重试。',
+    ageYears: (n) => `${n} 岁`,
+    forYou: '为您推荐',
+    more: '更多请求',
+    fewer: '收起',
+    requests: '您的请求',
+    openCount: (n) => `${n} 个进行中的请求`,
+    noOpen: '没有进行中的请求。',
+    close: '关闭',
+    startOver: '重新开始',
+    tapToTalk: '轻触并告诉我您需要什么',
+    listening: '正在聆听…',
+    heard: '我听到：',
+    voiceUnavailable: '此设备不支持语音。请使用下方的按钮。',
+  },
+  ht: {
+    welcome: 'Byenvini',
+    intakeIntro: 'Di nou yon ti kras sou ou pou nou ka prepare ekran ou.',
+    name: 'Non ou',
+    age: 'Laj ou',
+    notes: 'Nòt klinik',
+    notesHint: 'Pa egzanp: je pa wè byen, risk pou tonbe, ale nan twalèt souvan, pa manje anvan operasyon.',
+    setUp: 'Prepare ekran mwen',
+    settingUp: 'N ap prepare…',
+    intakeFailed: 'Li pa anrejistre. Tanpri eseye ankò.',
+    ageYears: (n) => `${n} an`,
+    forYou: 'Pou ou',
+    more: 'Plis demann',
+    fewer: 'Montre mwens',
+    requests: 'Demann ou yo',
+    openCount: (n) => `${n} demann ouvè`,
+    noOpen: 'Pa gen demann ouvè.',
+    close: 'Fèmen',
+    startOver: 'Rekòmanse',
+    tapToTalk: 'Touche epi di m sa ou bezwen',
+    listening: 'M ap koute…',
+    heard: 'Mwen tande:',
+    voiceUnavailable: 'Vwa pa disponib sou aparèy sa a. Tanpri sèvi ak bouton ki anba yo.',
+  },
+  pt: {
+    welcome: 'Bem-vindo',
+    intakeIntro: 'Conte-nos um pouco sobre você para prepararmos sua tela.',
+    name: 'Seu nome',
+    age: 'Sua idade',
+    notes: 'Notas clínicas',
+    notesHint: 'Por exemplo: baixa visão, risco de queda, vai ao banheiro com frequência, jejum antes da cirurgia.',
+    setUp: 'Preparar minha tela',
+    settingUp: 'Preparando…',
+    intakeFailed: 'Não foi salvo. Tente de novo.',
+    ageYears: (n) => `${n} anos`,
+    forYou: 'Para você',
+    more: 'Mais pedidos',
+    fewer: 'Mostrar menos',
+    requests: 'Seus pedidos',
+    openCount: (n) => `${n} ${n === 1 ? 'pedido aberto' : 'pedidos abertos'}`,
+    noOpen: 'Nenhum pedido aberto.',
+    close: 'Fechar',
+    startOver: 'Recomeçar',
+    tapToTalk: 'Toque e diga o que você precisa',
+    listening: 'Ouvindo…',
+    heard: 'Eu ouvi:',
+    voiceUnavailable: 'A voz não está disponível neste aparelho. Use os botões abaixo.',
+  },
+}
+
+/** Three synthetic test patients for the intake form (one tap fills it in). */
+export const DEMO_PATIENTS = [
+  {
+    label: 'Rosa, 82 · low vision, bathroom often',
+    name: 'Rosa',
+    age: 82,
+    clinical_notes:
+      'Macular degeneration, poor eyesight. Uses the bathroom a lot at night (on furosemide). Unsteady on her feet.',
+  },
+  {
+    label: 'Sam, 54 · post-op, nothing by mouth',
+    name: 'Sam',
+    age: 54,
+    clinical_notes: 'Post-op day 1 after knee replacement. NPO for a second procedure tomorrow. Anxious about surgery.',
+  },
+  {
+    label: 'Lena, 37 · feels cold, poor sleep',
+    name: 'Lena',
+    age: 37,
+    clinical_notes: 'Recovering from pneumonia. Feels cold and has trouble sleeping. Mildly dehydrated.',
+  },
+] as const

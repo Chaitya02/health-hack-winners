@@ -66,15 +66,23 @@ export function RequestTiles({
   busy,
   onTap,
   large = false,
+  exclude = [],
 }: {
   t: Strings
   busy: boolean
   onTap: (tile: QuickTile) => void
   large?: boolean
+  /** Tiles already shown elsewhere (the patient's top 3); groups left empty are dropped. */
+  exclude?: QuickTile[]
 }) {
   const iconClass = large ? 'text-[56px]' : 'text-[36px]'
   const [open, setOpen] = useState<TileGroupKey | null>(null)
-  const group = MAIN_TILES.find((m) => m.kind === 'group' && m.key === open)
+  const tiles = MAIN_TILES.flatMap((m): MainTile[] => {
+    if (m.kind === 'tile') return exclude.includes(m.key) ? [] : [m]
+    const items = m.items.filter((i) => !exclude.includes(i.key))
+    return items.length ? [{ ...m, items }] : []
+  })
+  const group = tiles.find((m) => m.kind === 'group' && m.key === open)
   const headingRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -118,7 +126,7 @@ export function RequestTiles({
     <>
       <h2 className="mt-8 text-[26px] font-bold">{t.quickTitle}</h2>
       <ul className={`mt-3 grid grid-cols-2 ${large ? 'gap-4' : 'gap-3 md:grid-cols-3'}`}>
-        {MAIN_TILES.map((m) => (
+        {tiles.map((m) => (
           <li key={m.key}>
             <button
               type="button"
