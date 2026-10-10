@@ -147,7 +147,17 @@ describe('US-7: spoken updates and waiting music', () => {
     const ws = await liveRoom()
     expect(spoken).toEqual([])
     act(() => ws.emit({ type: 'ticket.updated', ticket: ticket({ ticket_id: 'a', tile: 'pillow', status: 'ACKNOWLEDGED', room_id: '400' }), ts: '' }))
-    await waitFor(() => expect(spoken).toEqual(['Pillow: Seen']))
+    await waitFor(() => expect(spoken).toEqual(['Pillow: Seen.']))
+  })
+
+  it('a missed response target is shown on the request and said aloud', async () => {
+    const ws = await liveRoom()
+    act(() =>
+      ws.emit({ type: 'ticket.updated', ticket: ticket({ ticket_id: 'a', tile: 'pillow', status: 'NEW', room_id: '400', patient_notice: 'still_looking' }), ts: '' }),
+    )
+    await waitFor(() =>
+      expect(spoken).toEqual(['Pillow: Sent. We’re still looking for someone to help you. You haven’t been forgotten.']),
+    )
   })
 
   it('music plays while a request is open; both can be switched off and stay off', async () => {

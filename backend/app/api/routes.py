@@ -231,7 +231,9 @@ def queue(
 ) -> list[Ticket]:
     if staff != department:
         raise HTTPException(403, "Token is for another department")
-    _service(request).rebalance(department)  # hand waiting requests to anyone now available
+    svc = _service(request)
+    svc.check_deadlines()  # late requests go to a backup first
+    svc.rebalance(department)  # hand waiting requests to anyone now available
     since = start_of_day()
     tickets = request.app.state.tickets.by_department(department, status)
     # Today's tickets plus anything still open from earlier.
@@ -259,6 +261,7 @@ def department_staff(department: Department, request: Request, role: SignedIn) -
     if role != Role.ADMIN and ROLE_DEPARTMENT.get(role) != department:
         raise HTTPException(403, "Token is for another department")
     svc = _service(request)
+    svc.check_deadlines()
     svc.rebalance(department)
     return svc.staff_views(department)
 
