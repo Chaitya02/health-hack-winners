@@ -23,8 +23,8 @@ SCRIPT: list[tuple[float, str, str, str, str | None, str]] = [
      "Injection attempt → still Nurse HIGH"),
     (4, "405", "我想要一杯热水", "text", None, "Chinese hot water → Food"),
     (3, "413", "Mwen bezwen yon lòt kouvèti", "text", None, "Creole blanket → Housekeeping"),
-    (3, "410", "मेरी दवा कब मिलेगी?", "text", None, "Hindi medication question → Nurse (routine)"),
-    (3, "414", "O quarto está muito quente", "text", None, "Portuguese room too hot → Housekeeping"),
+    (3, "410", "मेरी दवा कब मिलेगी?", "text", None, "Hindi medication → Nurse (routine)"),
+    (3, "414", "O quarto está muito quente", "text", None, "PT: room too hot → Housekeeping"),
     (3, "415", "I need water and my IV is beeping", "text", None, "Multi-intent → Food + Nurse"),
 ]  # fmt: skip
 
