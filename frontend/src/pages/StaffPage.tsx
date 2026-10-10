@@ -7,6 +7,7 @@ import { playAlert, unlockAudio } from '../lib/alertSound'
 import { api, ApiError } from '../lib/api'
 import { aging, formatWait, secondsSince, type Aging } from '../lib/time'
 import {
+  CLOSED_STATUSES,
   DEPARTMENT_LABELS,
   DEPARTMENTS,
   type Department,
@@ -182,9 +183,9 @@ function Dashboard({
     if (error?.includes('expired') || error?.includes('Invalid')) onSignOut()
   }, [error, onSignOut])
 
-  const open = useMemo(() => items.filter((t) => t.status !== 'RESOLVED').sort(sortQueue), [items])
+  const open = useMemo(() => items.filter((t) => !CLOSED_STATUSES.includes(t.status)).sort(sortQueue), [items])
   const done = useMemo(
-    () => items.filter((t) => t.status === 'RESOLVED').sort((a, b) => b.created_at.localeCompare(a.created_at)),
+    () => items.filter((t) => CLOSED_STATUSES.includes(t.status)).sort((a, b) => b.created_at.localeCompare(a.created_at)),
     [items],
   )
   const unackedHigh = open.filter((t) => t.priority === 'HIGH' && (t.status === 'NEW' || t.status === 'ESCALATED'))
@@ -254,6 +255,7 @@ function Dashboard({
               {done.map((t) => (
                 <li key={t.ticket_id} className="rounded-xl bg-paper px-4 py-3 text-pine-soft">
                   Room {t.room_id}: {t.english_summary}
+                  {t.status === 'CANCELLED' && ' (cancelled by patient)'}
                 </li>
               ))}
             </ul>
@@ -319,6 +321,11 @@ function TicketRow({
             {t.detected_language.toUpperCase()} · {lang.languageName}
           </span>
           {t.status !== 'NEW' && <span className="text-sm text-pine-soft">{t.status.replace('_', ' ').toLowerCase()}</span>}
+          {t.nudge_count > 0 && (
+            <span className="rounded-full bg-bell-tint px-3 py-1 text-sm font-bold text-bell-deep" data-testid="still-waiting">
+              Patient still waiting{t.nudge_count > 1 ? ` ×${t.nudge_count}` : ''}
+            </span>
+          )}
         </div>
         <span className={`text-xl font-bold tabular-nums ${AGING_TEXT[age]}`} aria-label={`Waiting ${formatWait(waited)}`}>
           {formatWait(waited)}
@@ -326,6 +333,15 @@ function TicketRow({
       </div>
       <p className="mt-3 text-xl leading-snug">{t.english_summary}</p>
       {t.escalated_from && <p className="mt-1 font-bold text-bell">Escalated by {DEPARTMENT_LABELS[t.escalated_from]}</p>}
+      {t.notes.length > 0 && (
+        <ul className="mt-2 space-y-1" aria-label="Patient notes">
+          {t.notes.map((n) => (
+            <li key={n.at} className="rounded-xl bg-curtain px-3 py-2" lang={t.detected_language}>
+              <span className="font-bold">Patient added:</span> “{n.text}”
+            </li>
+          ))}
+        </ul>
+      )}
       {department === 'nursing' && t.safety_reasons.length > 0 && (
         <p className="mt-1 text-sm text-pine-soft">Why you: {t.safety_reasons.join(', ')}</p>
       )}

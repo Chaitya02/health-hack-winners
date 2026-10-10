@@ -3,6 +3,7 @@ import type {
   CreateRequestBody,
   CreateRequestResponse,
   Department,
+  PatientAction,
   PatientTicketView,
   Room,
   Status,
@@ -70,5 +71,10 @@ export const api = {
       { method: 'PATCH', body: JSON.stringify({ action }) },
       token,
     ),
+  patientAction: (roomId: string, ticketId: string, action: PatientAction, note?: string) =>
+    request<PatientTicketView>(`/api/rooms/${encodeURIComponent(roomId)}/tickets/${ticketId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(note === undefined ? { action } : { action, note }),
+    }),
   metrics: () => request<Metrics>('/api/metrics'),
 }

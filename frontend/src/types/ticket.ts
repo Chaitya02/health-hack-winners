@@ -16,7 +16,10 @@ export const DEPARTMENTS = ['nursing', 'housekeeping', 'food', 'it'] as const
 export type Department = (typeof DEPARTMENTS)[number]
 
 export type Priority = 'HIGH' | 'NORMAL' | 'LOW'
-export type Status = 'NEW' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'ESCALATED'
+export type Status = 'NEW' | 'ACKNOWLEDGED' | 'IN_PROGRESS' | 'RESOLVED' | 'ESCALATED' | 'CANCELLED'
+
+/** Statuses where the request is finished (done or cancelled by the patient). */
+export const CLOSED_STATUSES: readonly Status[] = ['RESOLVED', 'CANCELLED']
 export type InputMode = 'text' | 'voice' | 'quick_tap'
 
 export const ROLES = ['patient', 'nurse', 'housekeeping', 'food', 'it', 'admin', 'system'] as const
@@ -32,6 +35,14 @@ export interface StatusChange {
   at: string
   by_role: Role
 }
+
+export interface TicketNote {
+  text: string
+  at: string
+  by_role: Role
+}
+
+export const MAX_NOTE_LEN = 200
 
 export const LANGUAGES = ['en', 'es', 'hi', 'gu', 'zh', 'ht', 'pt'] as const
 export type Language = (typeof LANGUAGES)[number]
@@ -69,6 +80,9 @@ export interface Ticket {
   escalated_from: Department | null
   eta_minutes: number | null
   history: StatusChange[]
+  notes: TicketNote[]
+  nudge_count: number
+  last_nudge_at: string | null
   model_id: string
   prompt_version: string
   latency_ms: number
@@ -136,6 +150,9 @@ export interface TicketEvent {
 }
 
 export type TicketAction = 'acknowledge' | 'start' | 'resolve' | 'escalate_to_nurse'
+
+/** What a patient can do to a request while waiting. Cancel is refused (409) for clinical ones. */
+export type PatientAction = 'cancel' | 'still_waiting' | 'add_note'
 
 export const DEPARTMENT_LABELS: Record<Department, string> = {
   nursing: 'Primary Nurse',

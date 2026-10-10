@@ -16,6 +16,7 @@ from app.models.enums import (
 from app.models.routing import default_severity
 
 MAX_TEXT_LEN = 500
+MAX_NOTE_LEN = 200
 
 
 def utc_now_iso() -> str:
@@ -62,6 +63,12 @@ class StatusChange(BaseModel):
     by_role: Role
 
 
+class TicketNote(BaseModel):
+    text: str = Field(max_length=MAX_NOTE_LEN)
+    at: str
+    by_role: Role
+
+
 class Ticket(BaseModel):
     model_config = ConfigDict(use_enum_values=False)
 
@@ -89,6 +96,9 @@ class Ticket(BaseModel):
     escalated_from: Department | None = None
     eta_minutes: int | None = Field(default=None, ge=0)
     history: list[StatusChange] = Field(default_factory=list)
+    notes: list[TicketNote] = Field(default_factory=list)
+    nudge_count: int = Field(default=0, ge=0)  # times the patient tapped "still waiting"
+    last_nudge_at: str | None = None
     model_id: str
     prompt_version: str
     latency_ms: int = Field(ge=0)

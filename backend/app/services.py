@@ -1,10 +1,17 @@
-"""Application services: turn patient requests into routed tickets, and apply staff actions."""
+"""Application services: turn patient requests into routed tickets, and apply staff and
+patient actions."""
 
 import logging
+import math
 from dataclasses import dataclass
+from datetime import datetime
+from statistics import median
 
 from app.classifier import Classifier, Decision, FinalIntent, confirmation_for, decide
+from app.metrics import start_of_day
 from app.models import (
+    CLINICAL_CATEGORIES,
+    CLOSED_STATUSES,
     Category,
     CreateRequest,
     CreateRequestResponse,
@@ -12,22 +19,54 @@ from app.models import (
     InputMode,
     Language,
     Priority,
+    Role,
     Room,
     Status,
+    StatusChange,
     Ticket,
     TicketAudit,
+    TicketNote,
     default_severity,
     utc_now_iso,
 )
 from app.realtime import Publisher
 from app.repo import TicketRepository, new_id
+from app.safety import scan
 from app.tiles import QUICK_TAP_TILES
 
 log = logging.getLogger("tingting.service")
 
+STAFF_ROLE: dict[Department, Role] = {
+    Department.NURSING: Role.NURSE,
+    Department.HOUSEKEEPING: Role.HOUSEKEEPING,
+    Department.FOOD: Role.FOOD,
+    Department.IT: Role.IT,
+}
+
+# ETA until the request is done, used until there are enough resolved tickets today to learn from.
+DEFAULT_ETA_MINUTES: dict[Priority, int] = {Priority.HIGH: 2, Priority.NORMAL: 10, Priority.LOW: 15}
+MIN_ETA_SAMPLES = 3
+MAX_ETA_MINUTES = 60
+# "Still waiting" can raise severity, but never into the urgent band (5 is reserved for clinical).
+MAX_NUDGE_SEVERITY = 4
+
+
+def _minutes_between(start: str, end: str) -> float:
+    parse = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
+    return (parse(end) - parse(start)).total_seconds() / 60
+
 
 class InvalidTransition(Exception):
     pass
+
+
+def _is_clinical(ticket: Ticket) -> bool:
+    return (
+        ticket.category in CLINICAL_CATEGORIES
+        or ticket.clinical_risk_flag
+        or ticket.status == Status.ESCALATED
+        or ticket.department == Department.NURSING
+    )
 
 
 @dataclass
@@ -59,6 +98,23 @@ class TicketService:
             prompt_version="tiles-v1",
         )
 
+    def eta_minutes(self, department: Department, priority: Priority) -> int:
+        """Median minutes from request to done for today's resolved tickets with the same
+        department and priority; a fixed default until there are enough of them."""
+        since = start_of_day()
+        samples = [
+            _minutes_between(t.created_at, t.resolved_at)
+            for t in self.tickets.by_department(department, Status.RESOLVED, limit=100)
+            if t.priority == priority and t.resolved_at and t.created_at >= since
+        ]
+        if len(samples) < MIN_ETA_SAMPLES:
+            return DEFAULT_ETA_MINUTES[priority]
+        return max(1, min(MAX_ETA_MINUTES, math.ceil(median(samples))))
+
+    @staticmethod
+    def _record(ticket: Ticket, by_role: Role, at: str) -> None:
+        ticket.history.append(StatusChange(status=ticket.status, at=at, by_role=by_role))
+
     def create(self, req: CreateRequest, room: Room) -> CreateRequestResponse:
         if req.input_mode == InputMode.QUICK_TAP and req.tile in QUICK_TAP_TILES:
             decision = self._quick_tap_decision(req.tile, req.language_hint or Language.EN)
@@ -89,6 +145,8 @@ class TicketService:
                 requested_items=intent.requested_items,
                 patient_confirmation=confirmation_for(language, [intent.department], urgent),
                 created_at=now,
+                eta_minutes=self.eta_minutes(intent.department, intent.priority),
+                history=[StatusChange(status=Status.NEW, at=now, by_role=Role.PATIENT)],
                 model_id=decision.model_id,
                 prompt_version=decision.prompt_version,
                 latency_ms=decision.latency_ms,
@@ -130,11 +188,13 @@ class TicketService:
             is_clinical=decision.is_clinical,
         )
 
-    def apply_action(self, ticket: Ticket, action: str) -> tuple[Ticket, str]:
+    def apply_action(
+        self, ticket: Ticket, action: str, by_role: Role = Role.SYSTEM
+    ) -> tuple[Ticket, str]:
         now = utc_now_iso()
         event = "ticket.updated"
-        if ticket.status == Status.RESOLVED:
-            raise InvalidTransition("ticket is already resolved")
+        if ticket.status in CLOSED_STATUSES:
+            raise InvalidTransition(f"ticket is already {ticket.status.lower()}")
         if action == "acknowledge":
             if ticket.status not in (Status.NEW, Status.ESCALATED):
                 raise InvalidTransition(f"cannot acknowledge a {ticket.status} ticket")
@@ -150,19 +210,11 @@ class TicketService:
             ticket.acknowledged_at = ticket.acknowledged_at or now
             ticket.resolved_at = now
         elif action == "escalate_to_nurse":
-            ticket.escalated_from = ticket.department
-            ticket.department = Department.NURSING
-            ticket.category = Category.URGENT_CLINICAL
-            ticket.priority = Priority.HIGH
-            ticket.severity = default_severity(Category.URGENT_CLINICAL)
-            ticket.clinical_risk_flag = True
-            ticket.status = Status.ESCALATED
-            ticket.acknowledged_at = None
-            if "staff_escalation" not in ticket.safety_reasons:
-                ticket.safety_reasons.append("staff_escalation")
+            self._escalate(ticket, ["staff_escalation"])
             event = "ticket.escalated"
         else:  # pragma: no cover - validated by the API model
             raise InvalidTransition(f"unknown action {action}")
+        self._record(ticket, by_role, now)
         self.tickets.put(ticket)
         self.publisher.publish(event, ticket)  # type: ignore[arg-type]
         log.info(
@@ -175,3 +227,67 @@ class TicketService:
             },
         )
         return ticket, event
+
+    def _escalate(self, ticket: Ticket, reasons: list[str]) -> None:
+        if ticket.department != Department.NURSING:
+            ticket.escalated_from = ticket.department
+        ticket.department = Department.NURSING
+        ticket.category = Category.URGENT_CLINICAL
+        ticket.priority = Priority.HIGH
+        ticket.severity = default_severity(Category.URGENT_CLINICAL)
+        ticket.clinical_risk_flag = True
+        ticket.status = Status.ESCALATED
+        ticket.acknowledged_at = None
+        ticket.eta_minutes = self.eta_minutes(Department.NURSING, Priority.HIGH)
+        ticket.safety_reasons += [r for r in reasons if r not in ticket.safety_reasons]
+
+    def patient_action(self, ticket: Ticket, action: str, note: str | None = None) -> Ticket:
+        """Changes the patient can make while waiting (US-2). They can only move a request
+        toward more attention: no cancelling clinical requests, and notes are safety-scanned."""
+        now = utc_now_iso()
+        if ticket.status in CLOSED_STATUSES:
+            raise InvalidTransition(f"request is already {ticket.status.lower()}")
+        event = "ticket.updated"
+        if action == "cancel":
+            if _is_clinical(ticket):
+                raise InvalidTransition("Clinical requests can only be closed by your nurse.")
+            ticket.status = Status.CANCELLED
+            ticket.resolved_at = now
+            self._record(ticket, Role.PATIENT, now)
+        elif action == "still_waiting":
+            ticket.nudge_count += 1
+            ticket.last_nudge_at = now
+            if ticket.severity < MAX_NUDGE_SEVERITY:
+                ticket.severity += 1
+        elif action == "add_note":
+            if not note:
+                raise InvalidTransition("note text is required")
+            ticket.notes.append(TicketNote(text=note, at=now, by_role=Role.PATIENT))
+            red_flags = scan(note)
+            already_urgent = (
+                ticket.category == Category.URGENT_CLINICAL
+                and ticket.department == Department.NURSING
+            )
+            if red_flags and already_urgent:
+                reasons = [*red_flags, "patient_note_red_flag"]
+                ticket.safety_reasons += [r for r in reasons if r not in ticket.safety_reasons]
+            elif red_flags:
+                self._escalate(ticket, [*red_flags, "patient_note_red_flag"])
+                self._record(ticket, Role.SYSTEM, now)
+                event = "ticket.escalated"
+        else:  # pragma: no cover - validated by the API model
+            raise InvalidTransition(f"unknown action {action}")
+        self.tickets.put(ticket)
+        self.publisher.publish(event, ticket)  # type: ignore[arg-type]
+        log.info(
+            "patient action",
+            extra={
+                "ticket_id": ticket.ticket_id,
+                "action": action,
+                "status": str(ticket.status),
+                "department": str(ticket.department),
+                "severity": ticket.severity,
+                "escalated": event == "ticket.escalated",
+            },
+        )
+        return ticket

@@ -70,6 +70,26 @@ describe('StaffPage', () => {
     await waitFor(() => expect(screen.queryByTestId('ticket')).not.toBeInTheDocument())
   })
 
+  it('shows patient notes and still-waiting nudges; cancelled requests move to done', async () => {
+    sessionStorage.setItem('tingting.staff.housekeeping', 'tok')
+    mockFetch({
+      'GET /api/queues/housekeeping': [
+        ticket({
+          nudge_count: 2,
+          notes: [{ text: 'Two pillows if possible', at: '2026-10-10T10:00:00Z', by_role: 'patient' }],
+        }),
+        ticket({ ticket_id: 't_2', room_id: '406', status: 'CANCELLED', english_summary: 'Patient requests a blanket.' }),
+      ],
+    })
+    renderStaff('housekeeping')
+    const row = await screen.findByTestId('ticket')
+    expect(within(row).getByTestId('still-waiting')).toHaveTextContent('Patient still waiting ×2')
+    expect(within(row).getByRole('list', { name: /patient notes/i })).toHaveTextContent('Two pillows if possible')
+    expect(screen.getAllByTestId('ticket')).toHaveLength(1)
+    expect(screen.getByText(/done today \(1\)/i)).toBeInTheDocument()
+    expect(screen.getByText(/cancelled by patient/i)).toBeInTheDocument()
+  })
+
   it('shows reconnecting status when the socket drops', async () => {
     sessionStorage.setItem('tingting.staff.food', 'tok')
     mockFetch({ 'GET /api/queues/food': [] })

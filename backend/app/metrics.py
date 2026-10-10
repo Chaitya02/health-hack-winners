@@ -6,7 +6,7 @@ from statistics import mean
 
 from pydantic import BaseModel
 
-from app.models import Category, Department, Ticket
+from app.models import Category, Department, Status, Ticket
 
 
 class Metrics(BaseModel):
@@ -54,7 +54,7 @@ def compute(tickets: list[Ticket], since: str) -> Metrics:
             ack[str(t.department)].append(secs)
             if t.category == Category.URGENT_CLINICAL:
                 urgent_ack.append(secs)
-        if t.resolved_at:
+        if t.resolved_at and t.status == Status.RESOLVED:  # cancelled ones were never done
             res[str(t.department)].append((_ts(t.resolved_at) - created).total_seconds())
 
     open_by_dept = Counter(str(t.department) for t in tickets if t.resolved_at is None)

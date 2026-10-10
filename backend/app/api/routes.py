@@ -1,11 +1,12 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.classifier import decide
 from app.metrics import Metrics, compute, start_of_day
 from app.models import (
+    MAX_NOTE_LEN,
     MAX_TEXT_LEN,
     CreateRequest,
     CreateRequestResponse,
@@ -15,7 +16,7 @@ from app.models import (
     Status,
     Ticket,
 )
-from app.services import InvalidTransition, TicketService
+from app.services import STAFF_ROLE, InvalidTransition, TicketService
 
 router = APIRouter(prefix="/api")
 
@@ -27,6 +28,19 @@ class LoginBody(BaseModel):
 
 class ActionBody(BaseModel):
     action: Literal["acknowledge", "start", "resolve", "escalate_to_nurse"]
+
+
+class PatientActionBody(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    action: Literal["cancel", "still_waiting", "add_note"]
+    note: str | None = Field(default=None, min_length=1, max_length=MAX_NOTE_LEN)
+
+    @model_validator(mode="after")
+    def _note_only_with_add_note(self) -> "PatientActionBody":
+        if (self.action == "add_note") != (self.note is not None):
+            raise ValueError("note is required for add_note and only allowed there")
+        return self
 
 
 class ClassifyBody(BaseModel):
@@ -79,6 +93,24 @@ def room_tickets(room_id: str, request: Request) -> list[PatientTicketView]:
     return [PatientTicketView.model_validate(t.model_dump()) for t in tickets]
 
 
+@router.patch("/rooms/{room_id}/tickets/{ticket_id}", response_model=PatientTicketView)
+def patient_ticket_action(
+    room_id: str, ticket_id: str, body: PatientActionBody, request: Request
+) -> PatientTicketView:
+    """Patient changes while waiting: cancel (non-clinical only), still waiting, add a note."""
+    room = _room(request, room_id)
+    ticket = request.app.state.tickets.get(ticket_id)
+    if ticket is None or ticket.room_id != room.room_id:
+        raise HTTPException(404, "Unknown request")
+    if not request.app.state.rate_limiter.allow(room.room_id):
+        raise HTTPException(429, "Too many requests from this room. Tap 'I need my nurse'.")
+    try:
+        updated = _service(request).patient_action(ticket, body.action, body.note)
+    except InvalidTransition as e:
+        raise HTTPException(409, str(e)) from e
+    return PatientTicketView.model_validate(updated.model_dump())
+
+
 @router.post("/auth/login")
 def login(body: LoginBody, request: Request) -> dict:
     token = request.app.state.auth.login(body.department, body.pin)
@@ -107,7 +139,7 @@ def update_ticket(ticket_id: str, body: ActionBody, request: Request, staff: Sta
     if ticket.department != staff:
         raise HTTPException(403, "Ticket belongs to another department")
     try:
-        updated, _ = _service(request).apply_action(ticket, body.action)
+        updated, _ = _service(request).apply_action(ticket, body.action, STAFF_ROLE[staff])
     except InvalidTransition as e:
         raise HTTPException(409, str(e)) from e
     return updated

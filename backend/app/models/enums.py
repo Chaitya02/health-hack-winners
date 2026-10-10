@@ -33,6 +33,7 @@ class Status(StrEnum):
     IN_PROGRESS = "IN_PROGRESS"
     RESOLVED = "RESOLVED"
     ESCALATED = "ESCALATED"
+    CANCELLED = "CANCELLED"  # by the patient; never allowed for clinical tickets
 
 
 class Role(StrEnum):
@@ -70,6 +71,7 @@ class Language(StrEnum):
 
 
 OPEN_STATUSES = frozenset({Status.NEW, Status.ACKNOWLEDGED, Status.IN_PROGRESS, Status.ESCALATED})
+CLOSED_STATUSES = frozenset({Status.RESOLVED, Status.CANCELLED})
 CLINICAL_CATEGORIES = frozenset(
     {Category.URGENT_CLINICAL, Category.NON_URGENT_CLINICAL, Category.UNCLEAR}
 )
