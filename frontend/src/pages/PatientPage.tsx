@@ -31,7 +31,6 @@ function toView(e: TicketEvent): PatientTicketView {
     category: t.category,
     priority: t.priority,
     status: t.status,
-    english_summary: t.english_summary,
     patient_confirmation: t.patient_confirmation,
     created_at: t.created_at,
     eta_minutes: t.eta_minutes,

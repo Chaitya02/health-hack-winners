@@ -53,3 +53,35 @@ def test_department_channels_require_matching_staff_token(app):
         assert subscribe(ws, "room:401")["type"] == "error"
         ws.send_text("not json")
         assert ws.receive_json()["type"] == "error"
+
+
+def test_room_channel_gets_only_the_patient_view(app):
+    """room:* needs no login, so it must never carry patient words, audit or safety reasons."""
+    from app.models import PatientTicketView
+
+    with TestClient(app) as client:
+        nurse = token(client, "nursing")
+        with (
+            client.websocket_connect("/ws") as ws_nurse,
+            client.websocket_connect("/ws") as ws_room,
+            client.websocket_connect("/ws") as ws_both,
+        ):
+            subscribe(ws_nurse, ["dept:nursing"], nurse)
+            subscribe(ws_room, ["room:401"])
+            subscribe(ws_both, ["dept:nursing", "room:401"], nurse)
+
+            client.post("/api/requests", json={"room_id": "401", "text": "I'm bleeding badly"})
+            staff = ws_nurse.receive_json()["ticket"]
+            room = ws_room.receive_json()["ticket"]
+
+            assert staff["original_text"] == "I'm bleeding badly" and staff["audit"]
+            assert set(room) == set(PatientTicketView.model_fields)
+            for hidden in ("original_text", "english_summary", "audit", "safety_reasons", "notes"):
+                assert hidden not in room
+            assert "bleeding" not in str(room).lower()
+
+            # A staff socket that also watches the room gets exactly one message, the full one.
+            both = ws_both.receive_json()["ticket"]
+            assert both["original_text"] == "I'm bleeding badly"
+            ws_both.send_json({"action": "ping"})
+            assert ws_both.receive_json() == {"type": "pong"}
