@@ -48,8 +48,9 @@ export function VoiceBubble({
 
   const listening = speech.listening
   return (
-    <section className="mt-6 flex flex-col items-center gap-4" data-testid="voice-bubble">
+    <section className="mt-6 flex flex-1 flex-col items-center justify-center gap-4 py-4" data-testid="voice-bubble">
       <SiriOrb
+        size="xl"
         listening={listening}
         disabled={busy}
         label={listening ? d.listening : d.tapToTalk}

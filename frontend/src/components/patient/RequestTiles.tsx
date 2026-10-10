@@ -56,11 +56,11 @@ export const MAIN_TILES: MainTile[] = [
   { kind: 'tile', key: 'bathroom', icon: '🚻' },
 ]
 
-/** One request per row (a single column): icon left, label right. `large` is the low-vision
- * layout (US-4): taller rows, bigger text, high-contrast borders. */
+/** One card per line (a single column): big icon above the label. `large` is the low-vision
+ * layout (US-4): taller cards, bigger text, high-contrast borders. */
 const tileClass = (large: boolean) =>
-  `flex w-full items-center gap-5 rounded-2xl bg-paper px-5 text-left font-bold hover:border-care hover:bg-care-tint ${
-    large ? 'min-h-24 border-4 border-pine text-[30px]' : 'min-h-20 border-2 border-line text-[24px]'
+  `flex w-full flex-col items-center justify-center gap-2 rounded-2xl bg-paper p-4 text-center font-bold hover:border-care hover:bg-care-tint ${
+    large ? 'min-h-40 border-4 border-pine text-[28px]' : 'min-h-32 border-2 border-line text-[24px]'
   }`
 
 /** `large` (low-vision layout, US-4): two columns, bigger targets and text, high-contrast borders. */
@@ -84,7 +84,7 @@ export function RequestTiles({
   /** Off when embedded under the dashboard's "More requests" toggle. */
   showTitle?: boolean
 }) {
-  const iconClass = `shrink-0 text-pine ${large ? 'size-12' : 'size-10'}`
+  const iconClass = `shrink-0 text-pine ${large ? 'size-16' : 'size-14'}`
   const [open, setOpen] = useState<TileGroupKey | null>(null)
   const tiles = MAIN_TILES.flatMap((m): MainTile[] => {
     if (m.kind === 'tile') return exclude.includes(m.key) ? [] : [m]

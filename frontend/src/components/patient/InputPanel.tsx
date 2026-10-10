@@ -46,10 +46,11 @@ export function InputPanel({
 
   return (
     <>
-      <form onSubmit={submit} className="mt-6 flex flex-col gap-6">
+      <form onSubmit={submit} className="mt-6 flex flex-1 flex-col gap-6">
         {mic && (
-          <div className="flex flex-col items-center justify-center gap-2">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 py-4">
             <SiriOrb
+              size="xl"
               listening={speech.listening}
               label={speech.listening ? t.micStop : t.micStart}
               onClick={speech.listening ? speech.stop : speech.start}
