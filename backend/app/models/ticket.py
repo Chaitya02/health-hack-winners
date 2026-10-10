@@ -1,9 +1,19 @@
 from datetime import UTC, datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.models.enums import Category, Department, InputMode, Language, Priority, Status
+from app.models.enums import (
+    AttendantPreference,
+    Category,
+    Department,
+    InputMode,
+    Language,
+    Priority,
+    Role,
+    Status,
+)
+from app.models.routing import default_severity
 
 MAX_TEXT_LEN = 500
 
@@ -12,12 +22,30 @@ def utc_now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+class Accessibility(BaseModel):
+    low_vision: bool = False
+    speech_difficulty: bool = False
+    cannot_write: bool = False
+
+
+class PatientProfile(BaseModel):
+    """Care-team-entered patient context (EMR-sourced later; seeded synthetic data for now)."""
+
+    npo: bool = False
+    npo_reason: str | None = Field(default=None, max_length=120)
+    fall_risk: bool = False
+    diet: str | None = Field(default=None, max_length=60)
+    accessibility: Accessibility = Field(default_factory=Accessibility)
+    attendant_preference: AttendantPreference = AttendantPreference.ANY
+
+
 class Room(BaseModel):
     room_id: str
     unit: str
     patient_alias: str
     preferred_language: Language = Language.EN
     primary_nurse: str
+    profile: PatientProfile = Field(default_factory=PatientProfile)
 
 
 class TicketAudit(BaseModel):
@@ -26,6 +54,12 @@ class TicketAudit(BaseModel):
     llm_decision: dict[str, Any] | None = None
     final_decision: dict[str, Any] = Field(default_factory=dict)
     fallback: str | None = None
+
+
+class StatusChange(BaseModel):
+    status: Status
+    at: str
+    by_role: Role
 
 
 class Ticket(BaseModel):
@@ -42,6 +76,7 @@ class Ticket(BaseModel):
     category: Category
     department: Department
     priority: Priority
+    severity: int = Field(ge=1, le=5)  # derived from category when omitted
     confidence: float = Field(ge=0, le=1)
     clinical_risk_flag: bool
     safety_reasons: list[str] = Field(default_factory=list)
@@ -52,10 +87,20 @@ class Ticket(BaseModel):
     acknowledged_at: str | None = None
     resolved_at: str | None = None
     escalated_from: Department | None = None
+    eta_minutes: int | None = Field(default=None, ge=0)
+    history: list[StatusChange] = Field(default_factory=list)
     model_id: str
     prompt_version: str
     latency_ms: int = Field(ge=0)
     audit: TicketAudit = Field(default_factory=TicketAudit)
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_severity(cls, data: Any) -> Any:
+        # Tickets stored before severity existed, and callers that don't set it.
+        if isinstance(data, dict) and data.get("severity") is None and "category" in data:
+            data = {**data, "severity": default_severity(Category(data["category"]))}
+        return data
 
 
 class PatientTicketView(BaseModel):
@@ -69,6 +114,8 @@ class PatientTicketView(BaseModel):
     english_summary: str
     patient_confirmation: str
     created_at: str
+    eta_minutes: int | None = None
+    history: list[StatusChange] = Field(default_factory=list)
 
 
 class CreateRequest(BaseModel):

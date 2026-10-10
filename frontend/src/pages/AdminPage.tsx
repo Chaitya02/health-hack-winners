@@ -11,6 +11,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
   COMFORT_SUPPLIES: 'Comfort supplies',
   DIETARY: 'Food & drink',
   TECH_AMENITIES: 'TV & tech',
+  EMOTIONAL_SUPPORT: 'Emotional support',
 }
 
 const nf = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })

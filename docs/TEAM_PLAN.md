@@ -79,7 +79,7 @@ Changes to the data model:
 Housekeeping so the two tracks don't collide:
 - Move `QUICK_TAP_TILES` out of `services.py` into its own `backend/app/tiles.py`. Om then owns the tiles and Chaitya owns `services.py`.
 - Mirror all of the above in `frontend/src/types/ticket.ts`.
-- `scripts/seed.py` gives demo rooms varied profiles: 403 NPO, 405 fall risk, 407 low vision, 409 speech difficulty, 411 can't write.
+- `scripts/seed.py` gives demo rooms varied profiles: 410 NPO, 412 fall risk, 414 low vision, 416 speech difficulty, 418 can't write. (Rooms 401–405 belong to the Playwright tests.)
 
 **O1 · Om · patient page refactor, no behavior change**
 - Split `frontend/src/pages/PatientPage.tsx` into `frontend/src/components/patient/`: `Header`, `NurseButton`, `InputPanel`, `RequestTiles`, `MyRequests` and `Confirmation`.
