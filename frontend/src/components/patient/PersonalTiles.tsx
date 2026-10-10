@@ -31,7 +31,7 @@ export function PersonalTiles({
       <h2 id="for-you" className="text-[26px] font-bold">
         {d.forYou}
       </h2>
-      <ul className="mt-3 grid grid-cols-3 gap-3" data-testid="top-tiles">
+      <ul className="mt-3 flex flex-col gap-3" data-testid="top-tiles">
         {top.map((key) => (
           <li key={key}>
             <button
@@ -39,7 +39,7 @@ export function PersonalTiles({
               disabled={busy}
               onClick={() => onTap(key)}
               className={`flex h-full w-full flex-col items-center justify-center gap-3 rounded-3xl border-4 border-pine bg-paper p-3 text-center font-bold leading-tight hover:bg-care-tint ${
-                large ? 'min-h-48 text-[26px]' : 'min-h-40 text-[22px]'
+                large ? 'min-h-44 text-[30px]' : 'min-h-36 text-[26px]'
               }`}
             >
               <TileGlyph tile={key} gender={gender} className={`shrink-0 text-pine ${large ? 'size-20' : 'size-16'}`} />
