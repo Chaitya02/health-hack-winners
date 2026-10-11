@@ -8,8 +8,11 @@ export interface AppConfig {
 let cached: AppConfig | null = null
 
 function defaults(): AppConfig {
+  // VITE_API_URL="" means the API is on this page's own address (the dev server forwards /api and
+  // /ws to the backend), so one URL works from any device, e.g. a tablet through an ngrok tunnel.
   const apiUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
-  const wsUrl = import.meta.env.VITE_WS_URL ?? apiUrl.replace(/^http/, 'ws') + '/ws'
+  const sameOriginWs = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`
+  const wsUrl = import.meta.env.VITE_WS_URL ?? (apiUrl ? apiUrl.replace(/^http/, 'ws') + '/ws' : sameOriginWs)
   return { apiUrl, wsUrl }
 }
 

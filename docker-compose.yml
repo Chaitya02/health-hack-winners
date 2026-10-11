@@ -33,7 +33,10 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.dev
     environment:
-      VITE_API_URL: http://localhost:8000
+      # Same-origin API: the dev server forwards /api and /ws to the backend, so the app works from
+      # any device that can reach :5173 (e.g. a tablet via `ngrok http 5173`).
+      VITE_API_URL: ""
+      VITE_PROXY_TARGET: http://backend:8000
       VITE_POLL: "1"
     volumes:
       - ./frontend/src:/app/src

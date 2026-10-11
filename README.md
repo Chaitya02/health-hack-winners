@@ -21,6 +21,20 @@ make seed               # synthetic unit "4 West Med-Surg", rooms 401–420
 - Admin / impact: http://localhost:5173/admin
 - API health: http://localhost:8000/health
 
+## Open it on a tablet or phone (ngrok)
+
+The page and the API share one address (the dev server forwards `/api` and `/ws` to the backend),
+so a single tunnel is enough:
+
+```bash
+docker compose up -d          # the app on http://localhost:5173
+ngrok http 5173               # prints https://<something>.ngrok-free.app
+```
+
+Open the `https://…ngrok-free.app` link on the tablet and tap **Visit Site** on ngrok's notice
+once. HTTPS also lets the tablet's microphone work. Demo auto sign-in means anyone with the link
+can open the staff and admin screens: use demo patients only, and stop the tunnel when done.
+
 ## Development
 
 ```bash
