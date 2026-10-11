@@ -16,6 +16,7 @@ import * as waitingMusic from '../lib/waitingMusic'
 import { requestLabel } from '../components/patient/RequestTracker'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { DASHBOARD } from '../i18n/dashboard'
+import { TRACKER } from '../i18n/tracker'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
 import { layoutFor } from '../lib/accessibility'
 import { api, ApiError } from '../lib/api'
@@ -46,6 +47,7 @@ function toView(e: TicketEvent): PatientTicketView {
     patient_confirmation: t.patient_confirmation,
     created_at: t.created_at,
     eta_minutes: t.eta_minutes,
+    patient_notice: t.patient_notice ?? null,
     history: t.history,
   }
 }
@@ -149,12 +151,18 @@ function Dashboard({
   const lastStatus = useRef<Map<string, string> | null>(null)
   useEffect(() => {
     const prev = lastStatus.current
-    lastStatus.current = new Map(requests.map((r) => [r.ticket_id, r.status]))
+    const key = (r: PatientTicketView) => `${r.status}|${r.patient_notice ?? ''}`
+    lastStatus.current = new Map(requests.map((r) => [r.ticket_id, key(r)]))
     if (prev === null || !audioPrefs.voice) return // first load: nothing to announce
     const changes = requests
-      .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== r.status)
-      .map((r) => `${requestLabel(r, t, lang)}: ${t.status[r.status]}`) // same words as on screen
-    if (changes.length) speak(changes.join('. '), t.speechLang)
+      .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== key(r))
+      .map((r) => {
+        // Same words as on screen; a missed target also says we're still on it.
+        const was = prev.get(r.ticket_id)!.split('|')
+        const news = r.patient_notice && r.patient_notice !== was[1] ? ` ${TRACKER[lang].notice[r.patient_notice]}` : ''
+        return `${requestLabel(r, t, lang)}: ${t.status[r.status]}.${news}`
+      })
+    if (changes.length) speak(changes.join(' '), t.speechLang)
   }, [requests, audioPrefs.voice, t, lang])
   const { top } = useMemo(() => topTiles(room.profile, requests), [room.profile, requests])
 

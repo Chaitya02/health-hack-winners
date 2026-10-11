@@ -458,8 +458,13 @@ function TicketRow({
             <span className="rounded-xl bg-pine px-3 py-0.5 text-[26px] font-bold tabular-nums text-white" aria-label={`Room ${t.room_id}`}>
               {t.room_id}
             </span>
-            {high && <span className="rounded-full bg-bell px-3 py-1 text-sm font-bold tracking-wide text-white">URGENT</span>}
+            {high && <span className="rounded-full bg-bell px-3 py-1 text-sm font-bold tracking-wide text-white">HIGH PRIORITY</span>}
             {stage && <span className="rounded-full bg-care-tint px-3 py-1 text-sm font-bold text-care-deep">{stage}</span>}
+            {t.overdue && (
+              <span className="rounded-full bg-bell-tint px-3 py-1 text-sm font-bold tracking-wide text-bell-deep" data-testid="overdue">
+                OVERDUE
+              </span>
+            )}
             {t.nudge_count > 0 && (
               <span className="rounded-full bg-bell-tint px-3 py-1 text-sm font-bold text-bell-deep" data-testid="still-waiting">
                 Patient still waiting
@@ -487,7 +492,13 @@ function TicketRow({
       </div>
 
       <div className="mt-3 space-y-1 text-[16px] font-bold">
+        <Deadline ticket={t} now={now} />
         {t.escalated_from && <p className="text-bell">Escalated by {DEPARTMENT_LABELS[t.escalated_from]}</p>}
+        {t.backup_from && (
+          <p className="text-bell-deep" data-testid="backup">
+            Backup: {t.backup_from} didn’t acknowledge in time
+          </p>
+        )}
         {t.assigned_name ? (
           <p className="text-care-deep" data-testid="assignee">
             Assigned to {t.assigned_name}
@@ -552,6 +563,27 @@ function TicketRow({
         )}
       </div>
     </li>
+  )
+}
+
+/** The next response-time target: acknowledge (countdown) or resolve (by a time). */
+function Deadline({ ticket: t, now }: { ticket: Ticket; now: number }) {
+  const waitingForAck = t.status === 'NEW' || t.status === 'ESCALATED'
+  const due = waitingForAck ? t.ack_due_at : t.resolve_due_at
+  if (!due) return null
+  const left = Math.ceil((Date.parse(due) - now) / 1000)
+  const what = waitingForAck ? 'Acknowledge' : 'Resolve'
+  const late = left <= 0
+  const soon = !late && left <= 60
+  const text = late
+    ? `${what} overdue`
+    : waitingForAck
+      ? `${what} within ${formatWait(left)}`
+      : `${what} by ${new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(Date.parse(due))}`
+  return (
+    <p className={late ? 'text-bell' : soon ? 'text-wait' : 'text-pine-soft'} data-testid="deadline">
+      {text}
+    </p>
   )
 }
 

@@ -91,6 +91,13 @@ export interface Ticket {
   attendant_preference: AttendantPreference | null
   attendant_preference_met: boolean | null
   eta_minutes: number | null
+  /** Response-time targets (backend app/sla.py) and what happened when one was missed. */
+  ack_due_at?: string | null
+  resolve_due_at?: string | null
+  overdue?: 'ack' | 'resolve' | null
+  backup_count?: number
+  backup_from?: string | null
+  patient_notice?: PatientNotice | null
   history: StatusChange[]
   notes: TicketNote[]
   nudge_count: number
@@ -112,8 +119,12 @@ export interface PatientTicketView {
   patient_confirmation: string
   created_at: string
   eta_minutes: number | null
+  /** Set when a response-time target was missed: what to tell the patient. */
+  patient_notice?: PatientNotice | null
   history: StatusChange[]
 }
+
+export type PatientNotice = 'still_looking' | 'taking_longer'
 
 export interface Accessibility {
   low_vision: boolean

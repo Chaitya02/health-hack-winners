@@ -117,6 +117,27 @@ describe('StaffPage', () => {
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ action: 'resolve' })
   })
 
+  it('shows the response deadline, and when it was missed: OVERDUE and who the backup replaced', async () => {
+    sessionStorage.setItem('tingting.staff.housekeeping', 'tok')
+    const inSec = (s: number) => new Date(Date.now() + s * 1000).toISOString()
+    mockFetch({
+      'GET /api/queues/housekeeping': [
+        ticket({ ticket_id: 'fresh', ack_due_at: inSec(170) }),
+        ticket({ ticket_id: 'late', room_id: '402', priority: 'HIGH', overdue: 'ack', backup_from: 'Ana', assigned_name: 'Marcus', ack_due_at: inSec(-5) }),
+        ticket({ ticket_id: 'doing', room_id: '403', status: 'IN_PROGRESS', resolve_due_at: inSec(1200) }),
+      ],
+    })
+    renderStaff('housekeeping')
+    const rows = await screen.findAllByTestId('ticket')
+    const byId = (id: string) => rows.find((r) => r.dataset.ticketId === id)!
+    expect(within(byId('fresh')).getByTestId('deadline')).toHaveTextContent(/^Acknowledge within 2:[45]\d$/)
+    expect(within(byId('fresh')).queryByTestId('overdue')).not.toBeInTheDocument()
+    expect(within(byId('late')).getByTestId('overdue')).toHaveTextContent('OVERDUE')
+    expect(within(byId('late')).getByTestId('deadline')).toHaveTextContent('Acknowledge overdue')
+    expect(within(byId('late')).getByTestId('backup')).toHaveTextContent('Backup: Ana didn’t acknowledge in time')
+    expect(within(byId('doing')).getByTestId('deadline')).toHaveTextContent(/^Resolve by \d{1,2}:\d{2} [AP]M$/)
+  })
+
   it('shows reconnecting status when the socket drops', async () => {
     sessionStorage.setItem('tingting.staff.food', 'tok')
     mockFetch({ 'GET /api/queues/food': [] })

@@ -4,7 +4,7 @@ patient actions."""
 import logging
 import math
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from statistics import median
 
 from app.classifier import (
@@ -42,8 +42,10 @@ from app.profile_rules import apply_profile, check_tile, is_mobility_request
 from app.realtime import Publisher
 from app.repo import TicketRepository, new_id
 from app.safety import scan
+from app.sla import ACK_MINUTES, iso, parse, raise_priority, set_deadlines
 from app.staff import (
     STAFFED_DEPARTMENTS,
+    StaffMember,
     StaffRepository,
     StaffView,
     choose_assignee,
@@ -136,6 +138,83 @@ class TicketService:
             self.publisher.publish("ticket.updated", ticket)
             assigned += 1
         return assigned
+
+    def check_deadlines(self, now: datetime | None = None) -> int:
+        """Apply the response-time targets (app/sla.py) to every open request. Returns how many
+        changed. Runs on a timer and whenever a dashboard loads."""
+        now = now or datetime.now(UTC)
+        changed = 0
+        for department in Department:
+            for ticket in self.tickets.by_department(department):
+                if ticket.status not in OPEN_STATUSES:
+                    continue
+                if self._late_ack(ticket, now) or self._late_resolve(ticket, now):
+                    self.tickets.put(ticket)
+                    self.publisher.publish("ticket.updated", ticket)
+                    changed += 1
+        return changed
+
+    def _late_ack(self, ticket: Ticket, now: datetime) -> bool:
+        """Not acknowledged in time: hand it to a backup, raise priority, tell the patient."""
+        if ticket.status not in (Status.NEW, Status.ESCALATED) or not ticket.ack_due_at:
+            return False
+        if now < parse(ticket.ack_due_at):
+            return False
+        raise_priority(ticket)
+        previous_id, previous_name = ticket.assigned_to, ticket.assigned_name
+        backup = self._backup_for(ticket, now)
+        if backup:
+            ticket.assigned_to, ticket.assigned_name = backup.staff_id, backup.name
+            ticket.assigned_at = iso(now)
+            if ticket.attendant_preference:
+                ticket.attendant_preference_met = backup.gender == str(ticket.attendant_preference)
+            ticket.backup_from = previous_name
+        elif previous_id is None:
+            ticket.backup_from = None  # still nobody available: keeps waiting, now higher up
+        ticket.backup_count += 1
+        ticket.overdue = "ack"
+        ticket.patient_notice = "still_looking"
+        ticket.ack_due_at = iso(now + timedelta(minutes=ACK_MINUTES[ticket.priority]))
+        log.info(
+            "acknowledgement overdue",
+            extra={
+                "ticket_id": ticket.ticket_id,
+                "department": str(ticket.department),
+                "priority": str(ticket.priority),
+                "backup": bool(backup),
+            },
+        )
+        return True
+
+    def _late_resolve(self, ticket: Ticket, now: datetime) -> bool:
+        """Acknowledged but not resolved in time: raise priority once, tell the patient."""
+        if ticket.overdue == "resolve" or not ticket.resolve_due_at:
+            return False
+        if ticket.status not in (Status.ACKNOWLEDGED, Status.IN_PROGRESS):
+            return False
+        if now < parse(ticket.resolve_due_at):
+            return False
+        raise_priority(ticket)
+        ticket.overdue = "resolve"
+        ticket.patient_notice = "taking_longer"
+        log.info(
+            "resolution overdue",
+            extra={"ticket_id": ticket.ticket_id, "department": str(ticket.department)},
+        )
+        return True
+
+    def _backup_for(self, ticket: Ticket, now: datetime) -> StaffMember | None:
+        """Someone other than the current assignee, by the usual availability rules."""
+        if self.staff is None or ticket.department not in STAFFED_DEPARTMENTS:
+            return None
+        others = [
+            m
+            for m in self.staff.by_department(ticket.department)
+            if m.staff_id != ticket.assigned_to
+        ]
+        counts = open_counts(self.tickets.by_department(ticket.department))
+        attendant = str(ticket.attendant_preference) if ticket.attendant_preference else None
+        return choose_assignee(others, counts, now, urgent=is_urgent(ticket), attendant=attendant)
 
     def staff_views(self, department: Department) -> list[StaffView]:
         if self.staff is None:
@@ -245,6 +324,7 @@ class TicketService:
                     fallback=decision.fallback,
                 ),
             )
+            set_deadlines(ticket, parse(now))
             # US-6: bathroom / mobility help honours the patient's attendant preference.
             pref = room.profile.attendant_preference
             if (
@@ -305,11 +385,14 @@ class TicketService:
                 raise InvalidTransition(f"cannot acknowledge a {ticket.status} ticket")
             ticket.status = Status.ACKNOWLEDGED
             ticket.acknowledged_at = now
+            ticket.overdue = ticket.patient_notice = None
         elif action == "start":
             if ticket.status == Status.IN_PROGRESS:
                 raise InvalidTransition("ticket is already in progress")
             ticket.status = Status.IN_PROGRESS
             ticket.acknowledged_at = ticket.acknowledged_at or now
+            if ticket.overdue == "ack":
+                ticket.overdue = ticket.patient_notice = None
         elif action == "resolve":
             ticket.status = Status.RESOLVED
             ticket.acknowledged_at = ticket.acknowledged_at or now
@@ -344,6 +427,7 @@ class TicketService:
         ticket.status = Status.ESCALATED
         ticket.acknowledged_at = None
         ticket.eta_minutes = self.eta_minutes(Department.NURSING, Priority.HIGH)
+        ticket.ack_due_at = iso(datetime.now(UTC) + timedelta(minutes=ACK_MINUTES[Priority.HIGH]))
         ticket.safety_reasons += [r for r in reasons if r not in ticket.safety_reasons]
         self._assign(ticket)  # now a nursing request: an available nurse (never left unassigned)
 

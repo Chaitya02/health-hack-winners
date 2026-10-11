@@ -99,6 +99,12 @@ export function RequestTracker({
         )}
       </div>
 
+      {r.patient_notice && (
+        <p role="status" className="mt-3 rounded-2xl bg-wait-tint px-4 py-3 text-[20px] font-bold text-wait" data-testid="patient-notice">
+          {s.notice[r.patient_notice]}
+        </p>
+      )}
+
       <ol aria-label={s.progress} className="mt-3 grid grid-cols-4 gap-1">
         {STEPS.map((step, i) => {
           const done = i < current
