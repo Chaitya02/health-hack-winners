@@ -4,6 +4,9 @@ export interface TrackerStrings {
   progress: string
   eta: (minutes: number) => string
   soon: string
+  /** Spoken with status updates: when someone will be with the patient. */
+  arriving: (minutes: number) => string
+  arrivingSoon: string
   stillWaiting: string
   nudged: string
   /** Shown and spoken when a response-time target is missed. */
@@ -25,6 +28,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: 'Request progress',
     eta: (n) => `About ${n} min`,
     soon: 'Any minute now',
+    arriving: (n) => n === 1 ? 'Someone will be with you in about 1 minute.' : `Someone will be with you in about ${n} minutes.`,
+    arrivingSoon: 'Someone will be with you very soon.',
     stillWaiting: 'Still waiting?',
     nudged: 'We’ve reminded them.',
     notice: {
@@ -53,6 +58,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: 'Progreso del pedido',
     eta: (n) => `Unos ${n} min`,
     soon: 'En cualquier momento',
+    arriving: (n) => n === 1 ? 'Alguien estará con usted en 1 minuto, más o menos.' : `Alguien estará con usted en unos ${n} minutos.`,
+    arrivingSoon: 'Alguien estará con usted muy pronto.',
     stillWaiting: '¿Sigue esperando?',
     nudged: 'Les hemos avisado otra vez.',
     notice: {
@@ -81,6 +88,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: 'अनुरोध की प्रगति',
     eta: (n) => `लगभग ${n} मिनट`,
     soon: 'बस आने ही वाले हैं',
+    arriving: (n) => `लगभग ${n} मिनट में कोई आपके पास होगा।`,
+    arrivingSoon: 'कोई बहुत जल्द आपके पास होगा।',
     stillWaiting: 'अभी भी इंतज़ार कर रहे हैं?',
     nudged: 'हमने उन्हें फिर से याद दिलाया है।',
     notice: {
@@ -109,6 +118,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: 'વિનંતીની પ્રગતિ',
     eta: (n) => `લગભગ ${n} મિનિટ`,
     soon: 'બસ હમણાં જ આવે છે',
+    arriving: (n) => `લગભગ ${n} મિનિટમાં કોઈ તમારી પાસે હશે.`,
+    arrivingSoon: 'કોઈ ખૂબ જલ્દી તમારી પાસે હશે.',
     stillWaiting: 'હજી રાહ જુઓ છો?',
     nudged: 'અમે તેમને ફરી યાદ અપાવ્યું છે.',
     notice: {
@@ -137,6 +148,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: '请求进度',
     eta: (n) => `约 ${n} 分钟`,
     soon: '马上就到',
+    arriving: (n) => `大约 ${n} 分钟后会有人来。`,
+    arrivingSoon: '马上会有人来。',
     stillWaiting: '还在等吗？',
     nudged: '我们已再次提醒他们。',
     notice: {
@@ -165,6 +178,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: 'Pwogrè demann nan',
     eta: (n) => `Anviwon ${n} min`,
     soon: 'Nenpòt ki lè kounye a',
+    arriving: (n) => `Yon moun ap la nan anviwon ${n} minit.`,
+    arrivingSoon: 'Yon moun ap la byento.',
     stillWaiting: 'W ap tann toujou?',
     nudged: 'Nou raple yo ankò.',
     notice: {
@@ -193,6 +208,8 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     progress: 'Andamento do pedido',
     eta: (n) => `Cerca de ${n} min`,
     soon: 'A qualquer momento',
+    arriving: (n) => n === 1 ? 'Alguém estará com você em cerca de 1 minuto.' : `Alguém estará com você em cerca de ${n} minutos.`,
+    arrivingSoon: 'Alguém estará com você muito em breve.',
     stillWaiting: 'Ainda esperando?',
     nudged: 'Já avisamos de novo.',
     notice: {

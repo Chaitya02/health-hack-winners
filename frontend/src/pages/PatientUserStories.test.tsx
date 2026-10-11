@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Confirmation } from '../components/patient/Confirmation'
 import { profileRefusalMessage } from '../components/patient/profileRules'
 import { STRINGS } from '../i18n/strings'
+import { arrivalSentence } from '../lib/arrival'
 import * as waitingMusic from '../lib/waitingMusic'
 import { FakeWebSocket } from '../test/setup'
 import { mockFetch, ticket } from '../test/fixtures'
@@ -172,6 +173,24 @@ describe('US-7: spoken updates and waiting music', () => {
     await waitFor(() =>
       expect(spoken).toEqual(['Pillow: Sent. We’re still looking for someone to help you. You haven’t been forgotten.']),
     )
+  })
+
+  it('says when someone will be there, counted down from when the request was sent', async () => {
+    const sent = new Date(Date.now() - 6 * 60_000).toISOString()
+    const ws = await liveRoom([ticket({ ticket_id: 'a', tile: 'pillow', status: 'NEW', room_id: '400', created_at: sent, eta_minutes: 10 })])
+    act(() =>
+      ws.emit({ type: 'ticket.updated', ticket: ticket({ ticket_id: 'a', tile: 'pillow', status: 'IN_PROGRESS', room_id: '400', created_at: sent, eta_minutes: 10 }), ts: '' }),
+    )
+    await waitFor(() => expect(spoken).toEqual(['Pillow: On the way. Someone will be with you in about 4 minutes.']))
+  })
+
+  it('arrival wording: one minute, several, and very soon once the time is up', () => {
+    const at = (minAgo: number) => new Date(Date.now() - minAgo * 60_000).toISOString()
+    expect(arrivalSentence({ status: 'ACKNOWLEDGED', created_at: at(9.5), eta_minutes: 10 }, 'en', Date.now())).toBe('Someone will be with you in about 1 minute.')
+    expect(arrivalSentence({ status: 'NEW', created_at: at(0), eta_minutes: 10 }, 'es', Date.now())).toBe('Alguien estará con usted en unos 10 minutos.')
+    expect(arrivalSentence({ status: 'IN_PROGRESS', created_at: at(12), eta_minutes: 10 }, 'en', Date.now())).toBe('Someone will be with you very soon.')
+    expect(arrivalSentence({ status: 'RESOLVED', created_at: at(0), eta_minutes: 10 }, 'en', Date.now())).toBeNull()
+    expect(arrivalSentence({ status: 'NEW', created_at: at(0), eta_minutes: null }, 'en', Date.now())).toBeNull()
   })
 
   it('music plays while a request is open; both can be switched off and stay off', async () => {

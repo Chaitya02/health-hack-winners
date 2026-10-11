@@ -25,6 +25,7 @@ import { api, ApiError } from '../lib/api'
 import { DEFAULT_ROOM, IDLE_MS } from '../lib/config'
 import { topTiles } from '../lib/personalize'
 import { blockedTiles, profileRefusalMessage } from '../components/patient/profileRules'
+import { arrivalSentence } from '../lib/arrival'
 import { speak } from '../lib/speak'
 import {
   CLOSED_STATUSES,
@@ -169,10 +170,12 @@ function Dashboard({
     const changes = requests
       .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== key(r))
       .map((r) => {
-        // Same words as on screen; a missed target also says we're still on it.
+        // Same words as on screen. A missed target says we're still on it; otherwise say when
+        // someone will be there ("in about 4 minutes"). Never both, so they can't contradict.
         const was = prev.get(r.ticket_id)!.split('|')
-        const news = r.patient_notice && r.patient_notice !== was[1] ? ` ${TRACKER[lang].notice[r.patient_notice]}` : ''
-        return `${requestLabel(r, t, lang)}: ${t.status[r.status]}.${news}`
+        const news = r.patient_notice && r.patient_notice !== was[1] ? TRACKER[lang].notice[r.patient_notice] : null
+        const when = r.patient_notice ? null : arrivalSentence(r, lang, Date.now())
+        return [`${requestLabel(r, t, lang)}: ${t.status[r.status]}.`, news, when].filter(Boolean).join(' ')
       })
     if (changes.length) speak(changes.join(' '), t.speechLang)
   }, [requests, audioPrefs.voice, t, lang])
@@ -189,7 +192,10 @@ function Dashboard({
         setResult(res)
         if (!isTap && res.confirmation_language !== lang) onLangChange(res.confirmation_language)
         if (layout.readAloud) {
-          const said = spokenLabel ? `${spokenLabel}. ${res.confirmation}` : res.confirmation
+          // The confirmation, then the longest wait among the teams it went to.
+          const last = res.tickets.reduce((a, b) => ((b.eta_minutes ?? 0) > (a.eta_minutes ?? 0) ? b : a), res.tickets[0])
+          const when = last ? arrivalSentence(last, res.confirmation_language, Date.now()) : null
+          const said = [spokenLabel && `${spokenLabel}.`, res.confirmation, when].filter(Boolean).join(' ')
           speak(said, STRINGS[res.confirmation_language].speechLang)
         }
         return true
