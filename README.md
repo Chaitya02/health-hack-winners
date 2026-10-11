@@ -5,6 +5,12 @@
 > Rutgers Health Hack 2026 · Ops Unleashed track
 > **Synthetic data only. No real patient information.**
 
+## ▶ Watch the demo (4:44)
+
+[![Tink Tink demo video — click to play](docs/demo/preview.png)](docs/demo/tink-tink-demo.mp4)
+
+**[▶ Play the demo video](docs/demo/tink-tink-demo.mp4)**: the problem, a live walkthrough of the patient tablet and staff dashboards, how it's built, and the business case.
+
 ## What is it?
 
 In a hospital, the call bell next to every bed goes to one person: the nurse. But **60–70% of call-bell presses are not medical**. The patient wants water, a blanket, or help with the TV. The nurse walks over, asks what's needed, then passes the job on to someone else. Patients wait, nurses are pulled away from medical care, and the constant alarms wear everyone out ("alarm fatigue").
