@@ -22,6 +22,13 @@ export interface DashboardStrings {
   attendantAny: string
   attendantFemale: string
   attendantMale: string
+  // Procedures
+  comingUp: string
+  procedureNow: string
+  inMinutes: (n: number) => string
+  procedureAt: (name: string, time: string) => string
+  procedureSoon: (name: string, time: string, minutes: number) => string
+  procedureStarting: (name: string) => string
   ageYears: (n: number) => string
   room: (id: string) => string
   emergencyAgain: string
@@ -65,6 +72,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: 'No preference',
     attendantFemale: 'Female staff',
     attendantMale: 'Male staff',
+    comingUp: 'Coming up',
+    procedureNow: 'Now',
+    inMinutes: (n) => `in ${n} min`,
+    procedureAt: (name, time) => `You have ${name} at ${time}.`,
+    procedureSoon: (name, time, n) => `Reminder: ${name} at ${time}, in ${n} minutes.`,
+    procedureStarting: (name) => `It’s time for your ${name}. Your nurse will come for you.`,
     emergencyAgain: 'Tap Emergency again to call your nurse.',
     forYou: 'For you',
     more: 'More requests',
@@ -102,6 +115,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: 'Sin preferencia',
     attendantFemale: 'Personal femenino',
     attendantMale: 'Personal masculino',
+    comingUp: 'Próximamente',
+    procedureNow: 'Ahora',
+    inMinutes: (n) => `en ${n} min`,
+    procedureAt: (name, time) => `Tiene ${name} a las ${time}.`,
+    procedureSoon: (name, time, n) => `Recordatorio: ${name} a las ${time}, en ${n} minutos.`,
+    procedureStarting: (name) => `Es la hora de su ${name}. Su enfermera vendrá por usted.`,
     emergencyAgain: 'Toque Emergencia otra vez para llamar a su enfermera.',
     forYou: 'Para usted',
     more: 'Más pedidos',
@@ -139,6 +158,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: 'कोई पसंद नहीं',
     attendantFemale: 'महिला स्टाफ',
     attendantMale: 'पुरुष स्टाफ',
+    comingUp: 'आगे क्या है',
+    procedureNow: 'अभी',
+    inMinutes: (n) => `${n} मिनट में`,
+    procedureAt: (name, time) => `आपका ${name} ${time} पर है।`,
+    procedureSoon: (name, time, n) => `याद दिलाना: ${name} ${time} पर, ${n} मिनट में।`,
+    procedureStarting: (name) => `आपके ${name} का समय हो गया है। आपकी नर्स आपको लेने आएंगी।`,
     emergencyAgain: 'नर्स को बुलाने के लिए आपातकाल फिर से टैप करें।',
     forYou: 'आपके लिए',
     more: 'और अनुरोध',
@@ -176,6 +201,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: 'કોઈ પસંદગી નથી',
     attendantFemale: 'મહિલા સ્ટાફ',
     attendantMale: 'પુરુષ સ્ટાફ',
+    comingUp: 'આગળ શું છે',
+    procedureNow: 'હમણાં',
+    inMinutes: (n) => `${n} મિનિટમાં`,
+    procedureAt: (name, time) => `તમારું ${name} ${time} વાગ્યે છે.`,
+    procedureSoon: (name, time, n) => `યાદ અપાવું: ${name} ${time} વાગ્યે, ${n} મિનિટમાં.`,
+    procedureStarting: (name) => `તમારા ${name}નો સમય થઈ ગયો છે. તમારી નર્સ તમને લેવા આવશે.`,
     emergencyAgain: 'નર્સને બોલાવવા માટે કટોકટી ફરીથી ટેપ કરો.',
     forYou: 'તમારા માટે',
     more: 'વધુ વિનંતીઓ',
@@ -213,6 +244,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: '无偏好',
     attendantFemale: '女性工作人员',
     attendantMale: '男性工作人员',
+    comingUp: '即将进行',
+    procedureNow: '现在',
+    inMinutes: (n) => `${n} 分钟后`,
+    procedureAt: (name, time) => `您的${name}安排在${time}。`,
+    procedureSoon: (name, time, n) => `提醒：${name}在${time}，还有 ${n} 分钟。`,
+    procedureStarting: (name) => `您的${name}时间到了。护士会来接您。`,
     emergencyAgain: '再次轻触“紧急”即可呼叫护士。',
     forYou: '为您推荐',
     more: '更多请求',
@@ -250,6 +287,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: 'Pa gen preferans',
     attendantFemale: 'Anplwaye fanm',
     attendantMale: 'Anplwaye gason',
+    comingUp: 'Kap vini',
+    procedureNow: 'Kounye a',
+    inMinutes: (n) => `nan ${n} min`,
+    procedureAt: (name, time) => `Ou gen ${name} a ${time}.`,
+    procedureSoon: (name, time, n) => `Rapèl: ${name} a ${time}, nan ${n} minit.`,
+    procedureStarting: (name) => `Li lè pou ${name} ou. Enfimyè ou ap vin chèche ou.`,
     emergencyAgain: 'Touche Ijans ankò pou rele enfimyè w.',
     forYou: 'Pou ou',
     more: 'Plis demann',
@@ -287,6 +330,12 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     attendantAny: 'Sem preferência',
     attendantFemale: 'Equipe feminina',
     attendantMale: 'Equipe masculina',
+    comingUp: 'Em breve',
+    procedureNow: 'Agora',
+    inMinutes: (n) => `em ${n} min`,
+    procedureAt: (name, time) => `Você tem ${name} às ${time}.`,
+    procedureSoon: (name, time, n) => `Lembrete: ${name} às ${time}, em ${n} minutos.`,
+    procedureStarting: (name) => `Chegou a hora do seu ${name}. Sua enfermeira virá buscá-lo.`,
     emergencyAgain: 'Toque em Emergência de novo para chamar a enfermeira.',
     forYou: 'Para você',
     more: 'Mais pedidos',
@@ -309,6 +358,7 @@ export const DEMO_PATIENTS = [
   {
     label: 'Rosa, 82 · low vision, bathroom often',
     name: 'Rosa',
+    procedures: [{ name: 'Blood test', inMinutes: 10 }, { name: 'Physiotherapy', inMinutes: 180 }],
     gender: 'female' as const,
     age: 82,
     attendant_preference: 'female' as const,
@@ -318,6 +368,7 @@ export const DEMO_PATIENTS = [
   {
     label: 'Sam, 54 · post-op, nothing by mouth',
     name: 'Sam',
+    procedures: [{ name: 'Knee X-ray', inMinutes: 12 }, { name: 'Knee surgery', inMinutes: 20 * 60 }],
     gender: 'male' as const,
     age: 54,
     attendant_preference: 'any' as const,
@@ -326,6 +377,7 @@ export const DEMO_PATIENTS = [
   {
     label: 'Lena, 37 · feels cold, poor sleep',
     name: 'Lena',
+    procedures: [{ name: 'Chest X-ray', inMinutes: 8 }, { name: 'Breathing treatment', inMinutes: 120 }],
     gender: 'female' as const,
     age: 37,
     attendant_preference: 'any' as const,

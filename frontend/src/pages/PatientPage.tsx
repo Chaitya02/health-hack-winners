@@ -6,12 +6,14 @@ import { IntakeForm } from '../components/patient/IntakeForm'
 import { EmergencyButton } from '../components/patient/EmergencyButton'
 import { PatientHeader } from '../components/patient/PatientHeader'
 import { PersonalTiles } from '../components/patient/PersonalTiles'
+import { ProcedureNotice, Procedures } from '../components/patient/Procedures'
 import { RequestsPanel } from '../components/patient/RequestsPanel'
 import type { QuickTile } from '../components/patient/RequestTiles'
 import { Screensaver } from '../components/patient/Screensaver'
 import { VoiceBubble } from '../components/patient/VoiceBubble'
 import { useAudioPrefs } from '../hooks/useAudioPrefs'
 import { useIdle } from '../hooks/useIdle'
+import { useProcedureReminders } from '../hooks/useProcedureReminders'
 import * as waitingMusic from '../lib/waitingMusic'
 import { requestLabel } from '../components/patient/RequestTracker'
 import { useLiveTickets } from '../hooks/useLiveTickets'
@@ -32,6 +34,7 @@ import {
   type PatientTicketView,
   type Room,
   type TicketEvent,
+  type Procedure,
 } from '../types/ticket'
 
 /** Room-channel events carry the patient view (no free text); keep only its fields. */
@@ -107,6 +110,8 @@ export default function PatientPage() {
   )
 }
 
+const NO_PROCEDURES: Procedure[] = []
+
 function Dashboard({
   room,
   lang,
@@ -148,6 +153,13 @@ function Dashboard({
     else waitingMusic.stop()
   }, [audioPrefs.music, openCount])
   useEffect(() => () => waitingMusic.stop(), [])
+  const reminders = useProcedureReminders({
+    roomId,
+    intakeAt: room.intake_at,
+    procedures: room.procedures ?? NO_PROCEDURES,
+    lang,
+    voice: audioPrefs.voice,
+  })
   const lastStatus = useRef<Map<string, string> | null>(null)
   useEffect(() => {
     const prev = lastStatus.current
@@ -254,6 +266,7 @@ function Dashboard({
         onOpenRequests={() => setPanelOpen(true)}
         onStartOver={onStartOver}
       />
+      {reminders.notice && <ProcedureNotice text={reminders.notice} d={d} onClose={reminders.dismiss} />}
 
       <main className="px-5 pb-10 pt-2 sm:px-8 lg:pb-0">
         {result ? (
@@ -286,6 +299,7 @@ function Dashboard({
             </div>
             {/* Wide screens: the request column scrolls in place; the page itself doesn't move. */}
             <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:px-2 lg:pb-4" data-testid="request-column">
+              <Procedures items={reminders.items} d={d} />
               <PersonalTiles
                 top={top}
                 t={t}

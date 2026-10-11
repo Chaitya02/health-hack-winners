@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import (
     AttendantPreference,
@@ -18,6 +18,7 @@ from app.models.routing import default_severity
 MAX_TEXT_LEN = 500
 MAX_NOTE_LEN = 200
 MAX_NOTES_LEN = 1000
+MAX_PROCEDURES = 5
 
 Gender = Literal["female", "male", "unspecified"]
 # What the patient is told when a response-time target is missed (app/sla.py).
@@ -50,6 +51,15 @@ class PatientProfile(BaseModel):
     notes_flags: list[str] = Field(default_factory=list)
 
 
+class Procedure(BaseModel):
+    """A scheduled procedure the patient is told about (name and time only)."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    name: str = Field(min_length=1, max_length=60)
+    at: AwareDatetime
+
+
 class Room(BaseModel):
     room_id: str
     unit: str
@@ -65,6 +75,7 @@ class Room(BaseModel):
     clinical_notes: str | None = Field(default=None, max_length=MAX_NOTES_LEN)
     intake_complete: bool = True
     intake_at: str | None = None  # requests before this belong to the previous patient
+    procedures: list[Procedure] = Field(default_factory=list, max_length=MAX_PROCEDURES)
 
 
 class RoomView(BaseModel):
@@ -80,6 +91,7 @@ class RoomView(BaseModel):
     gender: Gender = "unspecified"
     intake_complete: bool
     intake_at: str | None
+    procedures: list[Procedure] = Field(default_factory=list)
 
 
 class TicketAudit(BaseModel):
