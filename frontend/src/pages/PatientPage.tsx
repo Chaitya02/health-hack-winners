@@ -226,6 +226,7 @@ function Dashboard({
           lang={lang}
           t={t}
           requests={requests}
+          nurse={room.primary_nurse}
           onWake={screensaver.wake}
           onNurse={() => {
             screensaver.wake()

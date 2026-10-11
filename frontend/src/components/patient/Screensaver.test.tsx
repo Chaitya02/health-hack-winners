@@ -18,6 +18,7 @@ function renderSaver(lang: 'en' | 'es' = 'en') {
       lang={lang}
       t={STRINGS[lang]}
       requests={[view('a', 'IN_PROGRESS', 'housekeeping'), view('b', 'RESOLVED', 'food'), view('c', 'CANCELLED', 'it')]}
+      nurse="Nurse Jordan"
       onWake={onWake}
       onNurse={onNurse}
     />,
@@ -33,6 +34,19 @@ describe('Screensaver', () => {
     expect(screen.getByText('On the way')).toBeInTheDocument()
     expect(screen.queryByText('Food Services')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^emergency$/i })).toBeEnabled()
+  })
+
+  it('shows the patient’s nurse and how long each open request has waited', () => {
+    vi.useFakeTimers({ now: Date.parse('2026-10-10T10:07:30Z') })
+    renderSaver()
+    expect(screen.getByTestId('screensaver-nurse')).toHaveTextContent('Your nurse: Jordan')
+    expect(screen.getAllByTestId('screensaver-wait').map((n) => n.textContent)).toEqual(['Waiting 7 min'])
+    vi.useRealTimers()
+  })
+
+  it('waiting time in the patient’s language', () => {
+    expect(SCREENSAVER.es.waited(0)).toBe('Recién enviado')
+    expect(SCREENSAVER.zh.waited(12)).toBe('已等待 12 分钟')
   })
 
   it('a tap anywhere wakes; Emergency (tapped twice) calls the nurse instead', async () => {
