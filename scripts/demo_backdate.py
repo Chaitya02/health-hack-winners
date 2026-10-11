@@ -16,8 +16,8 @@ os.environ.setdefault("AWS_ACCESS_KEY_ID", "local")
 os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "local")
 os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 
-from app.config import Settings  # noqa: E402
-from app.repo import TicketRepository, dynamo_resource  # noqa: E402
+from app.config import Settings
+from app.repo import TicketRepository, dynamo_resource
 
 settings = Settings(
     dynamodb_endpoint_url=os.environ.get("DYNAMODB_ENDPOINT_URL", "http://localhost:8001"),

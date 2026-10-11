@@ -20,9 +20,9 @@ os.environ.setdefault("AWS_ACCESS_KEY_ID", "local")
 os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "local")
 os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
 
-from app.classifier import MockClassifier  # noqa: E402
-from app.config import Settings  # noqa: E402
-from app.models import (  # noqa: E402
+from app.classifier import MockClassifier
+from app.config import Settings
+from app.models import (
     CLOSED_STATUSES,
     CreateRequest,
     Department,
@@ -33,12 +33,12 @@ from app.models import (  # noqa: E402
     StatusChange,
     TicketNote,
 )
-from app.profile_rules import ProfileRefusal  # noqa: E402
-from app.realtime import NullPublisher  # noqa: E402
-from app.repo import RoomRepository, TicketRepository, dynamo_resource  # noqa: E402
-from app.services import TicketService  # noqa: E402
-from app.sla import iso, set_deadlines  # noqa: E402
-from app.staff import StaffRepository  # noqa: E402
+from app.profile_rules import ProfileRefusal
+from app.realtime import NullPublisher
+from app.repo import RoomRepository, TicketRepository, dynamo_resource
+from app.services import TicketService
+from app.sla import iso, set_deadlines
+from app.staff import StaffRepository
 
 # (weight, text or None for a button, tile or None)
 SAMPLES: list[tuple[int, str | None, str | None]] = [
@@ -54,7 +54,8 @@ SAMPLES: list[tuple[int, str | None, str | None]] = [
     (1, "我想要一杯热水", None), (1, "电视坏了", None), (1, "Mwen bezwen yon lòt kouvèti", None),
     (1, "ટીવી ચાલતું નથી", None), (1, "मुझे तकिया चाहिए", None), (1, "quero um suco", None),
     (1, "My surgical incision is throbbing and I feel dizzy.", None),
-    (1, "my chest feels tight", None), (1, "I feel sick", None), (1, "I'm scared about tomorrow", None),
+    (1, "my chest feels tight", None), (1, "I feel sick", None),
+    (1, "I'm scared about tomorrow", None),
     (1, "the wifi is down", None), (1, "there's water on the floor", None),
 ]  # fmt: skip
 
@@ -99,7 +100,9 @@ def main() -> None:
         count = args.per_day + random.randint(-6, 8)
         for _ in range(count):
             hour = random.choices(range(24), weights=HOURS)[0]
-            local = datetime(date.year, date.month, date.day, hour, random.randint(0, 59), tzinfo=UTC)
+            local = datetime(
+                date.year, date.month, date.day, hour, random.randint(0, 59), tzinfo=UTC
+            )
             created = local - local_offset
             if created > now - timedelta(minutes=10):
                 continue  # only the past
@@ -132,17 +135,27 @@ def main() -> None:
                     t.assigned_to, t.assigned_name, t.assigned_at = who.staff_id, who.name, iso(c)
                 history = [StatusChange(status=Status.NEW, at=iso(c), by_role=Role.PATIENT)]
                 if t.escalated_from:
-                    history.append(StatusChange(status=Status.ESCALATED, at=iso(c), by_role=Role.SYSTEM))
+                    history.append(
+                        StatusChange(status=Status.ESCALATED, at=iso(c), by_role=Role.SYSTEM)
+                    )
                 still_open = done > now
                 roll = random.random()
                 if roll < 0.05 and t.department != Department.NURSING:
                     t.status = Status.CANCELLED
                     t.resolved_at = iso(c + timedelta(minutes=random.uniform(1, 4)))
-                    history.append(StatusChange(status=Status.CANCELLED, at=t.resolved_at, by_role=Role.PATIENT))
+                    history.append(
+                        StatusChange(
+                            status=Status.CANCELLED, at=t.resolved_at, by_role=Role.PATIENT
+                        )
+                    )
                 elif still_open:
                     if ack < now:
                         t.status, t.acknowledged_at = Status.ACKNOWLEDGED, iso(ack)
-                        history.append(StatusChange(status=Status.ACKNOWLEDGED, at=iso(ack), by_role=Role.SYSTEM))
+                        history.append(
+                            StatusChange(
+                                status=Status.ACKNOWLEDGED, at=iso(ack), by_role=Role.SYSTEM
+                            )
+                        )
                 else:
                     t.status = Status.RESOLVED
                     t.acknowledged_at, t.resolved_at = iso(ack), iso(done)
@@ -155,7 +168,13 @@ def main() -> None:
                     t.nudge_count = random.randint(1, 2)
                     t.last_nudge_at = iso(c + timedelta(minutes=3))
                 if random.random() < 0.05:
-                    t.notes = [TicketNote(text="Please hurry if you can", at=iso(c + timedelta(minutes=2)), by_role=Role.PATIENT)]
+                    t.notes = [
+                        TicketNote(
+                            text="Please hurry if you can",
+                            at=iso(c + timedelta(minutes=2)),
+                            by_role=Role.PATIENT,
+                        )
+                    ]
                 if t.status in CLOSED_STATUSES:
                     t.overdue = t.patient_notice = None
                 tickets.put(t)
