@@ -99,6 +99,24 @@ export function CheckIcon({ className = 'size-6' }: IconProps) {
   )
 }
 
+export function PinIcon({ className = 'size-6' }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
+      <circle cx="12" cy="10" r="2.3" />
+    </svg>
+  )
+}
+
+export function PersonIcon({ className = 'size-6' }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20.5a7 7 0 0 1 14 0" />
+    </svg>
+  )
+}
+
 export function CalendarIcon({ className = 'size-6' }: IconProps) {
   return (
     <svg {...base} className={className}>

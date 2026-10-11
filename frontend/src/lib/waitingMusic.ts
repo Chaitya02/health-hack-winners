@@ -17,6 +17,7 @@ let master: GainNode | null = null
 let voices: OscillatorNode[] = []
 let timer: ReturnType<typeof setInterval> | null = null
 let playing = false
+let muted = false // while the patient is recording: silent, so the mic doesn't hear it
 
 /** Create/resume the audio context. Call from a tap or key handler. */
 export function prime(): void {
@@ -39,7 +40,7 @@ export function start(): void {
   playing = true
   master = ctx.createGain()
   master.gain.setValueAtTime(0, ctx.currentTime)
-  master.gain.linearRampToValueAtTime(VOLUME, ctx.currentTime + 2) // fade in
+  master.gain.linearRampToValueAtTime(muted ? 0 : VOLUME, ctx.currentTime + 2) // fade in
   master.connect(ctx.destination)
   voices = CHORDS[0].map((f) => {
     const osc = ctx!.createOscillator()
@@ -78,6 +79,13 @@ export function stop(): void {
 
 /** Lower the music while something is being read aloud. */
 export function duck(on: boolean): void {
-  if (!ctx || !master) return
+  if (!ctx || !master || muted) return
   master.gain.setTargetAtTime(on ? DUCKED : VOLUME, ctx.currentTime, 0.15)
+}
+
+/** Silence the music while the microphone is recording; it comes back when recording stops. */
+export function mute(on: boolean): void {
+  muted = on
+  if (!ctx || !master) return
+  master.gain.setTargetAtTime(on ? 0 : VOLUME, ctx.currentTime, 0.1)
 }

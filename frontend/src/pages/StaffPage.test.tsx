@@ -42,6 +42,7 @@ describe('StaffPage', () => {
     const rows = await screen.findAllByTestId('ticket')
     expect(rows[0]).toHaveAttribute('data-priority', 'HIGH')
     expect(within(rows[0]).getByText('409')).toBeInTheDocument()
+    expect(within(rows[0]).getByTestId('where-who')).toHaveTextContent('4 West, Room 409Maya, 67 years')
     expect(screen.getByTestId('urgent-banner')).toHaveTextContent('Room 409')
     // Safety reasons are hidden until the nurse opens "Why you".
     const why = within(rows[0]).getByTestId('why-you')
@@ -92,6 +93,49 @@ describe('StaffPage', () => {
     expect(screen.getAllByTestId('ticket')).toHaveLength(1)
     expect(screen.getByText(/done today \(1\)/i)).toBeInTheDocument()
     expect(screen.getByText(/cancelled by patient/i)).toBeInTheDocument()
+  })
+
+  it('each card shows the request icon and only its next step, plus Done', async () => {
+    sessionStorage.setItem('tingting.staff.housekeeping', 'tok')
+    const calls = mockFetch({
+      'GET /api/queues/housekeeping': [
+        ticket({ ticket_id: 'new', tile: 'pillow' }),
+        ticket({ ticket_id: 'seen', status: 'ACKNOWLEDGED', room_id: '402' }),
+        ticket({ ticket_id: 'going', status: 'IN_PROGRESS', room_id: '403' }),
+      ],
+      'PATCH /api/tickets/going': ticket({ status: 'RESOLVED' }),
+    })
+    renderStaff('housekeeping')
+    const rows = await screen.findAllByTestId('ticket')
+    const buttons = (row: HTMLElement) => within(row).getAllByRole('button').map((b) => b.textContent)
+    const byId = (id: string) => rows.find((r) => r.dataset.ticketId === id)!
+    expect(byId('new').querySelector('[data-icon="pillow"]')).not.toBeNull()
+    expect(buttons(byId('new'))).toEqual(['Acknowledge', 'Done', 'Clinical? Send to nurse'])
+    expect(buttons(byId('seen'))).toEqual(['On my way', 'Done', 'Clinical? Send to nurse'])
+    expect(buttons(byId('going'))).toEqual(['Done', 'Clinical? Send to nurse'])
+    await userEvent.click(within(byId('going')).getByRole('button', { name: 'Done' }))
+    expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ action: 'resolve' })
+  })
+
+  it('shows the response deadline, and when it was missed: OVERDUE and who the backup replaced', async () => {
+    sessionStorage.setItem('tingting.staff.housekeeping', 'tok')
+    const inSec = (s: number) => new Date(Date.now() + s * 1000).toISOString()
+    mockFetch({
+      'GET /api/queues/housekeeping': [
+        ticket({ ticket_id: 'fresh', ack_due_at: inSec(170) }),
+        ticket({ ticket_id: 'late', room_id: '402', priority: 'HIGH', overdue: 'ack', backup_from: 'Ana', assigned_name: 'Marcus', ack_due_at: inSec(-5) }),
+        ticket({ ticket_id: 'doing', room_id: '403', status: 'IN_PROGRESS', resolve_due_at: inSec(1200) }),
+      ],
+    })
+    renderStaff('housekeeping')
+    const rows = await screen.findAllByTestId('ticket')
+    const byId = (id: string) => rows.find((r) => r.dataset.ticketId === id)!
+    expect(within(byId('fresh')).getByTestId('deadline')).toHaveTextContent(/^Acknowledge within 2:[45]\d$/)
+    expect(within(byId('fresh')).queryByTestId('overdue')).not.toBeInTheDocument()
+    expect(within(byId('late')).getByTestId('overdue')).toHaveTextContent('OVERDUE')
+    expect(within(byId('late')).getByTestId('deadline')).toHaveTextContent('Acknowledge overdue')
+    expect(within(byId('late')).getByTestId('backup')).toHaveTextContent('Backup: Ana didn’t acknowledge in time')
+    expect(within(byId('doing')).getByTestId('deadline')).toHaveTextContent(/^Resolve by \d{1,2}:\d{2} [AP]M$/)
   })
 
   it('shows reconnecting status when the socket drops', async () => {

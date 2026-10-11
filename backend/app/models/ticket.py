@@ -21,6 +21,8 @@ MAX_NOTES_LEN = 1000
 MAX_PROCEDURES = 5
 
 Gender = Literal["female", "male", "unspecified"]
+# What the patient is told when a response-time target is missed (app/sla.py).
+PatientNotice = Literal["still_looking", "taking_longer"]
 
 
 def utc_now_iso() -> str:
@@ -119,6 +121,9 @@ class Ticket(BaseModel):
     request_id: str
     room_id: str
     patient_alias: str
+    # Where and who, for the staff card: the room's unit and the patient's age at request time.
+    unit: str | None = None
+    patient_age: int | None = Field(default=None, ge=0, le=120)
     original_text: str = Field(max_length=MAX_TEXT_LEN)
     input_mode: InputMode
     # Quick-tap tile key (e.g. "pillow") so the patient UI can name the request without free text.
@@ -147,6 +152,13 @@ class Ticket(BaseModel):
     attendant_preference: AttendantPreference | None = None
     attendant_preference_met: bool | None = None
     eta_minutes: int | None = Field(default=None, ge=0)
+    # Response-time targets (app/sla.py) and what happened when one was missed.
+    ack_due_at: str | None = None
+    resolve_due_at: str | None = None
+    overdue: Literal["ack", "resolve"] | None = None
+    backup_count: int = Field(default=0, ge=0)
+    backup_from: str | None = None  # who had it before the backup took over
+    patient_notice: PatientNotice | None = None
     history: list[StatusChange] = Field(default_factory=list)
     notes: list[TicketNote] = Field(default_factory=list)
     nudge_count: int = Field(default=0, ge=0)  # times the patient tapped "still waiting"
@@ -179,6 +191,7 @@ class PatientTicketView(BaseModel):
     patient_confirmation: str
     created_at: str
     eta_minutes: int | None = None
+    patient_notice: PatientNotice | None = None
     history: list[StatusChange] = Field(default_factory=list)
 
 

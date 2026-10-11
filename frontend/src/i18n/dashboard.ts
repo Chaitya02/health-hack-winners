@@ -43,6 +43,7 @@ export interface DashboardStrings {
   // Audio dashboard
   tapToTalk: string
   listening: string
+  tapToSend: string
   heard: string
   voiceUnavailable: string
 }
@@ -88,6 +89,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: 'Start over',
     tapToTalk: 'Tap and tell me for help',
     listening: 'Listening…',
+    tapToSend: 'Tap to stop and send',
     heard: 'I heard:',
     voiceUnavailable: 'Voice isn’t available on this device. Please use the buttons below.',
   },
@@ -130,6 +132,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: 'Empezar de nuevo',
     tapToTalk: 'Toque y dígame para pedir ayuda',
     listening: 'Escuchando…',
+    tapToSend: 'Toque para detener y enviar',
     heard: 'Escuché:',
     voiceUnavailable: 'La voz no está disponible en este dispositivo. Use los botones de abajo.',
   },
@@ -172,6 +175,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: 'फिर से शुरू करें',
     tapToTalk: 'टैप करें और मदद के लिए बताएँ',
     listening: 'सुन रहे हैं…',
+    tapToSend: 'रोकने और भेजने के लिए टैप करें',
     heard: 'मैंने सुना:',
     voiceUnavailable: 'इस डिवाइस पर आवाज़ उपलब्ध नहीं है। कृपया नीचे के बटन इस्तेमाल करें।',
   },
@@ -214,6 +218,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: 'ફરીથી શરૂ કરો',
     tapToTalk: 'ટેપ કરો અને મદદ માટે કહો',
     listening: 'સાંભળી રહ્યા છીએ…',
+    tapToSend: 'રોકવા અને મોકલવા ટેપ કરો',
     heard: 'મેં સાંભળ્યું:',
     voiceUnavailable: 'આ ઉપકરણ પર અવાજ ઉપલબ્ધ નથી. કૃપા કરીને નીચેના બટન વાપરો.',
   },
@@ -256,6 +261,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: '重新开始',
     tapToTalk: '轻触并告诉我您需要什么帮助',
     listening: '正在聆听…',
+    tapToSend: '点按停止并发送',
     heard: '我听到：',
     voiceUnavailable: '此设备不支持语音。请使用下方的按钮。',
   },
@@ -298,6 +304,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: 'Rekòmanse',
     tapToTalk: 'Touche epi di m pou jwenn èd',
     listening: 'M ap koute…',
+    tapToSend: 'Peze pou kanpe epi voye',
     heard: 'Mwen tande:',
     voiceUnavailable: 'Vwa pa disponib sou aparèy sa a. Tanpri sèvi ak bouton ki anba yo.',
   },
@@ -340,6 +347,7 @@ export const DASHBOARD: Record<Language, DashboardStrings> = {
     startOver: 'Recomeçar',
     tapToTalk: 'Toque e me diga para pedir ajuda',
     listening: 'Ouvindo…',
+    tapToSend: 'Toque para parar e enviar',
     heard: 'Eu ouvi:',
     voiceUnavailable: 'A voz não está disponível neste aparelho. Use os botões abaixo.',
   },

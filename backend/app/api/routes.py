@@ -5,7 +5,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app import analytics
-from app.classifier import decide, profile_note
+from app.classifier import decide, not_a_request_message, profile_note
 from app.intake import derive_profile
 from app.metrics import Metrics, compute, start_of_day
 from app.models import (
@@ -31,7 +31,7 @@ from app.models import (
     utc_now_iso,
 )
 from app.profile_rules import ProfileRefusal
-from app.services import InvalidTransition, TicketService
+from app.services import InvalidTransition, NotARequest, TicketService
 from app.staff import StaffView
 
 router = APIRouter(prefix="/api")
@@ -187,6 +187,17 @@ def create_request(body: CreateRequest, request: Request) -> CreateRequestRespon
         raise HTTPException(429, "Too many requests from this room. Tap 'I need my nurse'.")
     try:
         return _service(request).create(body, room)
+    except NotARequest as e:
+        # Nothing was sent to anyone: the patient is asked to try again.
+        language = body.language_hint or room.preferred_language
+        raise HTTPException(
+            422,
+            {
+                "code": "not_a_request",
+                "reason": e.reason,
+                "message": not_a_request_message(language),
+            },
+        ) from e
     except ProfileRefusal as e:
         language = body.language_hint or room.preferred_language
         raise HTTPException(
@@ -237,7 +248,9 @@ def queue(
 ) -> list[Ticket]:
     if staff != department:
         raise HTTPException(403, "Token is for another department")
-    _service(request).rebalance(department)  # hand waiting requests to anyone now available
+    svc = _service(request)
+    svc.check_deadlines()  # late requests go to a backup first
+    svc.rebalance(department)  # hand waiting requests to anyone now available
     since = start_of_day()
     tickets = request.app.state.tickets.by_department(department, status)
     # Today's tickets plus anything still open from earlier.
@@ -265,6 +278,7 @@ def department_staff(department: Department, request: Request, role: SignedIn) -
     if role != Role.ADMIN and ROLE_DEPARTMENT.get(role) != department:
         raise HTTPException(403, "Token is for another department")
     svc = _service(request)
+    svc.check_deadlines()
     svc.rebalance(department)
     return svc.staff_views(department)
 
