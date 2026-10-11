@@ -117,3 +117,28 @@ def test_browser_preflight_allows_intake_methods(client, method):
     )
     assert r.status_code == 200
     assert method in r.headers["access-control-allow-methods"]
+
+
+def test_intake_saves_procedures_in_time_order_and_start_over_clears_them(client):
+    later = {"name": "Physiotherapy", "at": "2026-10-11T15:00:00Z"}
+    soon = {"name": "Blood test", "at": "2026-10-10T22:10:00+00:00"}
+    res = intake(client, "", procedures=[later, soon])
+    assert res.status_code == 200
+    procs = res.json()["room"]["procedures"]
+    assert [p["name"] for p in procs] == ["Blood test", "Physiotherapy"]
+    assert client.get("/api/rooms/400").json()["procedures"] == procs
+    client.delete("/api/rooms/400/intake")
+    assert client.get("/api/rooms/400").json()["procedures"] == []
+
+
+def test_procedures_need_a_name_and_a_timezone(client):
+    assert (
+        intake(client, "", procedures=[{"name": "", "at": "2026-10-11T15:00:00Z"}]).status_code
+        == 422
+    )
+    assert (
+        intake(client, "", procedures=[{"name": "X-ray", "at": "2026-10-11T15:00:00"}]).status_code
+        == 422
+    )
+    too_many = [{"name": f"P{i}", "at": "2026-10-11T15:00:00Z"} for i in range(6)]
+    assert intake(client, "", procedures=too_many).status_code == 422

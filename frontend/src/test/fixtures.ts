@@ -7,6 +7,8 @@ export function ticket(overrides: Partial<Ticket> = {}): Ticket {
     request_id: 'r_1',
     room_id: '401',
     patient_alias: 'Maya',
+    unit: '4 West',
+    patient_age: 67,
     original_text: 'extra pillow please',
     input_mode: 'text',
     tile: null,

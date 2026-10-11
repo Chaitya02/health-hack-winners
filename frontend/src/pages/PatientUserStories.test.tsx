@@ -13,7 +13,7 @@ import PatientPage from './PatientPage'
 // US-5 (NPO gray-out, fall-risk badge), US-6 (attendant preference), US-7 (spoken updates,
 // waiting music, toggles) on the bedside dashboard.
 
-vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn() }))
+vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn(), mute: vi.fn() }))
 
 const profile = (over: Record<string, unknown> = {}) => ({
   npo: false,
@@ -115,7 +115,7 @@ describe('US-5: NPO gray-out and fall-risk badge', () => {
 })
 
 describe('US-6: attendant preference', () => {
-  it('the intake form sends the bathroom attendant choice', async () => {
+  it('the welcome form doesn’t ask; a demo patient brings their preference, others send any', async () => {
     const calls = mockFetch({
       'GET /api/rooms/400/tickets': [],
       'GET /api/rooms/400': room({ intake_complete: false, patient_alias: '' }),
@@ -123,11 +123,25 @@ describe('US-6: attendant preference', () => {
     })
     renderRoom()
     await userEvent.click(await screen.findByRole('button', { name: /Rosa, 82/ })) // demo: prefers female
-    expect(screen.getByRole('radio', { name: 'Female staff' })).toBeChecked()
-    await userEvent.click(screen.getByRole('radio', { name: 'Male staff' }))
+    expect(screen.queryByRole('radio', { name: 'Female staff' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Bathroom help from')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
     await screen.findByTestId('patient-identity')
-    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ attendant_preference: 'male' })
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ attendant_preference: 'female' })
+  })
+
+  it('a patient typing their own name sends no preference', async () => {
+    const calls = mockFetch({
+      'GET /api/rooms/400/tickets': [],
+      'GET /api/rooms/400': room({ intake_complete: false, patient_alias: '' }),
+      'PUT /api/rooms/400/intake': { room: room({ patient_alias: 'Ann' }), detected: [] },
+    })
+    renderRoom()
+    await userEvent.type(await screen.findByLabelText(/^your name/i), 'Ann')
+    await userEvent.type(screen.getByLabelText(/^your age/i), '70')
+    await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
+    await screen.findByTestId('patient-identity')
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ attendant_preference: 'any' })
   })
 })
 
@@ -147,7 +161,17 @@ describe('US-7: spoken updates and waiting music', () => {
     const ws = await liveRoom()
     expect(spoken).toEqual([])
     act(() => ws.emit({ type: 'ticket.updated', ticket: ticket({ ticket_id: 'a', tile: 'pillow', status: 'ACKNOWLEDGED', room_id: '400' }), ts: '' }))
-    await waitFor(() => expect(spoken).toEqual(['Pillow: Seen']))
+    await waitFor(() => expect(spoken).toEqual(['Pillow: Seen.']))
+  })
+
+  it('a missed response target is shown on the request and said aloud', async () => {
+    const ws = await liveRoom()
+    act(() =>
+      ws.emit({ type: 'ticket.updated', ticket: ticket({ ticket_id: 'a', tile: 'pillow', status: 'NEW', room_id: '400', patient_notice: 'still_looking' }), ts: '' }),
+    )
+    await waitFor(() =>
+      expect(spoken).toEqual(['Pillow: Sent. We’re still looking for someone to help you. You haven’t been forgotten.']),
+    )
   })
 
   it('music plays while a request is open; both can be switched off and stay off', async () => {
@@ -163,5 +187,29 @@ describe('US-7: spoken updates and waiting music', () => {
     await act(async () => {}) // let the update render
     expect(spoken).toEqual([]) // voice off
     expect(JSON.parse(localStorage.getItem('tingting.audio.400')!)).toEqual({ voice: false, music: false })
+  })
+})
+
+describe('input that is not a request', () => {
+  it('is turned back with the server’s message; nothing is confirmed', async () => {
+    const calls = mockFetch({ 'GET /api/rooms/400/tickets': [], 'GET /api/rooms/400': room() })
+    const ok = vi.mocked(fetch).getMockImplementation()!
+    const message = 'Sorry, I didn’t understand a request. Please try again, or tap a button.'
+    vi.mocked(fetch).mockImplementation(async (input, init) =>
+      init?.method === 'POST'
+        ? new Response(JSON.stringify({ detail: { code: 'not_a_request', reason: 'gibberish', message } }), { status: 422 })
+        : ok(input, init),
+    )
+    renderRoom()
+    await userEvent.type(await screen.findByLabelText(STRINGS.en.typeLabel), 'asdfgh')
+    await userEvent.click(screen.getByRole('button', { name: STRINGS.en.send }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(message)
+    expect(screen.queryByTestId('confirmation')).not.toBeInTheDocument()
+    expect(calls.filter((c) => c.method === 'GET').length).toBeGreaterThan(0)
+  })
+
+  it('a 422 with a code carries the message; a plain validation error does not', () => {
+    expect(profileRefusalMessage(422, JSON.stringify({ code: 'not_a_request', message: 'Inténtelo de nuevo.' }))).toBe('Inténtelo de nuevo.')
+    expect(profileRefusalMessage(422, JSON.stringify([{ loc: ['body', 'text'] }]))).toBeNull()
   })
 })

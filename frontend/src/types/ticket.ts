@@ -60,6 +60,9 @@ export interface Ticket {
   request_id: string
   room_id: string
   patient_alias: string
+  /** The room's unit and the patient's age, for the staff card. */
+  unit?: string | null
+  patient_age?: number | null
   original_text: string
   input_mode: InputMode
   /** Quick-tap tile key, e.g. "pillow"; null for typed or spoken requests. */
@@ -88,6 +91,13 @@ export interface Ticket {
   attendant_preference: AttendantPreference | null
   attendant_preference_met: boolean | null
   eta_minutes: number | null
+  /** Response-time targets (backend app/sla.py) and what happened when one was missed. */
+  ack_due_at?: string | null
+  resolve_due_at?: string | null
+  overdue?: 'ack' | 'resolve' | null
+  backup_count?: number
+  backup_from?: string | null
+  patient_notice?: PatientNotice | null
   history: StatusChange[]
   notes: TicketNote[]
   nudge_count: number
@@ -109,8 +119,12 @@ export interface PatientTicketView {
   patient_confirmation: string
   created_at: string
   eta_minutes: number | null
+  /** Set when a response-time target was missed: what to tell the patient. */
+  patient_notice?: PatientNotice | null
   history: StatusChange[]
 }
+
+export type PatientNotice = 'still_looking' | 'taking_longer'
 
 export interface Accessibility {
   low_vision: boolean
@@ -144,6 +158,14 @@ export interface Room {
   /** False until the bedside intake form is filled in (the clinical notes are never sent back). */
   intake_complete: boolean
   intake_at: string | null
+  /** Scheduled procedures the bedside screen tells the patient about, soonest first. */
+  procedures?: Procedure[]
+}
+
+export interface Procedure {
+  name: string
+  /** ISO time with zone. */
+  at: string
 }
 
 export interface IntakeBody {
@@ -153,6 +175,7 @@ export interface IntakeBody {
   attendant_preference?: AttendantPreference
   clinical_notes: string
   preferred_language?: Language
+  procedures?: Procedure[]
 }
 
 export interface CreateRequestBody {

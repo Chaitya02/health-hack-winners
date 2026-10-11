@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { DASHBOARD, DEMO_PATIENTS } from '../../i18n/dashboard'
 import { api } from '../../lib/api'
-import { DEPARTMENT_LABELS, DEPARTMENTS, type AttendantPreference, type Language, type Room } from '../../types/ticket'
-import { CloseIcon, UsersIcon } from '../icons'
+import { DEPARTMENT_LABELS, DEPARTMENTS, type Language, type Room } from '../../types/ticket'
+import { CalendarIcon, CloseIcon, UsersIcon } from '../icons'
 import { LanguageSelect } from './LanguageSelect'
 
 type Gender = 'female' | 'male' | 'unspecified'
@@ -42,11 +42,12 @@ export function IntakeForm({
   const [name, setName] = useState('')
   const [age, setAge] = useState('')
   const [gender, setGender] = useState<Gender>('unspecified')
-  const [attendant, setAttendant] = useState<AttendantPreference>('any')
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [demosOpen, setDemosOpen] = useState(wideScreen)
+  // The demo patient filled in, while the name still matches it.
+  const demo = DEMO_PATIENTS.find((p) => p.name === name)
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -57,9 +58,15 @@ export function IntakeForm({
         name: name.trim(),
         age: Number(age),
         gender,
-        attendant_preference: attendant,
+        // Not asked on the form; demo patients bring one so US-6 can still be shown.
+        attendant_preference: demo?.attendant_preference ?? 'any',
         clinical_notes: notes.trim(),
         preferred_language: lang,
+        // Demo patients come with procedures, timed from now so reminders happen during the demo.
+        procedures: (demo?.procedures ?? []).map((p) => ({
+          name: p.name,
+          at: new Date(Date.now() + p.inMinutes * 60_000).toISOString(),
+        })),
       })
       onDone(room)
     } catch {
@@ -148,29 +155,6 @@ export function IntakeForm({
               ))}
             </div>
           </fieldset>
-          <fieldset>
-            <legend className="font-bold">{d.attendant}</legend>
-            <div className="mt-2 grid grid-cols-3 gap-3">
-              {(['any', 'female', 'male'] as const).map((a) => (
-                <label
-                  key={a}
-                  className={`flex min-h-16 items-center justify-center rounded-2xl border-2 px-3 text-center text-[20px] font-bold ${
-                    attendant === a ? 'border-pine bg-pine text-white' : 'border-pine bg-paper text-pine'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="attendant"
-                    value={a}
-                    checked={attendant === a}
-                    onChange={() => setAttendant(a)}
-                    className="sr-only"
-                  />
-                  {a === 'any' ? d.attendantAny : a === 'female' ? d.attendantFemale : d.attendantMale}
-                </label>
-              ))}
-            </div>
-          </fieldset>
           <label className="block font-bold">
             {d.notes}
             <textarea
@@ -227,7 +211,6 @@ export function IntakeForm({
                 setName(p.name)
                 setAge(String(p.age))
                 setGender(p.gender)
-                setAttendant(p.attendant_preference)
                 setNotes(p.clinical_notes)
                 if (!wideScreen()) setDemosOpen(false)
               }}
@@ -235,6 +218,10 @@ export function IntakeForm({
             >
               <span className="block font-bold">{p.label}</span>
               <span className="mt-1 line-clamp-3 block text-[16px] text-pine-soft">{p.clinical_notes}</span>
+              <span className="mt-2 flex items-start gap-2 text-[16px] font-bold text-care-deep">
+                <CalendarIcon className="size-5 shrink-0" />
+                {p.procedures.map((x) => `${x.name} in ${fromNow(x.inMinutes)}`).join(' · ')}
+              </span>
             </button>
           ))}
 
@@ -260,6 +247,11 @@ export function IntakeForm({
       )}
     </div>
   )
+}
+
+/** "10 min", "3 h", "20 h" for the demo cards. */
+function fromNow(minutes: number): string {
+  return minutes < 60 ? `${minutes} min` : `${Math.round(minutes / 60)} h`
 }
 
 /** Asterisk for sighted users, "(required)" for screen readers. */

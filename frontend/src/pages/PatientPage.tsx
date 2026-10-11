@@ -6,16 +6,19 @@ import { IntakeForm } from '../components/patient/IntakeForm'
 import { EmergencyButton } from '../components/patient/EmergencyButton'
 import { PatientHeader } from '../components/patient/PatientHeader'
 import { PersonalTiles } from '../components/patient/PersonalTiles'
+import { ProcedureNotice, Procedures } from '../components/patient/Procedures'
 import { RequestsPanel } from '../components/patient/RequestsPanel'
 import type { QuickTile } from '../components/patient/RequestTiles'
 import { Screensaver } from '../components/patient/Screensaver'
 import { VoiceBubble } from '../components/patient/VoiceBubble'
 import { useAudioPrefs } from '../hooks/useAudioPrefs'
 import { useIdle } from '../hooks/useIdle'
+import { useProcedureReminders } from '../hooks/useProcedureReminders'
 import * as waitingMusic from '../lib/waitingMusic'
 import { requestLabel } from '../components/patient/RequestTracker'
 import { useLiveTickets } from '../hooks/useLiveTickets'
 import { DASHBOARD } from '../i18n/dashboard'
+import { TRACKER } from '../i18n/tracker'
 import { HTML_LANG, STRINGS } from '../i18n/strings'
 import { layoutFor } from '../lib/accessibility'
 import { api, ApiError } from '../lib/api'
@@ -31,6 +34,7 @@ import {
   type PatientTicketView,
   type Room,
   type TicketEvent,
+  type Procedure,
 } from '../types/ticket'
 
 /** Room-channel events carry the patient view (no free text); keep only its fields. */
@@ -46,6 +50,7 @@ function toView(e: TicketEvent): PatientTicketView {
     patient_confirmation: t.patient_confirmation,
     created_at: t.created_at,
     eta_minutes: t.eta_minutes,
+    patient_notice: t.patient_notice ?? null,
     history: t.history,
   }
 }
@@ -105,6 +110,8 @@ export default function PatientPage() {
   )
 }
 
+const NO_PROCEDURES: Procedure[] = []
+
 function Dashboard({
   room,
   lang,
@@ -146,15 +153,28 @@ function Dashboard({
     else waitingMusic.stop()
   }, [audioPrefs.music, openCount])
   useEffect(() => () => waitingMusic.stop(), [])
+  const reminders = useProcedureReminders({
+    roomId,
+    intakeAt: room.intake_at,
+    procedures: room.procedures ?? NO_PROCEDURES,
+    lang,
+    voice: audioPrefs.voice,
+  })
   const lastStatus = useRef<Map<string, string> | null>(null)
   useEffect(() => {
     const prev = lastStatus.current
-    lastStatus.current = new Map(requests.map((r) => [r.ticket_id, r.status]))
+    const key = (r: PatientTicketView) => `${r.status}|${r.patient_notice ?? ''}`
+    lastStatus.current = new Map(requests.map((r) => [r.ticket_id, key(r)]))
     if (prev === null || !audioPrefs.voice) return // first load: nothing to announce
     const changes = requests
-      .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== r.status)
-      .map((r) => `${requestLabel(r, t, lang)}: ${t.status[r.status]}`) // same words as on screen
-    if (changes.length) speak(changes.join('. '), t.speechLang)
+      .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== key(r))
+      .map((r) => {
+        // Same words as on screen; a missed target also says we're still on it.
+        const was = prev.get(r.ticket_id)!.split('|')
+        const news = r.patient_notice && r.patient_notice !== was[1] ? ` ${TRACKER[lang].notice[r.patient_notice]}` : ''
+        return `${requestLabel(r, t, lang)}: ${t.status[r.status]}.${news}`
+      })
+    if (changes.length) speak(changes.join(' '), t.speechLang)
   }, [requests, audioPrefs.voice, t, lang])
   const { top } = useMemo(() => topTiles(room.profile, requests), [room.profile, requests])
 
@@ -174,11 +194,13 @@ function Dashboard({
         }
         return true
       } catch (e) {
-        // A profile refusal (409, e.g. water while NPO) carries a patient-language reason.
+        // A profile refusal (409, e.g. water while NPO) or "that wasn't a request" (422) carries a
+        // patient-language reason; nothing was sent to anyone.
         const refusal = e instanceof ApiError ? profileRefusalMessage(e.status, e.message) : null
         const message = refusal ?? (e instanceof ApiError && e.status === 429 ? t.tooMany : t.sendFailed)
         setError(message)
-        if (layout.readAloud) speak(message, t.speechLang)
+        // Spoken input gets a spoken answer, so the patient knows to try again.
+        if (layout.readAloud || body.input_mode === 'voice') speak(message, t.speechLang)
         return false
       } finally {
         setBusy(false)
@@ -216,6 +238,7 @@ function Dashboard({
           lang={lang}
           t={t}
           requests={requests}
+          nurse={room.primary_nurse}
           onWake={screensaver.wake}
           onNurse={() => {
             screensaver.wake()
@@ -243,6 +266,7 @@ function Dashboard({
         onOpenRequests={() => setPanelOpen(true)}
         onStartOver={onStartOver}
       />
+      {reminders.notice && <ProcedureNotice text={reminders.notice} d={d} onClose={reminders.dismiss} />}
 
       <main className="px-5 pb-10 pt-2 sm:px-8 lg:pb-0">
         {result ? (
@@ -275,6 +299,7 @@ function Dashboard({
             </div>
             {/* Wide screens: the request column scrolls in place; the page itself doesn't move. */}
             <div className="lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:px-2 lg:pb-4" data-testid="request-column">
+              <Procedures items={reminders.items} d={d} />
               <PersonalTiles
                 top={top}
                 t={t}
