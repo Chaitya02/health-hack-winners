@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useSpeech } from '../../hooks/useSpeech'
+import { Recording } from './Recording'
 import { SiriOrb } from './SiriOrb'
 import type { Strings } from '../../i18n/strings'
 import type { InputMode } from '../../types/ticket'
@@ -53,10 +54,15 @@ export function InputPanel({
               size="xl"
               listening={speech.listening}
               label={speech.listening ? t.micStop : t.micStart}
-              onClick={speech.listening ? speech.stop : speech.start}
+              onClick={() => {
+                if (!speech.listening) return speech.start()
+                speech.stop() // second tap: stop recording and send what was heard
+                const heard = text.trim()
+                if (heard && !busy) void onSubmit(heard.slice(0, 500), 'voice').then((ok) => ok && setText(''))
+              }}
             />
             <span aria-hidden="true" className="text-center text-[24px] font-bold">
-              {speech.listening ? t.micStop : t.micStart}
+              {speech.listening ? <Recording label={t.micStop} /> : t.micStart}
             </span>
           </div>
         )}

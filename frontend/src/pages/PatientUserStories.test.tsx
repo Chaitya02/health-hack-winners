@@ -13,7 +13,7 @@ import PatientPage from './PatientPage'
 // US-5 (NPO gray-out, fall-risk badge), US-6 (attendant preference), US-7 (spoken updates,
 // waiting music, toggles) on the bedside dashboard.
 
-vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn() }))
+vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn(), mute: vi.fn() }))
 
 const profile = (over: Record<string, unknown> = {}) => ({
   npo: false,

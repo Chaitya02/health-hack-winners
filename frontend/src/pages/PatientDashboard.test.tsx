@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mockFetch, ticket } from '../test/fixtures'
+import * as waitingMusic from '../lib/waitingMusic'
 import PatientPage from './PatientPage'
+
+vi.mock('../lib/waitingMusic', () => ({ prime: vi.fn(), start: vi.fn(), stop: vi.fn(), duck: vi.fn(), mute: vi.fn() }))
 
 // Intake form → personalised dashboard (standard / audio), header bell and request panel.
 
@@ -113,7 +116,7 @@ describe('Bedside intake → personalised dashboard', () => {
     expect(calls.some((c) => c.method === 'DELETE')).toBe(true)
   })
 
-  it('audio dashboard: voice bubble instead of the text box; speaking sends the request', async () => {
+  it('audio dashboard: voice bubble instead of the text box; tap to record, tap again to send', async () => {
     const calls = mockFetch({
       'GET /api/rooms/400/tickets': [],
       'GET /api/rooms/400': ROSA,
@@ -127,9 +130,37 @@ describe('Bedside intake → personalised dashboard', () => {
     await userEvent.click(within(bubble).getByRole('button', { name: /tap and tell me/i }))
     FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'I need a blanket' }, isFinal: true, length: 1 }] })
     expect(await screen.findByTestId('voice-heard')).toHaveTextContent('I need a blanket')
-    FakeRecognition.last!.onend!()
+    // A pause ends the browser's session: recording carries on, nothing is sent yet.
+    const first = FakeRecognition.last!
+    first.onend!()
+    expect(FakeRecognition.last).not.toBe(first)
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+    expect(within(bubble).getByTestId('recording')).toHaveTextContent('Tap to stop and send')
+    FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'and a pillow' }, isFinal: true, length: 1 }] })
+    expect(await screen.findByText(/I need a blanket and a pillow/)).toBeInTheDocument()
+    // Recording silences the waiting music; it comes back when recording stops.
+    expect(waitingMusic.mute).toHaveBeenLastCalledWith(true)
+    // Second tap: stop and send.
+    await userEvent.click(within(bubble).getByRole('button', { name: 'Tap to stop and send' }))
     await screen.findByTestId('confirmation')
-    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ text: 'I need a blanket', input_mode: 'voice' })
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ text: 'I need a blanket and a pillow', input_mode: 'voice' })
+    expect(waitingMusic.mute).toHaveBeenLastCalledWith(false)
+  })
+
+  it('standard dashboard: tap the mic to record, tap again to send', async () => {
+    const calls = mockFetch({
+      'GET /api/rooms/400/tickets': [],
+      'GET /api/rooms/400': SAM,
+      'POST /api/requests': { request_id: 'r', tickets: [ticket()], confirmation: 'Housekeeping is on the way.', confirmation_language: 'en', is_clinical: false },
+    })
+    renderRoom()
+    await userEvent.click(await screen.findByRole('button', { name: 'Tap to speak' }))
+    FakeRecognition.last!.onresult!({ results: [{ 0: { transcript: 'extra blanket' }, isFinal: true, length: 1 }] })
+    expect(await screen.findByDisplayValue('extra blanket')).toBeInTheDocument()
+    expect(calls.some((c) => c.method === 'POST')).toBe(false)
+    await userEvent.click(screen.getByRole('button', { name: 'Recording… tap to stop and send' }))
+    await screen.findByTestId('confirmation')
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({ text: 'extra blanket', input_mode: 'voice' })
   })
 
   it('bell shows the open count; its panel lists open requests and drops resolved ones', async () => {
