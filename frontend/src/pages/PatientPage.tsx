@@ -22,6 +22,7 @@ import { api, ApiError } from '../lib/api'
 import { DEFAULT_ROOM, IDLE_MS } from '../lib/config'
 import { topTiles } from '../lib/personalize'
 import { blockedTiles, profileRefusalMessage } from '../components/patient/profileRules'
+import { arrivalSentence } from '../lib/arrival'
 import { speak } from '../lib/speak'
 import {
   CLOSED_STATUSES,
@@ -153,8 +154,9 @@ function Dashboard({
     if (prev === null || !audioPrefs.voice) return // first load: nothing to announce
     const changes = requests
       .filter((r) => prev.has(r.ticket_id) && prev.get(r.ticket_id) !== r.status)
-      .map((r) => `${requestLabel(r, t, lang)}: ${t.status[r.status]}`) // same words as on screen
-    if (changes.length) speak(changes.join('. '), t.speechLang)
+      // Same words as on screen, then when someone will be there ("in about 4 minutes").
+      .map((r) => [`${requestLabel(r, t, lang)}: ${t.status[r.status]}.`, arrivalSentence(r, lang, Date.now())].filter(Boolean).join(' '))
+    if (changes.length) speak(changes.join(' '), t.speechLang)
   }, [requests, audioPrefs.voice, t, lang])
   const { top } = useMemo(() => topTiles(room.profile, requests), [room.profile, requests])
 
@@ -169,7 +171,10 @@ function Dashboard({
         setResult(res)
         if (!isTap && res.confirmation_language !== lang) onLangChange(res.confirmation_language)
         if (layout.readAloud) {
-          const said = spokenLabel ? `${spokenLabel}. ${res.confirmation}` : res.confirmation
+          // The confirmation, then the longest wait among the teams it went to.
+          const last = res.tickets.reduce((a, b) => ((b.eta_minutes ?? 0) > (a.eta_minutes ?? 0) ? b : a), res.tickets[0])
+          const when = last ? arrivalSentence(last, res.confirmation_language, Date.now()) : null
+          const said = [spokenLabel && `${spokenLabel}.`, res.confirmation, when].filter(Boolean).join(' ')
           speak(said, STRINGS[res.confirmation_language].speechLang)
         }
         return true
