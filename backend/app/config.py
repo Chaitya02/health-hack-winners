@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,7 +15,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Classifier
-    classifier_mode: Literal["mock", "bedrock"] = "mock"
+    # hybrid: keywords first, the LLM only for what they can't place (fast + cheap). Without an
+    # LLM configured (no API key) hybrid behaves like mock. bedrock / anthropic: LLM for all text.
+    classifier_mode: Literal["mock", "hybrid", "bedrock", "anthropic"] = "hybrid"
+    llm_provider: Literal["anthropic", "bedrock"] = "anthropic"
+    anthropic_model: str = "claude-haiku-5-5"
+    anthropic_api_key: SecretStr | None = None
     bedrock_model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
     aws_region: str = "us-east-1"
     confidence_threshold: float = Field(0.7, ge=0, le=1)
