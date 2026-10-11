@@ -115,7 +115,7 @@ describe('US-5: NPO gray-out and fall-risk badge', () => {
 })
 
 describe('US-6: attendant preference', () => {
-  it('the intake form sends the bathroom attendant choice', async () => {
+  it('the welcome form doesn’t ask; a demo patient brings their preference, others send any', async () => {
     const calls = mockFetch({
       'GET /api/rooms/400/tickets': [],
       'GET /api/rooms/400': room({ intake_complete: false, patient_alias: '' }),
@@ -123,11 +123,25 @@ describe('US-6: attendant preference', () => {
     })
     renderRoom()
     await userEvent.click(await screen.findByRole('button', { name: /Rosa, 82/ })) // demo: prefers female
-    expect(screen.getByRole('radio', { name: 'Female staff' })).toBeChecked()
-    await userEvent.click(screen.getByRole('radio', { name: 'Male staff' }))
+    expect(screen.queryByRole('radio', { name: 'Female staff' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Bathroom help from')).not.toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
     await screen.findByTestId('patient-identity')
-    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ attendant_preference: 'male' })
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ attendant_preference: 'female' })
+  })
+
+  it('a patient typing their own name sends no preference', async () => {
+    const calls = mockFetch({
+      'GET /api/rooms/400/tickets': [],
+      'GET /api/rooms/400': room({ intake_complete: false, patient_alias: '' }),
+      'PUT /api/rooms/400/intake': { room: room({ patient_alias: 'Ann' }), detected: [] },
+    })
+    renderRoom()
+    await userEvent.type(await screen.findByLabelText(/^your name/i), 'Ann')
+    await userEvent.type(screen.getByLabelText(/^your age/i), '70')
+    await userEvent.click(screen.getByRole('button', { name: 'Set up my screen' }))
+    await screen.findByTestId('patient-identity')
+    expect(calls.find((c) => c.method === 'PUT')?.body).toMatchObject({ attendant_preference: 'any' })
   })
 })
 
