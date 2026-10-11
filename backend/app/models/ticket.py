@@ -107,6 +107,9 @@ class Ticket(BaseModel):
     request_id: str
     room_id: str
     patient_alias: str
+    # Where and who, for the staff card: the room's unit and the patient's age at request time.
+    unit: str | None = None
+    patient_age: int | None = Field(default=None, ge=0, le=120)
     original_text: str = Field(max_length=MAX_TEXT_LEN)
     input_mode: InputMode
     # Quick-tap tile key (e.g. "pillow") so the patient UI can name the request without free text.

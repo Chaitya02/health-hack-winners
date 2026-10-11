@@ -215,6 +215,8 @@ class TicketService:
                 request_id=request_id,
                 room_id=room.room_id,
                 patient_alias=room.patient_alias,
+                unit=room.unit,
+                patient_age=room.age,
                 original_text=req.text,
                 input_mode=req.input_mode,
                 tile=tile if tile in QUICK_TAP_TILES else None,
