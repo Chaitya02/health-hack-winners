@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useSpeech } from '../../hooks/useSpeech'
 import { DASHBOARD } from '../../i18n/dashboard'
+import { Recording } from './Recording'
 import { SiriOrb } from './SiriOrb'
 import type { Strings } from '../../i18n/strings'
 import type { Language } from '../../types/ticket'
 
 /**
- * Audio dashboard centrepiece (Siri-style): tap, speak, and the request is sent when you stop
- * talking. The read-aloud confirmation that follows says what was understood.
+ * Audio dashboard centrepiece (Siri-style): tap to record, speak (pauses are fine), tap again to
+ * send. The read-aloud confirmation that follows says what was understood.
  */
 export function VoiceBubble({
   t,
@@ -28,16 +29,6 @@ export function VoiceBubble({
     setHeard(text)
   })
 
-  // Send once recognition stops with something heard.
-  const wasListening = useRef(false)
-  useEffect(() => {
-    if (wasListening.current && !speech.listening && heardRef.current.trim()) {
-      onSend(heardRef.current.trim().slice(0, 500))
-      heardRef.current = ''
-    }
-    wasListening.current = speech.listening
-  }, [speech.listening, onSend])
-
   if (!speech.supported) {
     return (
       <p role="status" className="mt-6 rounded-2xl bg-wait-tint p-4 text-center font-bold" data-testid="voice-unavailable">
@@ -53,10 +44,15 @@ export function VoiceBubble({
         size="xl"
         listening={listening}
         disabled={busy}
-        label={listening ? d.listening : d.tapToTalk}
+        label={listening ? d.tapToSend : d.tapToTalk}
         onClick={() => {
-          if (listening) speech.stop()
-          else {
+          if (listening) {
+            // Second tap: stop recording and send what was heard.
+            speech.stop()
+            const text = heardRef.current.trim()
+            heardRef.current = ''
+            if (text) onSend(text.slice(0, 500))
+          } else {
             heardRef.current = ''
             setHeard('')
             speech.start()
@@ -64,7 +60,7 @@ export function VoiceBubble({
         }}
       />
       <p className="text-center text-[28px] font-bold" aria-live="polite">
-        {listening ? d.listening : d.tapToTalk}
+        {listening ? <Recording label={d.tapToSend} /> : d.tapToTalk}
       </p>
       {heard && (
         <p className="max-w-[32ch] text-center text-[24px]" data-testid="voice-heard">

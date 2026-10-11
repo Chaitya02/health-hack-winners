@@ -20,7 +20,8 @@ export const raisedForFallRisk = (res: CreateRequestResponse) =>
 
 /** The patient-language message from a C3 profile refusal (409), if that's what this error is. */
 export function profileRefusalMessage(status: number, detail: string): string | null {
-  if (status !== 409) return null
+  // 409: the profile rules it out (US-5). 422 + code: typed or spoken input that isn't a request.
+  if (status !== 409 && status !== 422) return null
   try {
     const body = JSON.parse(detail) as { code?: string; message?: string }
     return body.code && body.message ? body.message : null

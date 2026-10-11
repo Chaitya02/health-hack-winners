@@ -99,34 +99,6 @@ def test_nobody_available_routine_waits_but_urgent_is_still_assigned():
 # --- end to end ------------------------------------------------------------------------------
 
 
-@pytest.fixture
-def staffed(app):
-    """Nursing: Jordan on a break, Priya available. Housekeeping: Ana and Marcus available."""
-    now = datetime.now(UTC)
-    shift = [
-        ScheduleBlock(
-            start=iso(now - timedelta(hours=2)), end=iso(now + timedelta(hours=6)), kind="shift"
-        )
-    ]
-    brk = ScheduleBlock(
-        start=iso(now - timedelta(minutes=5)), end=iso(now + timedelta(minutes=25)), kind="break"
-    )
-    roster = [
-        StaffMember(
-            staff_id="n-jordan", name="Nurse Jordan", department="nursing", schedule=[*shift, brk]
-        ),
-        StaffMember(staff_id="n-priya", name="Nurse Priya", department="nursing", schedule=shift),
-        StaffMember(staff_id="h-ana", name="Ana", department="housekeeping", schedule=shift),
-        StaffMember(staff_id="h-marcus", name="Marcus", department="housekeeping", schedule=shift),
-    ]
-    for m in roster:
-        app.state.staff.put(m)
-    app.state.rooms.put(
-        Room(room_id="402", unit="u", patient_alias="Sofia", primary_nurse="Nurse Jordan")
-    )
-    return roster
-
-
 def test_requests_go_to_whoever_is_available(client, staffed):
     t = submit(client, "I need help with my medication")["tickets"][0]
     assert (t["department"], t["assigned_name"]) == ("nursing", "Nurse Priya")  # Jordan on break

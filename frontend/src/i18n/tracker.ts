@@ -9,6 +9,8 @@ export interface TrackerStrings {
   arrivingSoon: string
   stillWaiting: string
   nudged: string
+  /** Shown and spoken when a response-time target is missed. */
+  notice: Record<'still_looking' | 'taking_longer', string>
   cancel: string
   confirmCancel: string
   yesCancel: string
@@ -30,6 +32,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: 'Someone will be with you very soon.',
     stillWaiting: 'Still waiting?',
     nudged: 'We’ve reminded them.',
+    notice: {
+      still_looking: 'We’re still looking for someone to help you. You haven’t been forgotten.',
+      taking_longer: 'This is taking longer than expected. We’re still on it.',
+    },
     cancel: 'Cancel request',
     confirmCancel: 'Cancel this request?',
     yesCancel: 'Yes, cancel',
@@ -56,6 +62,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: 'Alguien estará con usted muy pronto.',
     stillWaiting: '¿Sigue esperando?',
     nudged: 'Les hemos avisado otra vez.',
+    notice: {
+      still_looking: 'Seguimos buscando a alguien para ayudarle. No nos hemos olvidado de usted.',
+      taking_longer: 'Esto está tardando más de lo esperado. Seguimos en ello.',
+    },
     cancel: 'Cancelar pedido',
     confirmCancel: '¿Cancelar este pedido?',
     yesCancel: 'Sí, cancelar',
@@ -82,6 +92,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: 'कोई बहुत जल्द आपके पास होगा।',
     stillWaiting: 'अभी भी इंतज़ार कर रहे हैं?',
     nudged: 'हमने उन्हें फिर से याद दिलाया है।',
+    notice: {
+      still_looking: 'हम अभी भी आपकी मदद के लिए किसी को ढूँढ रहे हैं। आपको भुलाया नहीं गया है।',
+      taking_longer: 'इसमें उम्मीद से ज़्यादा समय लग रहा है। हम इस पर काम कर रहे हैं।',
+    },
     cancel: 'अनुरोध रद्द करें',
     confirmCancel: 'क्या यह अनुरोध रद्द करें?',
     yesCancel: 'हाँ, रद्द करें',
@@ -108,6 +122,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: 'કોઈ ખૂબ જલ્દી તમારી પાસે હશે.',
     stillWaiting: 'હજી રાહ જુઓ છો?',
     nudged: 'અમે તેમને ફરી યાદ અપાવ્યું છે.',
+    notice: {
+      still_looking: 'અમે હજી પણ તમારી મદદ માટે કોઈને શોધી રહ્યા છીએ. તમને ભૂલ્યા નથી.',
+      taking_longer: 'આમાં ધાર્યા કરતાં વધુ સમય લાગી રહ્યો છે. અમે તેના પર કામ કરી રહ્યા છીએ.',
+    },
     cancel: 'વિનંતી રદ કરો',
     confirmCancel: 'આ વિનંતી રદ કરવી છે?',
     yesCancel: 'હા, રદ કરો',
@@ -134,6 +152,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: '马上会有人来。',
     stillWaiting: '还在等吗？',
     nudged: '我们已再次提醒他们。',
+    notice: {
+      still_looking: '我们仍在为您寻找帮助人员。我们没有忘记您。',
+      taking_longer: '这比预期花的时间更长。我们仍在处理。',
+    },
     cancel: '取消请求',
     confirmCancel: '要取消此请求吗？',
     yesCancel: '是，取消',
@@ -160,6 +182,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: 'Yon moun ap la byento.',
     stillWaiting: 'W ap tann toujou?',
     nudged: 'Nou raple yo ankò.',
+    notice: {
+      still_looking: 'N ap toujou chèche yon moun pou ede ou. Nou pa bliye ou.',
+      taking_longer: 'Sa a ap pran plis tan pase sa nou te panse. N ap toujou travay sou li.',
+    },
     cancel: 'Anile demann nan',
     confirmCancel: 'Anile demann sa a?',
     yesCancel: 'Wi, anile',
@@ -186,6 +212,10 @@ export const TRACKER: Record<Language, TrackerStrings> = {
     arrivingSoon: 'Alguém estará com você muito em breve.',
     stillWaiting: 'Ainda esperando?',
     nudged: 'Já avisamos de novo.',
+    notice: {
+      still_looking: 'Ainda estamos procurando alguém para ajudar você. Não esquecemos de você.',
+      taking_longer: 'Isto está demorando mais do que o esperado. Continuamos cuidando disso.',
+    },
     cancel: 'Cancelar pedido',
     confirmCancel: 'Cancelar este pedido?',
     yesCancel: 'Sim, cancelar',

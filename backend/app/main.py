@@ -21,6 +21,18 @@ from app.staff import StaffRepository
 log = logging.getLogger("tingting")
 
 
+DEADLINE_CHECK_S = 15
+
+
+async def _deadline_timer(app: FastAPI) -> None:
+    while True:
+        await asyncio.sleep(DEADLINE_CHECK_S)
+        try:
+            await asyncio.to_thread(app.state.service.check_deadlines)
+        except Exception:  # keep checking; one bad pass must not stop the timer
+            log.exception("deadline check failed")
+
+
 def create_app(
     settings: Settings | None = None,
     resource=None,
@@ -33,9 +45,14 @@ def create_app(
     hub = LocalHub()
 
     @asynccontextmanager
-    async def lifespan(_app: FastAPI):
+    async def lifespan(app: FastAPI):
         hub.attach_loop(asyncio.get_running_loop())
+        # Locally the server is long-lived: check response-time targets on a timer. (On Lambda,
+        # and in tests, they are checked when dashboards load.)
+        timer = asyncio.create_task(_deadline_timer(app)) if settings.app_env == "local" else None
         yield
+        if timer:
+            timer.cancel()
 
     app = FastAPI(title="Ting-ting Call Bell Router", version=settings.version, lifespan=lifespan)
     app.state.hub = hub

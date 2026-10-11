@@ -17,6 +17,7 @@ export function Screensaver({
   lang,
   t,
   requests,
+  nurse,
   onWake,
   onNurse,
 }: {
@@ -24,6 +25,8 @@ export function Screensaver({
   lang: Language
   t: Strings
   requests: PatientTicketView[]
+  /** The room's primary nurse, e.g. "Nurse Jordan". */
+  nurse?: string
   onWake: () => void
   onNurse: () => void
 }) {
@@ -63,9 +66,16 @@ export function Screensaver({
       />
       <div className="pointer-events-none relative flex h-full flex-col px-6 py-8 sm:px-12">
         <div className="flex items-center justify-between gap-4">
-          <span className="rounded-2xl bg-white/15 px-4 py-2 text-[28px] font-bold tabular-nums" aria-label={`Room ${roomId}`}>
-            {roomId}
-          </span>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <span className="rounded-2xl bg-white/15 px-4 py-2 text-[28px] font-bold tabular-nums" aria-label={`Room ${roomId}`}>
+              {roomId}
+            </span>
+            {nurse && (
+              <span className="text-[26px]" data-testid="screensaver-nurse">
+                {s.yourNurse}: <strong>{nurse.replace(/^nurse\s+/i, '')}</strong>
+              </span>
+            )}
+          </div>
           <span className="text-[44px] font-bold tabular-nums" data-testid="screensaver-clock">
             {time}
           </span>
@@ -88,7 +98,12 @@ export function Screensaver({
                 {open.slice(0, 3).map((r) => (
                   <li key={r.ticket_id} className="flex flex-wrap items-center justify-between gap-3 text-[22px]">
                     <span>{t.departments[r.department]}</span>
-                    <span className="rounded-full bg-white px-4 py-1 text-[20px] font-bold text-pine">{t.status[r.status]}</span>
+                    <span className="flex flex-wrap items-center gap-3">
+                      <span className="tabular-nums text-white/85" data-testid="screensaver-wait">
+                        {s.waited(Math.max(0, Math.floor((now - Date.parse(r.created_at)) / 60_000)))}
+                      </span>
+                      <span className="rounded-full bg-white px-4 py-1 text-[20px] font-bold text-pine">{t.status[r.status]}</span>
+                    </span>
                   </li>
                 ))}
               </ul>

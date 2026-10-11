@@ -11,7 +11,7 @@ from app.classifier.schema import LLMIntent, LLMOutput
 from app.models import Category, Language, route
 from app.safety import normalize, scan
 
-PROMPT_VERSION = "mock-v1"
+PROMPT_VERSION = "mock-v2"
 
 # Category keyword patterns, applied to normalize()d segment text. Order = precedence when a
 # single segment matches several categories.
@@ -29,6 +29,13 @@ _KEYWORDS: list[tuple[Category, list[str]]] = [
             r"\bdoctor\b",
             r"\bnurse\b",
             r"\b(help|take|walk|get)\s+(me\s+)?(getting\s+|going\s+)?to\s+the\s+(bathroom|toilet)",
+            # The patient needs to go (mobility help), not the bathroom needing cleaning.
+            r"\b(need|have|want|got)\s+to\s+(go|pee|poop|use\s+the\s+(bathroom|toilet|restroom))\b",
+            r"\bgo(ing)?\s+to\s+the\s+(bathroom|toilet|restroom|loo)\b",
+            r"\b(help|get)\s+(me\s+)?(out\s+of|into|in\s+to)\s+(bed|the\s+bed|the\s+chair)\b",
+            r"\bsit\s+up\b",
+            r"\bswallow\w*",
+            r"\bin\s+pain\b",
             r"\bbedpan\b",
             r"\burinal\b",
             r"\breposition\w*",
@@ -70,6 +77,9 @@ _KEYWORDS: list[tuple[Category, list[str]]] = [
             r"\bnetflix\b",
             r"\bchannel\w*",
             r"\bthe game on\b",
+            r"\bwi\s+fi\b",
+            r"\bcall\s+bell\b",
+            r"\bscreen\b",
             r"\btelevision\b",
             r"\btelevisao\b",
             r"\btelevizyon\b",
@@ -104,6 +114,7 @@ _KEYWORDS: list[tuple[Category, list[str]]] = [
             r"\b(too|so|very|really)\s+(hot|cold|warm)\b",
             r"\b(room|it)\s+is\s+(\w+\s+)?(cold|hot|warm|freezing)\b",
             r"\b(hot|cold|freezing)\s+in\s+here\b",
+            r"\b(close|shut|open)\s+the\s+(door|window)\b",
             r"\bbathroom\b",
             r"\bsucio\b",
             r"\bfrio\b",
@@ -181,6 +192,9 @@ _KEYWORDS: list[tuple[Category, list[str]]] = [
             r"\bstraw\b",
             r"\bvegetarian\b",
             r"\beat\b",
+            r"\bsomething\s+to\s+(eat|drink)\b",
+            r"\bice\s+(chips|cream|machine)\b",
+            r"\bhot\s+chocolate\b",
             r"\bagua\b",
             r"\bhielo\b",
             r"\bcomida\b",
@@ -192,6 +206,26 @@ _KEYWORDS: list[tuple[Category, list[str]]] = [
             r"\bmanje\b",
             r"\bgrangou\b",
             "पानी",
+            "प्यास",
+            "रोटी",
+            "चावल",
+            "दाल",
+            "दूध",
+            "कॉफी",
+            "તરસ",
+            "રોટલી",
+            "દૂધ",
+            "કોફી",
+            r"ચા(\s|$)",
+            "咖啡",
+            "喝",
+            "吃",
+            "沙拉",
+            "饮料",
+            "面包",
+            "汤",
+            "牛奶",
+            "水果",
             "खाना",
             "भूख",
             "चाय",
@@ -208,8 +242,116 @@ _KEYWORDS: list[tuple[Category, list[str]]] = [
 ]
 _COMPILED = [(cat, [re.compile(p) for p in pats]) for cat, pats in _KEYWORDS]
 
+# Single words per category, in the same precedence order. Matched exactly, and with one typo
+# (see _fuzzy) when nothing matched exactly. Words in several languages; no clinical red flags
+# here (app/safety handles those).
+_WORDS: list[tuple[Category, str]] = [
+    (
+        Category.NON_URGENT_CLINICAL,
+        """
+        medicine medicines medication medications painkiller painkillers pain hurts hurting ache
+        aches sore headache nausea nauseous vomit vomiting sick dose doctor nurse insulin
+        bandage dressing catheter oxygen discharge discharged swallow swallowing
+        dolor duele enfermera enfermero medico remedio douleur infirmiere infirmier medecin
+        dor enfermeira doule doulè enfimye
+        """,
+    ),
+    (
+        Category.TECH_AMENITIES,
+        """
+        tv telly tele television remote wifi internet phone iphone android charger cable tablet
+        netflix youtube channel channels screen laptop headphones earphones radio
+        televisao televizyon televisor
+        """,
+    ),
+    (
+        Category.ENVIRONMENT_CLEANING,
+        """
+        clean cleaning dirty filthy trash garbage rubbish bin spill spilled spilt floor sink
+        toilet shower drain clogged blocked flush
+        light lights lamp blinds curtain curtains noisy noise loud heater heating thermostat
+        aircon freezing temperature
+        sucio sucia limpiar basura frio sale froid chaud sujo lixo limpar sal fret
+        """,
+    ),
+    (
+        Category.COMFORT_SUPPLIES,
+        """
+        pillow pillows blanket blankets towel towels toothbrush toothpaste socks slippers comb
+        hairbrush brush lotion tissues tissue kleenex gown sheets shampoo soap razor deodorant
+        balm chapstick wipes earplugs mask
+        almohada cobija manta toalla sabana jabon oreiller couverture serviette drap savon
+        travesseiro cobertor toalha lencol sabonete zorye kouveti sevyet
+        """,
+    ),
+    (
+        Category.DIETARY,
+        """
+        water ice juice drink drinks coffee tea food hungry starving thirsty menu meal meals
+        lunch breakfast dinner supper tray snack snacks crackers soda coke pepsi sprite milk
+        straw vegetarian vegan eat salad sandwich soup pizza fruit apple banana orange grapes
+        chicken rice beef fish pasta noodles bread toast eggs egg yogurt cereal oatmeal
+        porridge cookie cookies cake dessert pudding jello chocolate burger fries smoothie
+        milkshake lemonade broth cheese potato potatoes vegetables veggies beans curry dal
+        roti chapati tortilla sushi nuts muffin bagel pancakes waffles bacon turkey meat
+        salmon tuna chips popcorn decaf cocoa
+        agua hielo comida hambre jugo sed comer beber ensalada sopa fruta cafe leche arroz
+        pollo carne desayuno almuerzo cena galletas postre
+        eau deau faim soif salade manger boire repas lait soupe dejeuner
+        fome sede suco salada pao leite frango almoco jantar
+        dlo manje grangou swaf diri kafe
+        """,
+    ),
+]
+_WORD_CATEGORY: dict[str, Category] = {}
+for _cat, _words in _WORDS:
+    for _w in _words.split():
+        _WORD_CATEGORY.setdefault(_w, _cat)
+_PRECEDENCE = [cat for cat, _ in _WORDS]
+
+# Everyday words never treated as a typo of a request word ("nice" is not "rice").
+_NO_FUZZ_WORDS = """
+nice like time take make have want need feel more some here there this that with just
+please thanks could would should when where what which they them then than been very much
+many come came help room done good back down over into about after before still again also
+only okay sure right left home call tell talk said says know think look give gave keep
+open close turn work working broken cant dont wont didnt isnt your yours mine sorry great
+fine hello there their where were wear bring brought later water
+"""
+_NO_FUZZ = frozenset(_NO_FUZZ_WORDS.split())
+_TOKEN = re.compile(r"[a-z]+")
+# Latin letters next to CJK text ("wifi不能用"): add a space so word patterns see a boundary.
+_SCRIPT_EDGE = re.compile(r"(?<=[a-z0-9])(?=[^\x00-\x7f])|(?<=[^\x00-\x7f])(?=[a-z0-9])")
+
+
+def _one_edit(a: str, b: str) -> bool:
+    """True if a and b differ by one insertion, deletion, substitution or swap of neighbours."""
+    if a == b or abs(len(a) - len(b)) > 1:
+        return False
+    if len(a) == len(b):
+        diff = [i for i in range(len(a)) if a[i] != b[i]]
+        if len(diff) == 1:
+            return True
+        i, j = diff[0], diff[-1]
+        return len(diff) == 2 and j == i + 1 and a[i] == b[j] and a[j] == b[i]
+    short, long_ = sorted((a, b), key=len)
+    return any(long_[:i] + long_[i + 1 :] == short for i in range(len(long_)))
+
+
+def _word_category(words: list[str]) -> Category | None:
+    """Exact word matches first, then one-typo matches (5+ letters, never common words)."""
+    exact = {_WORD_CATEGORY[w] for w in words if w in _WORD_CATEGORY}
+    if not exact:
+        for w in words:
+            if len(w) < 5 or w in _NO_FUZZ:
+                continue
+            exact |= {c for k, c in _WORD_CATEGORY.items() if len(k) >= 5 and _one_edit(w, k)}
+    return next((c for c in _PRECEDENCE if c in exact), None)
+
+
 _SPLIT = re.compile(
-    r"\s+(?:and also|and|also|plus|y|ak|epi)\s+|[,，;；。.!?！？]|还有|和|\s+और\s+|\s+અને\s+"
+    r"\s+(?:and also|and|also|plus|but|y|pero|ak|epi|mais|mas|et|e)\s+"
+    r"|[,，;；。.!?！？]|还有|和|\s+और\s+|\s+અને\s+"
 )
 
 _LANG_WORDS = {
@@ -250,11 +392,11 @@ def detect_language(text: str) -> Language:
 def _categorize(segment: str) -> Category | None:
     if scan(segment):
         return Category.URGENT_CLINICAL
-    t = normalize(segment)
+    t = _SCRIPT_EDGE.sub(" ", normalize(segment))
     for cat, patterns in _COMPILED:
         if any(p.search(t) for p in patterns):
             return cat
-    return None
+    return _word_category(_TOKEN.findall(t))
 
 
 class MockClassifier:
