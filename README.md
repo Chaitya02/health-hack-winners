@@ -43,8 +43,9 @@ In a hospital, the call bell next to every bed goes to one person: the nurse. Bu
 
 1. **Is it a real request?** Gibberish like "asdfgh" gets a friendly "please try again", and no request is created.
 2. **Safety check first.** Words that signal danger, such as chest pain, trouble breathing, falls or bleeding, go straight to the nurse as **HIGH PRIORITY**, in any of the 7 languages.
-3. **Understand the request.** Keyword matching in every language, tolerant of typos, handles common requests instantly. If it's unsure, **Claude AI** (Claude Haiku) decides.
-4. **Fail safe.** If the AI is slow (more than 3 seconds) or fails, the request goes to the nurse.
+3. **Understand the request — decision model first, not GenAI.** Our own lightweight, open-source decision model (multilingual keyword rules, tolerant of typos; the code is in this repo) handles common requests instantly, at no cost and with no AI service involved.
+4. **Low confidence → LLM.** Only when the decision model can't place a request confidently do we ask an LLM: **Claude Haiku 5.5** (model `claude-haiku-5-5`, Anthropic API). If the LLM's own confidence is below 0.7, the request goes to the nurse.
+5. **Fail safe.** If the AI is slow (more than 3 seconds) or fails, the request goes to the nurse.
 
 Routing is checked on 177 test phrases: 100% go to the right team, and every urgent one reaches the nurse. Every code change has to keep that score.
 
@@ -91,7 +92,7 @@ Open the link on the tablet and tap **Visit Site** once. HTTPS lets the micropho
 | Patient tablet and staff dashboards | React 19, TypeScript, Vite, Tailwind; live updates over WebSockets |
 | Server | FastAPI (Python 3.12), Pydantic v2 |
 | Database | DynamoDB (DynamoDB Local in development) |
-| AI | Safety rules + multilingual keywords + Claude Haiku (3 s limit, falls back to the nurse) |
+| AI routing | Safety rules → open-source decision model (multilingual keywords, no GenAI) → only on low confidence: Claude Haiku 5.5 (`claude-haiku-5-5`), 3 s limit, falls back to the nurse |
 | Tests | pytest + moto, vitest, Playwright end-to-end; GitHub Actions CI |
 | Cloud design (AWS) | CloudFront, API Gateway (HTTP and WebSocket), Lambda, DynamoDB Streams, Bedrock, CloudWatch; see `specs/design.md` |
 
