@@ -30,3 +30,12 @@ blob-report/
 .DS_Store
 .dynamodb/
 *.log
+
+# Local working notes (not part of the project)
+PHASE_STATUS.md
+docs/CONTEXT_OM.md
+docs/TEAM_PLAN.md
+specs/tasks.md
+User Stories.xlsx
+docs/lighthouse-patient.json
+*.pdf

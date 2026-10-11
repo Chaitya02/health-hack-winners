@@ -1,4 +1,4 @@
-"""Quick-tap tile → category mapping. Owned by the patient-UI track (see docs/TEAM_PLAN.md)."""
+"""Quick-tap tile → category mapping."""
 
 from app.models import Category
 
