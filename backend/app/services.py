@@ -54,6 +54,7 @@ from app.staff import (
     status_at,
 )
 from app.tiles import QUICK_TAP_TILES
+from app.validity import not_a_request
 
 log = logging.getLogger("tingting.service")
 
@@ -68,6 +69,14 @@ MAX_NUDGE_SEVERITY = 4
 def _minutes_between(start: str, end: str) -> float:
     parse = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00"))  # noqa: E731
     return (parse(end) - parse(start)).total_seconds() / 60
+
+
+class NotARequest(Exception):
+    """Typed or spoken input with no request in it (app/validity.py). No ticket is created."""
+
+    def __init__(self, reason: str):
+        super().__init__(reason)
+        self.reason = reason
 
 
 class InvalidTransition(Exception):
@@ -279,6 +288,10 @@ class TicketService:
             check_tile(room.profile, tile, QUICK_TAP_TILES[tile][0])  # raises ProfileRefusal
             decision = self._quick_tap_decision(tile, req.language_hint or Language.EN)
         else:
+            # Typed or spoken: turn back anything that isn't a request before it reaches a team.
+            reason = not_a_request(req.text)
+            if reason:
+                raise NotARequest(reason)
             decision = decide(req.text, self.classifier, self.confidence_threshold)
         profile = apply_profile(room.profile, decision.intents, req.text, tile)
 
