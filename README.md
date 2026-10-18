@@ -1,4 +1,4 @@
-# Tink Tink — AI Call Bell Router
+# Tink Tink! — AI Call Bell Router
 
 **The right help, right away.**
 
